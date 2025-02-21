@@ -1,4 +1,4 @@
-import { utils } from "@/app/utils";
+import { utils } from '@/app/utils';
 import React from "react";
 
 export interface RegionSelection {

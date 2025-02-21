@@ -123,7 +123,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       onMouseUp={unsetGrab}
       onMouseLeave={unsetGrab}
       className={css(
-        "track-audio text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-500/70",
+        "track-audio text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
         mode === AudioTrackManipulationMode.ResizeEnd ? 'cursor-e-resize' : 
           (mode === AudioTrackManipulationMode.ResizeStart ? 'cursor-w-resize' : 
             (grab ? 'cursor-grabbing' : 'cursor-grab')),
