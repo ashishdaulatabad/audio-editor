@@ -26,16 +26,16 @@ interface WaveformEditorProps {
  */
 export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorProps>) {
   const ref = React.createRef<HTMLCanvasElement>();
+  const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
 
   React.useEffect(() => {
     /// Draw canvas
-    if (ref.current) {
+    if (ref.current && divRef.current) {
       const offcanvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
-      // context.fillStyle = '#222';
-      // context.fillRect(0, 0, offcanvas.width, offcanvas.height);
-      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, ref.current.width, ref.current.height);
+      context.fillRect(0, 0, offcanvas.width, offcanvas.height);
+      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, divRef.current.clientWidth - 10, ref.current.height);
     }
   });
 
@@ -120,7 +120,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
 
   return (
     <>
-      <div className="flex flex-col justify-between h-full p-2">
+      <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
         <div className="flex flex-row">
           <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
             <div className="flex flex-col w-full content-start">
@@ -160,11 +160,13 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
 
           </div>
         </div>
-        <canvas
-          ref={ref}
-          width={props.w}
-          height={props.h * 1.5}
-        ></canvas>
+        <div className="bg-slate-900">
+          <canvas
+            ref={ref}
+            width={props.w}
+            height={props.h * 1.5}
+          ></canvas>
+        </div>
       </div>
     </>
   );

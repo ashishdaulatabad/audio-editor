@@ -1,4 +1,19 @@
-import { AudioTransformation, InputAudioTransformationDetails } from "./interfaces";
+
+enum AudioRendering {
+  PitchShift
+}
+
+enum AudioTransformation {
+  Reverse,
+  ReversePolarity,
+  SwapStereo,
+  Normalization
+}
+
+interface InputAudioTransformationDetails {
+  type: AudioTransformation,
+  buffer: Array<Float32Array>,
+}
 
 self.addEventListener(
   'message',

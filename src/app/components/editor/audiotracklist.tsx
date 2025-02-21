@@ -56,12 +56,12 @@ export function AudioTrackList() {
           return (
             <div
               className={css(
-                "cursor-pointer text-md mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none shadow-md shadow-gray-700",
-                selectedIndex === index + 1 ? "bg-blue-500" : "bg-blue-700",
+                "cursor-pointer text-md mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none shadow-md shadow-gray-700"
               )}
               key={index}
               data-index={index}
               onClick={() => selectAudioSlice(index)}
+              style={{background: file.colorAnnotation}}
             >
               <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
               <div className="w-full">{file.audioName}</div>

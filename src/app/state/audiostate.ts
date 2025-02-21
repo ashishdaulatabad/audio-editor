@@ -7,6 +7,7 @@ import { AudioTransformation } from '../services/interfaces';
 export interface AudioDetails {
   audioName: string,
   audioId: symbol,
+  colorAnnotation: string,
   buffer: AudioBuffer | null,
   effects: AudioTransformation[]
 }

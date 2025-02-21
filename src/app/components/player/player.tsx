@@ -56,9 +56,9 @@ export function Player(props: React.PropsWithoutRef<any>) {
           <Pause c="#E1E361" f="#D1D256" w={25} h={25} />
         }
       </span>
-      {/* <div className="speaker-decibel ml-4">
+      <div className="speaker-decibel ml-4">
         <VolumeLevels />
-      </div> */}
+      </div>
     </div>
   );
 }

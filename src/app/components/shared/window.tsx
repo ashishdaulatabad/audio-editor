@@ -57,7 +57,7 @@ export function Window(props: React.PropsWithChildren<{
   return (
     <div
       className={css(
-        "fixed border flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
+        "absolute border flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
         hold ? 'shadow-lg' : 'shadow-md'
       )}
       style={{ 

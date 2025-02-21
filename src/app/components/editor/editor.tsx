@@ -204,7 +204,7 @@ export function Editor() {
           header: <><b>Track</b>: {trackForEdit.audioName}</>,
           props: {
             track: trackForEdit,
-            w: 600,
+            w: 780,
             h: 100
           },
           windowSymbol: Symbol(),
@@ -592,12 +592,12 @@ export function Editor() {
 
   return (
     <>
-      <WindowManager />
       <div className="h-full flex flex-col max-h-screen">
         <div className="player">
           <Player />
         </div>
         <div className="editor flex flex-row h-full box-border min-w-screen">
+          <WindowManager />
           <div className="track-files min-w-96 max-w-96">
             <AudioTrackList />
           </div>

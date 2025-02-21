@@ -1,5 +1,6 @@
 import { AudioDetails } from "../state/audiostate";
 import { audioService } from "./audioservice";
+import { randomColor } from "./color";
 
 export function css(...cssStr: string[]): string {
   return cssStr.filter(css => css).map(css => css.trim()).join(' ')
@@ -22,6 +23,7 @@ export async function createAudioData(
   return {
     audioName: name,
     audioId: Symbol(),
+    colorAnnotation: randomColor(),
     effects: [],
     buffer: bufferedData,
   }

@@ -132,9 +132,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     >
       <span
         ref={spanRef}
-        data-selected={track.trackDetail.selected}
-        className="text-sm relative block bg-blue-500 data-[selected='true']:bg-red-500 text-left text-white select-none text-ellipsis text-nowrap"
-        style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
+        className="text-sm relative block data-[selected='true']:bg-red-500 text-left text-white select-none text-ellipsis text-nowrap"
+        style={{left: (divRef.current?.scrollLeft ?? 0) + 'px', background: track.trackDetail.selected ? 'rgb(239 68 68)' : props.audioDetails.colorAnnotation}}
       >
         <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />
         {track.audioName}

@@ -6,7 +6,9 @@ export interface ContextItem {
 }
 
 export interface ContextMenuProps {
-  items: ContextItem[]
+  items: ContextItem[],
+  x: number,
+  y: number
 }
 
 /**
@@ -18,7 +20,10 @@ export interface ContextMenuProps {
  */
 export function ContextMenu(props: React.PropsWithoutRef<ContextMenuProps>) {
   return (
-    <div className="fixed context-menu flex flex-col rounded-sm bg-[#445555]">
+    <div 
+      className="fixed context-menu flex flex-col rounded-sm bg-[#445555]"
+      style={{left: props.x + 'px', top: props.y + 'px'}}
+    >
       {
         props.items.map(item => {
           return (
