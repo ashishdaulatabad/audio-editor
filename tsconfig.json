@@ -17,6 +17,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/services/canvas.js", "src/app/services/canvas.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/services/audioworklet.js"],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 import { RootState } from "@/app/state/store";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { focusWindow, removeWindow, WindowView } from '../../state/windowstore';
+import { focusWindow, removeWindow, setWindowPosition, WindowView } from '../../state/windowstore';
 import { Window } from "./window";
 
 /**
@@ -10,7 +10,7 @@ import { Window } from "./window";
  * @returns WindowManager JSX
  */
 export function WindowManager() {
-  const windowStore = useSelector((state: RootState) => state.windowStoreReducer);
+  const windowStore = useSelector((state: RootState) => state.windowStoreReducer.contents);
   const dispatch = useDispatch();
 
   function close(symbol: symbol){
@@ -21,17 +21,21 @@ export function WindowManager() {
     dispatch(focusWindow(symbol));
   }
 
-  /// Manager
-  /// Registry should happen on the editor side.
-  /// Deletion, updation can happen here.
+  function setPosition(top: number, left: number, index: number) {
+    dispatch(setWindowPosition({ x: left, y: top, index }))
+  }
+
   return (
     <>
-      {windowStore.contents.map((window: WindowView<any>, index: number) => {
+      {windowStore.map((window: WindowView<any>, index: number) => {
         return (
           <Window
             key={index}
             w={window.w ?? 800}
             h={window.h ?? 600}
+            x={window.x}
+            y={window.y}
+            onPositionChange={(top: number, left: number) => setPosition(top, left, index)}
             zLevel={index}
             header={typeof window.header === 'string' ? <>{window.header}</> : window.header}
             onClose={() => close(window.windowSymbol)}

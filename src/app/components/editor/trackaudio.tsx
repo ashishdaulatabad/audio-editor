@@ -5,6 +5,9 @@ import { Waveform } from "@/assets/wave";
 import React from "react";
 import { Canvas } from "../shared/customcanvas";
 import { css } from "@/app/services/utils";
+import { ContextMenuContext } from "@/app/providers/contextmenu";
+import { FaAudible, FaCopy, FaDumpster, FaRegFileAudio } from "react-icons/fa";
+import { FaDeleteLeft } from "react-icons/fa6";
 
 export enum AudioTrackManipulationMode {
   None,
@@ -32,11 +35,18 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   /// States
   const [mode, setMode] = React.useState(AudioTrackManipulationMode.Move);
   const [grab, setIsGrab] = React.useState(false);
-  const [transformed, setTransformed] = React.useState(props.audioDetails.effects);
+  let newRendered = false;
+
   // Variables
   // Track should exist
   const duration = track.buffer?.duration as number;
   const width = (duration / 5) * props.lineDist;
+
+  const {
+    hideContextMenu,
+    showContextMenu,
+    isContextOpen
+  } = React.useContext(ContextMenuContext);
 
   React.useEffect(() => {
     if (divRef.current) {
@@ -49,6 +59,10 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }, [track.trackDetail.selected, props.lineDist]);
 
   React.useEffect(() => {
+    newRendered = true;
+  }, [track.effects]);
+
+  React.useEffect(() => {
     if (divRef.current && spanRef.current) {
       setWidthAndScrollLeft(divRef.current, spanRef.current, track);
     }
@@ -58,8 +72,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     return (track.trackDetail.offsetInMillis / 5000) * props.lineDist;
   }
 
-  function setGrab() {
-    !grab && setIsGrab(true);
+  function setGrab(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (!(event.target as HTMLElement).classList.contains('wave-icon')) {
+      hideContextMenu();
+      !grab && setIsGrab(true);
+    }
   }
 
   function unsetGrab() {
@@ -111,6 +128,35 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     divElement.scrollLeft = leftScrollAmount;
   }
 
+  function contextMenu(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+    if (!isContextOpen()) {
+      showContextMenu([
+        {
+          name: `Create Copy of Track`,
+          icon: <FaCopy />,
+          onSelect: () => console.log('here'),
+        },
+        {
+          name: `Sample New Audio`,
+          icon: <FaRegFileAudio />,
+          onSelect: () => console.log('here'),
+        },
+        {
+          name: 'Delete',
+          icon: <FaDumpster />,
+          onSelect: () => console.log('here'),
+        },
+        {
+          name: 'Edit',
+          icon: <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />,
+          onSelect: () => console.log('here'),
+        },
+      ], event.nativeEvent.clientX, event.nativeEvent.clientY);
+    } else {
+      hideContextMenu();
+    }
+  }
+
   return (
     <div
       title={`Track: ${track.audioName}`}
@@ -130,24 +176,31 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       )}
       style={{left: calculateLeft(track)}}
     >
-      <span
-        ref={spanRef}
-        className="text-sm relative block data-[selected='true']:bg-red-500 text-left text-white select-none text-ellipsis text-nowrap"
-        style={{left: (divRef.current?.scrollLeft ?? 0) + 'px', background: track.trackDetail.selected ? 'rgb(239 68 68)' : props.audioDetails.colorAnnotation}}
+      <div
+        className="data-[selected='true']:bg-red-500 w-full"
+        style={{ background: track.trackDetail.selected ? 'rgb(239 68 68)' : props.audioDetails.colorAnnotation, width: width + 'px' }}
       >
-        <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />
-        {track.audioName}
-      </span>
+        <span
+          ref={spanRef}
+          className="text-sm relative text-left text-white select-none text-ellipsis text-nowrap"
+          style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
+        >
+          <span onClick={contextMenu} className="wave-icon cursor-pointer">
+            <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />
+          </span>
+          {track.audioName}
+        </span>
+      </div>
       <Canvas
         h={props.height - 22}
         w={width}
-        image={renderAudioWaveform(track, width, props.height - 22)}
+        image={renderAudioWaveform(track, 200, 5, newRendered)}
       />
     </div>
   );
 }
 
-export function renderAudioWaveform(data: AudioDetails, width: number, _height: number, force: boolean = false) {
+export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTime: number, force: boolean = false) {
   if (!force) {
     let offcanvas = audioManager.getOffscreenCanvasDrawn(data.audioId);
 
@@ -156,6 +209,8 @@ export function renderAudioWaveform(data: AudioDetails, width: number, _height: 
     }
   }
 
+  const time = data.buffer?.duration as number;
+  const width = Math.round(time / unitTime) * lineDist;
   const height = 200;
   let offcanvas = new OffscreenCanvas(width, height);
   const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
@@ -167,7 +222,7 @@ export function renderAudioWaveform(data: AudioDetails, width: number, _height: 
   context.clearRect(0, 0, width, height);
   context.fillRect(0, 0, width, height);
   context.moveTo(0, height / 2);
-  context.lineWidth = 2;
+  context.lineWidth = 3;
 
   const mul = 128;
   const channelData = buffer.getChannelData(0);

@@ -19,6 +19,7 @@ import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
 import { ScheduledInformation } from '../../state/trackdetails';
 import { Slicer, SlicerSelection } from './slicer';
+import { ContextMenuContext } from '@/app/providers/contextmenu';
 
 export function Editor() {
   /// All states
@@ -48,6 +49,13 @@ export function Editor() {
   const ref = React.createRef<HTMLDivElement>();
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
+
+  // Context
+  const {
+    hideContextMenu,
+    isContextOpen,
+    showContextMenu
+  } = React.useContext(ContextMenuContext);
 
   // Other variables
   const totalTracks = trackDetails.length;
@@ -205,10 +213,12 @@ export function Editor() {
           props: {
             track: trackForEdit,
             w: 780,
-            h: 100
+            h: 100,
           },
           windowSymbol: Symbol(),
-          view: AudioWaveformEditor
+          view: AudioWaveformEditor,
+          x: 0,
+          y: 0
         }));
         selectTrackForEdit(null);
       }
@@ -590,9 +600,15 @@ export function Editor() {
     }
   }, [lineDist, status]);
 
+  function checkContextMenu() {
+    if (isContextOpen()) {
+      hideContextMenu();
+    }
+  }
+
   return (
     <>
-      <div className="h-full flex flex-col max-h-screen">
+      <div className="h-full flex flex-col max-h-screen" onClick={checkContextMenu}>
         <div className="player">
           <Player />
         </div>

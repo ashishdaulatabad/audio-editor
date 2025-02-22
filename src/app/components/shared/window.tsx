@@ -12,24 +12,33 @@ import React from "react";
 export function Window(props: React.PropsWithChildren<{
   w: number,
   h: number,
+  x: number,
+  y: number,
   onClose?: () => void,
   onClick: () => void,
+  onPositionChange: (top: number, left: number) => void,
   zLevel: number,
   header?: React.JSX.Element 
 }>) {
   /// States
   const [width, setWidth] = React.useState(props.w);
   const [height, setHeight] = React.useState(props.h);
-  const [left, setLeft] = React.useState(0);
-  const [top, setTop] = React.useState(0);
+  const [left, setLeft] = React.useState(props.x);
+  const [top, setTop] = React.useState(props.y);
   const [hold, setHold] = React.useState(false);
   const [anchorX, setAnchorX] = React.useState(0);
   const [anchorY, setAnchorY] = React.useState(0);
+  const windowRef = React.createRef<HTMLDivElement>();
   
   function initHold(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setHold(true);
     setAnchorX(event.nativeEvent.clientX);
     setAnchorY(event.nativeEvent.clientY);
+
+    if (windowRef.current) {
+      setLeft(windowRef.current.offsetLeft);
+      setTop(windowRef.current.offsetTop);
+    }
   }
   
   function move(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -37,17 +46,29 @@ export function Window(props: React.PropsWithChildren<{
       event.preventDefault();
       const changeX = event.nativeEvent.clientX - anchorX;
       const changeY = event.nativeEvent.clientY - anchorY;
-      setLeft(left + changeX);
-      setTop(top + changeY);
-      setAnchorX(event.nativeEvent.clientX);
-      setAnchorY(event.nativeEvent.clientY);
+
+      if (windowRef.current) {
+        windowRef.current.style.left = left + changeX + 'px';
+        windowRef.current.style.top = top + changeY + 'px';
+      }
     }
   }
 
   function deinitHold() {
     setHold(false);
+
+    if (windowRef.current) {
+      props.onPositionChange(windowRef.current.offsetTop, windowRef.current.offsetLeft);
+    }
+
     setAnchorX(0);
     setAnchorY(0);
+    setLeft(0);
+    setTop(0);
+  }
+
+  function onWindowClick() {
+    props.onClick();
   }
 
   function triggerClose() {
@@ -60,11 +81,13 @@ export function Window(props: React.PropsWithChildren<{
         "absolute border flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
         hold ? 'shadow-lg' : 'shadow-md'
       )}
+      ref={windowRef}
+      onClick={onWindowClick}
       style={{ 
         width: width + 'px',
         height: height + 'px',
-        left: left + 'px',
-        top: top + 'px',
+        left: props.x + 'px',
+        top: props.y + 'px',
         zIndex: props.zLevel + 100,
       }}
     >

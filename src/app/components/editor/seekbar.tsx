@@ -77,7 +77,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
           strokeWidth={1}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={11}
+          fontSize={13}
           dy={25}
           dx={lineDist * labelMultiplier * (index + 1)}
         >
@@ -92,7 +92,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   return (
     <div
-      className="seekbar bg-slate-700 overflow-visible rounded-sm z-[12] border border-solid border-slate-700 cursor-pointer shadow-bg"
+      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border border-solid border-slate-900 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       ref={divRef}
     >
@@ -111,7 +111,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
           <path
             d={svgLine.content}
             key={index}
-            stroke="#333"
+            stroke="#777"
             strokeWidth={svgLine.lw}
           ></path>
         ))}

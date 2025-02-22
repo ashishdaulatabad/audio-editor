@@ -7,6 +7,7 @@ import { Play } from "@/assets/play";
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { VolumeLevels } from "./volumelevels";
+import { Knob } from "../knob";
 
 /**
  * Player at the top bar
@@ -20,9 +21,7 @@ export function Player(props: React.PropsWithoutRef<any>) {
   const [timer, setTimer] = React.useState('00:00');
 
   const ref = React.createRef<HTMLDivElement>();
-
-  const [left, setLeft] = React.useState(0);
-  const [right, setRight] = React.useState(0);
+  const [masterVol, setMasterVol] = React.useState(1);
   const dispatch = useDispatch();
 
   React.useEffect(() => {
@@ -44,8 +43,17 @@ export function Player(props: React.PropsWithoutRef<any>) {
     dispatch(togglePlay(status === Status.Pause ? Status.Play : Status.Pause));
   }
 
+  function onMainVolChange(e: number) {
+    audioManager.setGainNodeForMaster(e);
+    setMasterVol(e);
+  }
+
   return (
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-slate-800 shadow-lg">
+      <div className="volume px-6 text-center text-xs" title="Master Volume">
+        <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
+        <div>{Math.round(masterVol * 100)}</div>
+      </div>
       <div ref={ref} className="timer bg-slate-700 text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none">
         {timer}
       </div>

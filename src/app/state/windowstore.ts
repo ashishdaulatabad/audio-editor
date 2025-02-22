@@ -8,7 +8,9 @@ export interface WindowView<TProps> {
   view: (props: TProps) => React.JSX.Element,
   props: PropsType<TProps>,
   w?: number,
-  h?: number
+  h?: number,
+  x: number,
+  y: number
 }
 
 const initialState: {
@@ -40,6 +42,12 @@ const windowManagerSlice = createSlice({
         const value = state.contents.splice(index, 1)[0];
         state.contents.push(value);
       }
+    },
+    setWindowPosition(state, action: PayloadAction<{x: number, y: number, index: number}>) {
+      const { x, y, index } = action.payload;
+
+      state.contents[index].x = x
+      state.contents[index].y = y;
     }
   }
 })
@@ -47,7 +55,8 @@ const windowManagerSlice = createSlice({
 export const {
   addWindow,
   focusWindow,
-  removeWindow
+  removeWindow,
+  setWindowPosition
 } = windowManagerSlice.actions;
 
 export default windowManagerSlice.reducer;

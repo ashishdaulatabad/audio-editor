@@ -201,12 +201,16 @@ class AudioTrackManager {
     this.loopEnd = Math.max(5, valueMillis / 1000);
   }
 
+  setGainNodeForMaster(vol: number) {
+    this.masterGainNode?.gain.setValueAtTime(vol, 0);
+  }
+
   setGainNodeForTrack(track: number, vol: number) {
-    this.gainNodes[track].gain.value = vol;
+    this.gainNodes[track].gain.setValueAtTime(vol, 0);
   }
 
   setPannerNodeForTrack(track: number, pan: number) {
-    this.pannerNodes[track].pan.value = pan;
+    this.pannerNodes[track].pan.setValueAtTime(pan, 0);
   }
 
   storeOffscreenCanvasDrawn(audioSymbolKey: symbol, canvas: OffscreenCanvas) {

@@ -33,14 +33,6 @@ self.addEventListener(
         const normalizedValue = ((channelData[index] + 1) / 2.0) * height;
         context.lineTo(x, normalizedValue);
         x += incr;
-
-        // if (Math.floor(percent) < Math.floor(percent + progress)) {
-        //   // this.postMessage({
-        //   //   key: 'progressCanvas',
-        //   //   percent
-        //   // });
-        // }
-        // percent += progress;
       }
     }
 
