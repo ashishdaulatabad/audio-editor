@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { changeModifiedAudio } from "@/app/state/audiostate";
 import { renderAudioWaveform } from "../editor/trackaudio";
 import { AudioTransformation } from "@/app/services/interfaces";
+import { Knob } from "../knob";
 
 interface WaveformEditorProps {
   track: AudioTrackDetails,
@@ -28,21 +29,21 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const ref = React.createRef<HTMLCanvasElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
+  const [pitch, setPitch] = React.useState(1);
 
   React.useEffect(() => {
     /// Draw canvas
     if (ref.current && divRef.current) {
       const offcanvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
-      context.fillRect(0, 0, offcanvas.width, offcanvas.height);
-      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, divRef.current.clientWidth - 10, ref.current.height);
+      context.clearRect(0, 0, ref.current.width, ref.current.height);
+      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, divRef.current.clientWidth, ref.current.height);
     }
   });
 
   function transformPolarity() {
     transformAudio(props.track, AudioTransformation.ReversePolarity).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data }, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
       dispatch(changeModifiedAudio({
         buffer: data,
@@ -55,6 +56,10 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.ReversePolarity
       }))
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
@@ -63,8 +68,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       props.track,
       AudioTransformation.Reverse
     ).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
       dispatch(changeModifiedAudio({
         buffer: data,
@@ -77,13 +81,17 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.Reverse
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
   function transformSwapStereo() {
     transformAudio(props.track, AudioTransformation.SwapStereo).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
       dispatch(changeModifiedAudio({
         buffer: data,
@@ -96,13 +104,17 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.SwapStereo
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
   function normalize() {
     transformAudio(props.track, AudioTransformation.Normalization).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
       dispatch(changeModifiedAudio({
         buffer: data,
@@ -115,6 +127,11 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.Normalization
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
@@ -157,7 +174,31 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
             </div>
           </div>
           <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
-
+          <div className="flex w-full content-start">
+              <div className="box w-full justify-items-center py-1">
+                <Knob
+                  r={16}
+                  onKnobChange={(e) => console.log(e)}
+                  scrollDelta={0.1}
+                  value={1}
+                  pd={8}
+                />
+                <label>Pitch</label>
+              </div>
+              <div className="box w-full justify-items-center py-1">
+                <Knob
+                  r={16}
+                  onKnobChange={(e) => console.log(e)}
+                  scrollDelta={0.1}
+                  value={1}
+                  pd={8}
+                />
+                <label>Playback Rate</label>
+              </div>
+              {/* <div className="box w-full py-1">
+                
+              </div> */}
+            </div>
           </div>
         </div>
         <div className="bg-slate-900">

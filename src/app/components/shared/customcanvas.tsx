@@ -14,7 +14,7 @@ export function Canvas(props: React.PropsWithoutRef<{
     if (ref.current) {
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
       context.clearRect(0, 0, props.w, props.h);
-      context.drawImage(props.image, 0, 0, props.w, props.h)
+      context.drawImage(props.image, 0, 0, props.w, props.h);
     }
   }, [props.w, props.image]);
 

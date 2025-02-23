@@ -1,13 +1,16 @@
 import { audioManager } from "@/app/services/audiotrackmanager";
-import { AudioDetails } from "@/app/state/audiostate";
-import { AudioTrackDetails } from "@/app/state/trackdetails";
+import { addAudio, AudioDetails } from "@/app/state/audiostate";
+import { AudioTrackDetails, deleteAudioFromTrack } from "@/app/state/trackdetails";
 import { Waveform } from "@/assets/wave";
 import React from "react";
 import { Canvas } from "../shared/customcanvas";
 import { css } from "@/app/services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { FaAudible, FaCopy, FaDumpster, FaRegFileAudio } from "react-icons/fa";
+import { FaAudible, FaCopy, FaDumpster, FaRegFileAudio, FaTrash } from "react-icons/fa";
 import { FaDeleteLeft } from "react-icons/fa6";
+import { createAudioSample } from "@/app/services/audiotransform";
+import { randomColor } from "@/app/services/color";
+import { useDispatch } from "react-redux";
 
 export enum AudioTrackManipulationMode {
   None,
@@ -31,11 +34,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   // const track = tracks[props.index]
   const spanRef = React.createRef<HTMLSpanElement>();
   const divRef = React.createRef<HTMLDivElement>();
+  const dispatch = useDispatch();
 
   /// States
   const [mode, setMode] = React.useState(AudioTrackManipulationMode.Move);
   const [grab, setIsGrab] = React.useState(false);
-  let newRendered = false;
 
   // Variables
   // Track should exist
@@ -59,7 +62,6 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }, [track.trackDetail.selected, props.lineDist]);
 
   React.useEffect(() => {
-    newRendered = true;
   }, [track.effects]);
 
   React.useEffect(() => {
@@ -95,11 +97,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       }
     }
 
-    if (pointerPosition <= 10) {
+    if (pointerPosition <= 5) {
       if (mode !== AudioTrackManipulationMode.ResizeStart) {
         setMode(AudioTrackManipulationMode.ResizeStart);
       }
-    } else if (divRef.current && pointerPosition >= divRef.current.clientWidth - 10) {
+    } else if (divRef.current && pointerPosition >= divRef.current.clientWidth - 5) {
       if (mode !== AudioTrackManipulationMode.ResizeEnd) {
         setMode(AudioTrackManipulationMode.ResizeEnd);
       }
@@ -128,23 +130,34 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     divElement.scrollLeft = leftScrollAmount;
   }
 
+  function handleNewSampleCreation(track: AudioTrackDetails) {
+    createAudioSample(track).then(data => {
+      const audioId = Symbol();
+      dispatch(addAudio({
+        audioId,
+        audioName: track.audioName,
+        buffer: data,
+        colorAnnotation: randomColor(),
+        effects: [],
+      }));
+    })
+  }
+
   function contextMenu(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
     if (!isContextOpen()) {
       showContextMenu([
         {
-          name: `Create Copy of Track`,
-          icon: <FaCopy />,
-          onSelect: () => console.log('here'),
-        },
-        {
-          name: `Sample New Audio`,
+          name: `Create New Sample`,
           icon: <FaRegFileAudio />,
-          onSelect: () => console.log('here'),
+          onSelect: () => handleNewSampleCreation(track),
         },
         {
           name: 'Delete',
-          icon: <FaDumpster />,
-          onSelect: () => console.log('here'),
+          icon: <FaTrash />,
+          onSelect: () => {
+            dispatch(deleteAudioFromTrack({ trackNumber: props.trackId, audioIndex: props.index }));
+            hideContextMenu();
+          },
         },
         {
           name: 'Edit',
@@ -156,7 +169,6 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       hideContextMenu();
     }
   }
-
   return (
     <div
       title={`Track: ${track.audioName}`}
@@ -182,7 +194,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       >
         <span
           ref={spanRef}
-          className="text-sm relative text-left text-white select-none text-ellipsis text-nowrap"
+          className="text-sm relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
           style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
         >
           <span onClick={contextMenu} className="wave-icon cursor-pointer">
@@ -194,7 +206,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       <Canvas
         h={props.height - 22}
         w={width}
-        image={renderAudioWaveform(track, 200, 5, newRendered)}
+        image={renderAudioWaveform(track, 200, 5, false)}
       />
     </div>
   );
@@ -210,7 +222,7 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
   }
 
   const time = data.buffer?.duration as number;
-  const width = Math.round(time / unitTime) * lineDist;
+  const width = Math.max((time / unitTime) * lineDist, 800);
   const height = 200;
   let offcanvas = new OffscreenCanvas(width, height);
   const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
@@ -224,7 +236,7 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
   context.moveTo(0, height / 2);
   context.lineWidth = 3;
 
-  const mul = 128;
+  const mul = Math.min(128);
   const channelData = buffer.getChannelData(0);
 
   let x = 0;

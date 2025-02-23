@@ -27,6 +27,9 @@ const audioSlice = createSlice({
     addAudio(state, action: PayloadAction<AudioDetails>) {
       state.contents.push(action.payload);
     },
+    removeAudio(state, action: PayloadAction<number>) {
+      state.contents.splice(action.payload, 1);
+    },
     changeModifiedAudio(state, action: PayloadAction<{ buffer: AudioBuffer, audioId: symbol, transformation: AudioTransformation }>) {
       const { audioId, buffer, transformation } = action.payload;
       
@@ -45,6 +48,6 @@ const audioSlice = createSlice({
   }
 });
 
-export const { addAudio, changeModifiedAudio } = audioSlice.actions;
+export const { addAudio, changeModifiedAudio, removeAudio } = audioSlice.actions;
 
 export default audioSlice.reducer;

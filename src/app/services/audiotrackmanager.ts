@@ -255,6 +255,20 @@ class AudioTrackManager {
     }
   }
 
+  removeAllAudioFromScheduledNodes(id: symbol) {
+    const allKeys = Object.getOwnPropertySymbols(this.scheduledNodes);
+
+    for (const key of allKeys) {
+      const node = this.scheduledNodes[key];
+
+      if (node.audioId === id) {
+        node.buffer.stop(0);
+        node.buffer.disconnect();
+        delete this.scheduledNodes[key];;
+      }
+    }
+  }
+
   /**
    * Schedule a single track at a given offset.
    * 
@@ -276,31 +290,27 @@ class AudioTrackManager {
    * @param audio Audio Details
    * @return void.
    */
-  rescheduleAudioFromScheduledNodes(
-    allTracks: AudioTrackDetails[][],
-    audioId: symbol
-  ) {
-    let trackNumber = 0;
+  // rescheduleAudioFromScheduledNodes(
+  //   audioId: symbol
+  // ) {
+  //   let trackNumber = 0;
 
-    for (const track of allTracks) {
-      for (const audio of track) {
-        if (audio.audioId === audioId) {
-          const scheduledKey = audio.trackDetail.scheduledKey;
+  //   for (const audioKey of Object.getOwnPropertySymbols(this.scheduledNodes)) {
+  //     if (audioKey === audioId) {
+  //       const scheduledKey = audio.trackDetail.scheduledKey;
+        
+  //       if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
+  //         const node = this.scheduledNodes[scheduledKey];
           
-          if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
-            const node = this.scheduledNodes[scheduledKey];
-            
-            node.pendingReschedule = {
-              offsetInMillis: audio.trackDetail.offsetInMillis,
-              newTrack: audio,
-              trackNumber
-            };
-          }
-        }
-      }
-      ++trackNumber;
-    }
-  }
+  //         node.pendingReschedule = {
+  //           offsetInMillis: audio.trackDetail.offsetInMillis,
+  //           newTrack: audio,
+  //           trackNumber
+  //         };
+  //       }
+  //     }
+  //   }
+  // }
 
   private _scheduleInternal(track: AudioTrackDetails, trackOffsetMillis: number, trackNumber: number) {
     const seekbarOffsetInMillis = this.runningTimestamp * 1000;
@@ -421,6 +431,23 @@ class AudioTrackManager {
   }
 
   rescheduleTrackFromScheduledNodes(
+    track: AudioTrackDetails
+  ) {
+    const symbolKey = track.trackDetail.scheduledKey;
+
+    if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
+      const node = this.scheduledNodes[symbolKey];
+      node.pendingReschedule = {
+        offsetInMillis: track.trackDetail.offsetInMillis,
+        newTrack: track,
+        trackNumber: track.trackDetail.trackNumber
+      };
+
+      node.buffer.stop(0);
+    }
+  }
+
+  rescheduleMovedTrackFromScheduledNodes(
     track: AudioTrackDetails,
     trackNumber: number,
     trackOffsetMillis: number

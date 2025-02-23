@@ -24,10 +24,11 @@ class Processor extends AudioWorkletProcessor {
         const outputChannel = output[channelIndex];
 
         for (let sample = 0; sample < channel.length; ++sample) {
-          outputChannel[sample] = -channel[sample]
+          outputChannel[sample] = channel[sample]
         }
       }
     }
+    console.log(inputs);
   }
 }
 

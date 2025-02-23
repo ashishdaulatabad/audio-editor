@@ -7,7 +7,7 @@ interface KnobSettings {
   pd: number,
   value?: number,
   scrollDelta?: number,
-  onKnobChange: (value: number) => void
+  onKnobChange: (value: number) => void,
 }
 
 function calcVectorX(value: number) {

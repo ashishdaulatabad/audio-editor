@@ -34,7 +34,8 @@ const twoMinuteInMillis: number = 2 * 60 * 1000;
 
 export type ScheduledInformation = {
   offsetInMillis: number,
-  scheduledKey: symbol
+  scheduledKey: symbol,
+  trackNumber: number
 };
 
 export type AudioNonScheduledDetails = AudioDetails & {
@@ -217,6 +218,7 @@ export const trackDetailsSlice = createSlice({
           audioTracks.push(pendingTrack);
         }
       }
+      // To do: call from source instead of from here.
       audioManager.rescheduleAllTracks(state.trackDetails, slicesToReschedule);
     },
     /// Set offset to audio track
@@ -274,7 +276,6 @@ export const trackDetailsSlice = createSlice({
           }
         }
       }
-      audioManager.rescheduleAudioFromScheduledNodes(state.trackDetails, audioId);
     },
     
     setOffsetInMillisToMultipleAudioTrack(state, action: PayloadAction<{
@@ -305,9 +306,13 @@ export const trackDetailsSlice = createSlice({
       const { payload: audioIdToDelete } = action;
 
       /// Filter all the tracks that contains this Audio
-      for (let trackDetails of state.trackDetails) {
-        trackDetails = trackDetails.filter(detail => detail.audioId === audioIdToDelete);
+      for (let index = 0; index < state.trackDetails.length; ++index) {
+        state.trackDetails[index] = state.trackDetails[index].filter(detail => detail.audioId !== audioIdToDelete);
       }
+
+      const maxTime = getMaxTime(state.trackDetails);
+      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      audioManager.setLoopEnd(maxTime);
     }
   }
 });

@@ -70,6 +70,49 @@ export function canvasRedraw(
   });
 }
 
+export function createAudioSample(
+  audioInput: AudioTrackDetails,
+) {
+  return new Promise<AudioBuffer>((resolve, reject) => {
+    const buffer = audioInput.buffer as AudioBuffer;
+
+    const offsetStartTimeSecs = audioInput.trackDetail.startOffsetInMillis / 1000;
+    const offsetEndTimeSecs = audioInput.trackDetail.endOffsetInMillis / 1000;
+    const duration = offsetEndTimeSecs - offsetStartTimeSecs;
+    const totalBufferSize = Math.round(buffer.sampleRate * duration);
+
+    const offlineAudioContext = new OfflineAudioContext(buffer.numberOfChannels, totalBufferSize, buffer.sampleRate);
+
+    offlineAudioContext.audioWorklet.addModule(new URL('./audioworklet.js', import.meta.url)).then(() => {
+      // To do: Assign certain details to perform before rendering the audio.
+      // const workletNode = new AudioWorkletNode(offlineAudioContext, 'transformation');
+      const bufferSourceNode = new AudioBufferSourceNode(offlineAudioContext, {
+        buffer
+      });
+      bufferSourceNode.connect(offlineAudioContext.destination);
+
+      bufferSourceNode.start(0, offsetStartTimeSecs, duration);
+      bufferSourceNode.stop(duration);
+      offlineAudioContext.onstatechange = function(e) {
+        console.log('here', e);
+      }
+      offlineAudioContext.startRendering().then(data => {
+        bufferSourceNode.disconnect();
+        resolve(data);
+      });
+
+      /// Acknowledged that the message is processed successfully.
+      // workletNode.port.onmessage = function (event: MessageEvent<any>) {
+      //   if (event.data.received) {
+      //   offlineAudioContext.startRendering();
+      //   } else {
+      //     reject();
+      //   }
+      // }
+    });
+  });
+}
+
 /**
  * Transform audio input with certain details to certain output, as per the
  * parameters (todo)

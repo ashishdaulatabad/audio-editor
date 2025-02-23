@@ -157,6 +157,7 @@ export function Editor() {
             trackDetails: {
               ...data,
               trackDetail: {
+                trackNumber: intIndex,
                 offsetInMillis: timeOffset,
                 scheduledKey: Symbol(),
                 startOffsetInMillis: 0,
@@ -428,6 +429,7 @@ export function Editor() {
           const currentTrack = trackDetails[trackIntIndex][audioIntIndex];
 
           const trackInformation: ScheduledInformation & TrackInformation = {
+            trackNumber: trackIntIndex,
             offsetInMillis,
             scheduledKey: currentTrack.trackDetail.scheduledKey,
             endOffsetInMillis,
@@ -505,6 +507,7 @@ export function Editor() {
         trackDetail: {
           ...currentTrack.trackDetail,
           offsetInMillis,
+          trackNumber,
           scheduledKey: Symbol(),
         }
       };
