@@ -281,11 +281,24 @@ export const trackDetailsSlice = createSlice({
     setOffsetInMillisToMultipleAudioTrack(state, action: PayloadAction<{
       allTrackNumbers: number[],
       allAudioIndexes: number[],
-      allOffsetsInMillis: number[]
+      allOffsetsInMillis: number[],
+      allStartOffsetsInMillis: number[],
+      allEndOffsetsInMillis: number[]
     }>) {
-      const { allTrackNumbers, allAudioIndexes, allOffsetsInMillis } = action.payload;
+      const {
+        allTrackNumbers,
+        allAudioIndexes,
+        allOffsetsInMillis,
+        allStartOffsetsInMillis,
+        allEndOffsetsInMillis
+      } = action.payload;
 
-      if (allAudioIndexes.length !== allAudioIndexes.length || allAudioIndexes.length !== allOffsetsInMillis.length) {
+      if (
+        allAudioIndexes.length !== allTrackNumbers.length ||
+        allAudioIndexes.length !== allOffsetsInMillis.length ||
+        allAudioIndexes.length !== allStartOffsetsInMillis.length ||
+        allAudioIndexes.length !== allEndOffsetsInMillis.length
+      ) {
         return;
       }
 
@@ -293,8 +306,12 @@ export const trackDetailsSlice = createSlice({
         const trackNumber = allTrackNumbers[index];
         const audioIndex = allAudioIndexes[index];
         const offsetInMillis = allOffsetsInMillis[index];
+        const startOffsetInMillis = allStartOffsetsInMillis[index];
+        const endOffsetInMillis = allEndOffsetsInMillis[index];
 
         state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMillis = offsetInMillis;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMillis = startOffsetInMillis;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMillis = endOffsetInMillis;
       }
 
       const maxTime = getMaxTime(state.trackDetails);

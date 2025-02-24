@@ -1,13 +1,20 @@
 import { AudioTrackDetails } from "../state/trackdetails";
+import { utils } from "../utils";
 import { audioService } from "./audioservice";
- 
+
+// To do: Maybe keep track of min width and min scroll left
+// to minimize calculation.
 export type SelectedAudioTrackDetails = AudioTrackDetails & {
-  domElement: HTMLElement,
-  initialPosition: number,
+  domElement: HTMLElement
+  initialPosition: number
+  initialWidth: number
+  initialScrollLeft: number
 }
 
 export type TransformedAudioTrackDetails = SelectedAudioTrackDetails & {
-  finalPosition: number
+  finalPosition: number,
+  finalScrollLeft: number,
+  finalWidth: number
 }
 
 class AudioTrackManager {
@@ -63,6 +70,20 @@ class AudioTrackManager {
   }
 
   /**
+   * @description Clear all selection of DOM Elements
+   */
+  clearSelection() {
+    this.multiSelectedDOMElements = [];
+  }
+
+  /**
+   * @description Check if at least one of the DOM elements is multi-selected
+   */
+  isMultiSelected() {
+    return this.multiSelectedDOMElements.length > 0;
+  }
+
+  /**
    * Set element as Multi-selected.
    * 
    * @param track Track to add into selected elements
@@ -81,7 +102,9 @@ class AudioTrackManager {
       this.multiSelectedDOMElements.push({
         ...track,
         domElement,
-        initialPosition: domElement.offsetLeft
+        initialPosition: domElement.offsetLeft,
+        initialWidth: domElement.offsetWidth,
+        initialScrollLeft: domElement.scrollLeft,
       });
     } else {
       this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
@@ -137,36 +160,128 @@ class AudioTrackManager {
    * @param diffX Move track by `diffX` from `initialPosition`
    * @returns void
    */
-  applyResizingToMultipleSelectedTracks(diffX: number) {
-    let diffOffsetToNegate = 0;
+  applyResizingStartToMultipleSelectedTracks(diffX: number) {
+    // Making sure one of the width does not move to zero
+    let minShrinkValue = 0;
+    let minShrinkSet = false;
+    // Making sure one of the width does not exceed while expanding inward.
+    let minExpandValue = 0
+    let minExpandSet = false;
 
+    // Rewriting this loop.
     for (const selectedTrack of this.multiSelectedDOMElements) {
-      const newLeft = selectedTrack.initialPosition + diffX;
+      const trackWidth = selectedTrack.initialWidth;
+      const trackScrollLeft = selectedTrack.initialScrollLeft;
 
-      if (newLeft < 0) {
-        diffOffsetToNegate = Math.max(diffOffsetToNegate, -newLeft);
+      if (!minShrinkSet) {
+        minShrinkValue = trackWidth;
+        minShrinkSet = true;
+      } else if (minShrinkValue > trackWidth) {
+        minShrinkValue = trackWidth;
+      }
+
+      if (!minExpandSet) {
+        minExpandValue = trackScrollLeft;
+        minExpandSet = true;
+      } else if (minExpandValue > trackScrollLeft) {
+        minExpandValue = trackScrollLeft;
       }
     }
 
     for (const selectedTrack of this.multiSelectedDOMElements) {
       const initPosition = selectedTrack.initialPosition;
-      selectedTrack.domElement.style.left = (initPosition + diffX + diffOffsetToNegate) + 'px'
+      const initScrollLeft = selectedTrack.initialScrollLeft;
+      const initWidth = selectedTrack.initialWidth;
+
+      selectedTrack.domElement.style.width = utils.fn.clamp(
+        initWidth - diffX,
+        initWidth - minShrinkValue,
+        initWidth + minExpandValue,
+      ) + 'px'
+
+      selectedTrack.domElement.style.left = utils.fn.clamp(
+        initPosition + diffX,
+        initPosition - minExpandValue,
+        initPosition + minShrinkValue,
+      ) + 'px'
+
+      selectedTrack.domElement.scrollLeft = utils.fn.clamp(
+        initScrollLeft + diffX,
+        initScrollLeft - minExpandValue,
+        initScrollLeft + minShrinkValue,
+      );
     }
   }
 
-  applyNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
+  /**
+   * Apply move transformation to these selected DOM elements
+   * 
+   * @param diffX Move track by `diffX` from `initialPosition`
+   * @returns void
+   */
+  applyResizingEndToMultipleSelectedTracks(diffX: number) {
+    let minExpandValue = 0
+    let minExpandSet = false;
+
+    let minShrinkValue = 0
+    let minShrinkSet = false;
+
+    // Rewriting this loop.
+    for (const selectedTrack of this.multiSelectedDOMElements) {
+      const trackWidth = selectedTrack.initialWidth;
+      const trackScrollLeft = selectedTrack.initialScrollLeft;
+      const totalWidth = selectedTrack.domElement.scrollWidth;
+
+      const expandableDist = totalWidth - 2 * trackScrollLeft - trackWidth;
+
+      if (!minExpandSet) {
+        minExpandValue = expandableDist;
+        minExpandSet = true;
+      } else if (minExpandValue > expandableDist) {
+        minExpandValue = expandableDist;
+      }
+
+      if (!minShrinkSet) {
+        minShrinkValue = trackWidth;
+        minShrinkSet = true;
+      } else if (minShrinkValue > trackWidth) {
+        minShrinkValue = trackWidth;
+      }
+    }
+
+    for (const selectedTrack of this.multiSelectedDOMElements) {
+      const initWidth = selectedTrack.initialWidth;
+
+      selectedTrack.domElement.style.width = utils.fn.clamp(
+        initWidth + diffX,
+        initWidth - minShrinkValue,
+        initWidth + minExpandValue,
+      ) + 'px'
+    }
+  }
+
+  getNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
     const newElements: TransformedAudioTrackDetails[] = [];
     
     this.multiSelectedDOMElements.forEach(element => {
       const left = element.domElement.style.left ?? '0px';
+      const scrollLeft = element.domElement.scrollLeft;
+      const width = element.domElement.offsetWidth;
+
       const finalPosition = parseFloat(left.substring(0, left.length - 2));
 
       newElements.push({
         ...element,
-        finalPosition
+        finalPosition,
+        finalScrollLeft: scrollLeft,
+        finalWidth: width
       });
 
+      /// Probably make a separate method to 
+      /// set all from initial to final values.
       element.initialPosition = finalPosition;
+      element.initialScrollLeft = scrollLeft;
+      element.initialWidth = width;
     });
 
     return newElements;
@@ -318,7 +433,7 @@ class AudioTrackManager {
     const currentTime = context.currentTime;
 
     const {
-      buffer,
+      transformedBuffer,
       audioId,
       trackDetail: {
         scheduledKey
@@ -343,7 +458,7 @@ class AudioTrackManager {
     const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
 
     const bufferSource = context.createBufferSource();
-    bufferSource.buffer = buffer;
+    bufferSource.buffer = transformedBuffer;
     bufferSource.connect(this.pannerNodes[trackNumber]);
 
     const offsetStart = startTimeSecs + Math.max(distance, 0);

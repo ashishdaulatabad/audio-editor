@@ -237,6 +237,14 @@ export function Editor() {
         const leftString = (element.style.left) || '0px';
         const left = parseInt(leftString.substring(0, leftString.length - 2));
         setPosition(left);
+        
+        if (
+          !trackDetails[intIndex][audioIntIndex].trackDetail.selected &&
+          audioManager.isMultiSelected()
+        ) {
+          audioManager.clearSelection();
+        }
+        
         dispatch(selectAudio(trackDetails[intIndex][audioIntIndex]));
       }
       setMovingTrack(element as HTMLElement);
@@ -302,7 +310,24 @@ export function Editor() {
         const diffAnchorX = event.nativeEvent.clientX - anchorX;
 
         if (selectedAttr === 'true') {
-          audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
+          switch (mode) {
+            case AudioTrackManipulationMode.Move: {
+              audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
+              break;
+            }
+
+            case AudioTrackManipulationMode.ResizeStart: {
+              audioManager.applyResizingStartToMultipleSelectedTracks(diffAnchorX);
+              break;
+            }
+
+            case AudioTrackManipulationMode.ResizeEnd: {
+              audioManager.applyResizingEndToMultipleSelectedTracks(diffAnchorX);
+              break;
+            }
+
+            default: break;
+          }
         } else {
           switch (mode) {
             case AudioTrackManipulationMode.Move: {
@@ -329,7 +354,7 @@ export function Editor() {
               // Manipulate width, scrollLeft and offset based on the initial position.
               // The width cannot exceed the scroll width.
               movingTrack.style.width = Math.min(
-                movingTrack.scrollWidth - initialScrollLeft,
+                movingTrack.scrollWidth - 2 * initialScrollLeft,
                 initialTrackWidth + diffAnchorX
               ) + 'px';
 
@@ -363,11 +388,15 @@ export function Editor() {
     const selectedAttr = movingTrack.getAttribute('data-selected');
 
     if (selectedAttr === 'true') {
-      const allElements = audioManager.useManager().applyNewPositionForMultipleSelectedTracks();
-      const allTrackNumbers: number[] = [], allAudioIndexes: number[] = [], allOffsetsInMillis: number[] = [];
+      const allElements = audioManager.useManager().getNewPositionForMultipleSelectedTracks();
+      const allTrackNumbers: number[] = [],
+        allAudioIndexes: number[] = [],
+        allStartOffsetsInMillis: number[] = [],
+        allEndOffsetsInMillis: number[] = [],
+        allOffsetsInMillis: number[] = [];
       
       allElements.forEach((element) => {
-        const { domElement, finalPosition } = element;
+        const { domElement, finalPosition, finalScrollLeft, finalWidth } = element;
         const audioIndex = domElement.getAttribute('data-audioid');
         const audioIntIndex = parseInt(audioIndex ?? '0');
 
@@ -375,28 +404,40 @@ export function Editor() {
         const trackIntIndex = parseInt(trackIndex ?? '0');
 
         const timeOffset = Math.round((finalPosition / lineDist) * 5000);
+        const startTimeOffset = Math.round((finalScrollLeft / lineDist) * 5000);
+        const endTimeOffset = Math.round(((finalWidth + finalScrollLeft) / lineDist) * 5000);
 
         allTrackNumbers.push(trackIntIndex);
         allAudioIndexes.push(audioIntIndex);
-        allOffsetsInMillis.push(timeOffset)
+        allOffsetsInMillis.push(timeOffset);
+        allStartOffsetsInMillis.push(startTimeOffset);
+        allEndOffsetsInMillis.push(endTimeOffset);
       });
 
       dispatch(setOffsetInMillisToMultipleAudioTrack({
         allTrackNumbers,
         allAudioIndexes,
-        allOffsetsInMillis
+        allOffsetsInMillis,
+        allStartOffsetsInMillis,
+        allEndOffsetsInMillis
       }));
 
       const movedTrackInfo: AudioTrackDetails[] = [];
       allTrackNumbers.forEach((trackNumber, index: number) => {
-        const audioIndex = allAudioIndexes[index], offsetInMillis = allOffsetsInMillis[index];
+        const audioIndex = allAudioIndexes[index], 
+          offsetInMillis = allOffsetsInMillis[index],
+          startOffsetInMillis = allStartOffsetsInMillis[index],
+          endOffsetInMillis = allEndOffsetsInMillis[index];
+
         const track = trackDetails[trackNumber][audioIndex];
 
         movedTrackInfo.push({
           ...track,
           trackDetail: {
             ...track.trackDetail,
-            offsetInMillis
+            offsetInMillis,
+            startOffsetInMillis,
+            endOffsetInMillis
           }
         });
       });

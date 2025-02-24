@@ -6,8 +6,7 @@ import React from "react";
 import { Canvas } from "../shared/customcanvas";
 import { css } from "@/app/services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { FaAudible, FaCopy, FaDumpster, FaRegFileAudio, FaTrash } from "react-icons/fa";
-import { FaDeleteLeft } from "react-icons/fa6";
+import { FaCog, FaRegFileAudio, FaTrash, FaWaveSquare } from "react-icons/fa";
 import { createAudioSample } from "@/app/services/audiotransform";
 import { randomColor } from "@/app/services/color";
 import { useDispatch } from "react-redux";
@@ -133,12 +132,14 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   function handleNewSampleCreation(track: AudioTrackDetails) {
     createAudioSample(track).then(data => {
       const audioId = Symbol();
+
       dispatch(addAudio({
         audioId,
         audioName: track.audioName,
         buffer: data,
+        transformedBuffer: data,
         colorAnnotation: randomColor(),
-        effects: [],
+        effects: []
       }));
     })
   }
@@ -161,7 +162,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         },
         {
           name: 'Edit',
-          icon: <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />,
+          icon: <FaCog />,
           onSelect: () => console.log('here'),
         },
       ], event.nativeEvent.clientX, event.nativeEvent.clientY);

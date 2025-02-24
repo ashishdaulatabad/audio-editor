@@ -93,9 +93,6 @@ export function createAudioSample(
 
       bufferSourceNode.start(0, offsetStartTimeSecs, duration);
       bufferSourceNode.stop(duration);
-      offlineAudioContext.onstatechange = function(e) {
-        console.log('here', e);
-      }
       offlineAudioContext.startRendering().then(data => {
         bufferSourceNode.disconnect();
         resolve(data);

@@ -26,6 +26,7 @@ export async function createAudioData(
     colorAnnotation: randomColor(),
     effects: [],
     buffer: bufferedData,
+    transformedBuffer: bufferedData
   }
 }
 
