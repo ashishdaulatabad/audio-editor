@@ -4,7 +4,7 @@ import React from "react";
 import { Checkbox } from "../checkbox";
 import { transformAudio } from "@/app/services/audiotransform";
 import { useDispatch } from "react-redux";
-import { applyTransformationToAudio, restoreAudioFromAudioId } from "@/app/state/audiostate";
+import { applyTransformationToAudio } from "@/app/state/audiostate";
 import { renderAudioWaveform } from "../editor/trackaudio";
 import { AudioTransformation } from "@/app/services/interfaces";
 import { Knob } from "../knob";
@@ -195,7 +195,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
             </div>
             <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
             <div className="flex w-full content-start">
-                <div className="box w-full justify-items-center py-1">
+                <div className="box w-full inline-grid justify-items-center py-1">
                   <Knob
                     r={16}
                     onKnobChange={(e) => console.log(e)}
@@ -205,7 +205,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   />
                   <label>Pitch</label>
                 </div>
-                <div className="box w-full justify-items-center py-1">
+                <div className="box w-full inline-grid justify-items-center py-1">
                   <Knob
                     r={16}
                     onKnobChange={(e) => console.log(e)}
