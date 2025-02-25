@@ -1,4 +1,3 @@
-import { audioService } from "@/app/services/audioservice";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status, togglePlay } from "@/app/state/trackdetails";
@@ -25,7 +24,7 @@ export function Player(props: React.PropsWithoutRef<any>) {
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    let intervalId = 0, volumeAnimationId = 0;
+    let intervalId = 0;
     intervalId = requestAnimationFrame(animateTimer);
 
     function animateTimer() {

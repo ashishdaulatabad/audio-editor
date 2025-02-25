@@ -4,9 +4,10 @@ import React from "react";
 import { Checkbox } from "../checkbox";
 import { transformAudio } from "@/app/services/audiotransform";
 import { useDispatch } from "react-redux";
-import { changeModifiedAudio } from "@/app/state/audiostate";
+import { applyTransformationToAudio } from "@/app/state/audiostate";
 import { renderAudioWaveform } from "../editor/trackaudio";
 import { AudioTransformation } from "@/app/services/interfaces";
+import { Knob } from "../knob";
 
 interface WaveformEditorProps {
   track: AudioTrackDetails,
@@ -28,23 +29,23 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const ref = React.createRef<HTMLCanvasElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
+  const [pitch, setPitch] = React.useState(1);
 
   React.useEffect(() => {
     /// Draw canvas
     if (ref.current && divRef.current) {
       const offcanvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
-      context.fillRect(0, 0, offcanvas.width, offcanvas.height);
-      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, divRef.current.clientWidth - 10, ref.current.height);
+      context.clearRect(0, 0, ref.current.width, ref.current.height);
+      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, divRef.current.clientWidth, ref.current.height);
     }
   });
 
   function transformPolarity() {
     transformAudio(props.track, AudioTransformation.ReversePolarity).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data }, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
-      dispatch(changeModifiedAudio({
+      dispatch(applyTransformationToAudio({
         buffer: data,
         audioId: props.track.audioId,
         transformation: AudioTransformation.ReversePolarity
@@ -55,6 +56,10 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.ReversePolarity
       }))
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
@@ -63,10 +68,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       props.track,
       AudioTransformation.Reverse
     ).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
-      dispatch(changeModifiedAudio({
+      dispatch(applyTransformationToAudio({
         buffer: data,
         audioId: props.track.audioId,
         transformation: AudioTransformation.Reverse
@@ -77,15 +81,19 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.Reverse
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
   function transformSwapStereo() {
     transformAudio(props.track, AudioTransformation.SwapStereo).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
-      dispatch(changeModifiedAudio({
+      dispatch(applyTransformationToAudio({
         buffer: data,
         audioId: props.track.audioId,
         transformation: AudioTransformation.SwapStereo
@@ -96,15 +104,19 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.SwapStereo
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
 
   function normalize() {
     transformAudio(props.track, AudioTransformation.Normalization).then(data => {
-      const canvas = audioManager.getOffscreenCanvasDrawn(props.track.audioId);
-      renderAudioWaveform({ ...props.track, buffer: data}, canvas.width, canvas.height, true);
+      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
-      dispatch(changeModifiedAudio({
+      dispatch(applyTransformationToAudio({
         buffer: data,
         audioId: props.track.audioId,
         transformation: AudioTransformation.Normalization
@@ -115,49 +127,99 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         audioId: props.track.audioId,
         transformation: AudioTransformation.Normalization
       }))
+
+      audioManager.rescheduleTrackFromScheduledNodes({
+        ...props.track,
+        buffer: data,
+      });
     });
   }
+
+  // function restoreDefault() {
+  //   dispatch(restoreAudioFromAudioId(props.track.audioId));
+
+  //   dispatch(applyChangesToModifiedAudio({
+  //     buffer: props.track.buffer,
+  //     audioId: props.track.audioId,
+  //     transformation: AudioTransformation.Normalization
+  //   }));
+
+  //   audioManager.rescheduleTrackFromScheduledNodes({
+  //     ...props.track,
+  //     transformedBuffer: props.track.buffer
+  //   });
+  // } 
 
   return (
     <>
       <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
-        <div className="flex flex-row">
-          <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
-            <div className="flex flex-col w-full content-start">
-              <div className="box w-full py-1">
-                <Checkbox
-                  checked={props.track.effects.indexOf(AudioTransformation.ReversePolarity) > -1}
-                  onChange={transformPolarity}
-                  label="Reverse Polarity"
-                />
+        <div className="">
+          {/* <button
+            className="select-none text-lg rounded-md py-3 px-4 bg-lime-700 shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
+            onClick={restoreDefault}
+          >Restore Audio to Default</button> */}
+          <div className="flex flex-row mt-4">
+            <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
+              <div className="flex flex-col w-full content-start">
+                <div className="box w-full py-1">
+                  <Checkbox
+                    checked={props.track.effects.indexOf(AudioTransformation.ReversePolarity) > -1}
+                    onChange={transformPolarity}
+                    label="Reverse Polarity"
+                  />
+                </div>
+                <div className="box w-full py-1">
+                  <Checkbox
+                    checked={props.track.effects.indexOf(AudioTransformation.Reverse) > -1}
+                    onChange={transformReverse}
+                    label="Reverse"
+                  />
+                </div>
+                <div className="box w-full py-1">
+                  <Checkbox
+                    checked={props.track.effects.indexOf(AudioTransformation.SwapStereo) > -1}
+                    onChange={transformSwapStereo}
+                    label="Swap Stereo"
+                  />
+                </div>
               </div>
-              <div className="box w-full py-1">
-                <Checkbox
-                  checked={props.track.effects.indexOf(AudioTransformation.Reverse) > -1}
-                  onChange={transformReverse}
-                  label="Reverse"
-                />
-              </div>
-              <div className="box w-full py-1">
-                <Checkbox
-                  checked={props.track.effects.indexOf(AudioTransformation.SwapStereo) > -1}
-                  onChange={transformSwapStereo}
-                  label="Swap Stereo"
-                />
+              <div className="flex flex-col w-full">
+                <div className="box w-full py-1">
+                  <Checkbox
+                    checked={props.track.effects.indexOf(AudioTransformation.Normalization) > -1}
+                    onChange={normalize}
+                    label="Normalize"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex flex-col w-full">
-              <div className="box w-full py-1">
-                <Checkbox
-                  checked={props.track.effects.indexOf(AudioTransformation.Normalization) > -1}
-                  onChange={normalize}
-                  label="Normalize"
-                />
+            <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
+            <div className="flex w-full content-start">
+                <div className="box w-full inline-grid justify-items-center py-1">
+                  <Knob
+                    r={16}
+                    onKnobChange={(e) => console.log(e)}
+                    scrollDelta={0.1}
+                    value={1}
+                    pd={8}
+                  />
+                  <label>Pitch</label>
+                </div>
+                <div className="box w-full inline-grid justify-items-center py-1">
+                  <Knob
+                    r={16}
+                    onKnobChange={(e) => console.log(e)}
+                    scrollDelta={0.1}
+                    value={1}
+                    pd={8}
+                  />
+                  <label>Playback Rate</label>
+                </div>
+                {/* <div className="box w-full py-1">
+                  
+                </div> */}
               </div>
             </div>
-          </div>
-          <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
-
           </div>
         </div>
         <div className="bg-slate-900">

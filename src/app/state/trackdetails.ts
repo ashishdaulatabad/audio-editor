@@ -34,7 +34,8 @@ const twoMinuteInMillis: number = 2 * 60 * 1000;
 
 export type ScheduledInformation = {
   offsetInMillis: number,
-  scheduledKey: symbol
+  scheduledKey: symbol,
+  trackNumber: number
 };
 
 export type AudioNonScheduledDetails = AudioDetails & {
@@ -217,6 +218,7 @@ export const trackDetailsSlice = createSlice({
           audioTracks.push(pendingTrack);
         }
       }
+      // To do: call from source instead of from here.
       audioManager.rescheduleAllTracks(state.trackDetails, slicesToReschedule);
     },
     /// Set offset to audio track
@@ -274,17 +276,29 @@ export const trackDetailsSlice = createSlice({
           }
         }
       }
-      audioManager.rescheduleAudioFromScheduledNodes(state.trackDetails, audioId);
     },
     
     setOffsetInMillisToMultipleAudioTrack(state, action: PayloadAction<{
       allTrackNumbers: number[],
       allAudioIndexes: number[],
-      allOffsetsInMillis: number[]
+      allOffsetsInMillis: number[],
+      allStartOffsetsInMillis: number[],
+      allEndOffsetsInMillis: number[]
     }>) {
-      const { allTrackNumbers, allAudioIndexes, allOffsetsInMillis } = action.payload;
+      const {
+        allTrackNumbers,
+        allAudioIndexes,
+        allOffsetsInMillis,
+        allStartOffsetsInMillis,
+        allEndOffsetsInMillis
+      } = action.payload;
 
-      if (allAudioIndexes.length !== allAudioIndexes.length || allAudioIndexes.length !== allOffsetsInMillis.length) {
+      if (
+        allAudioIndexes.length !== allTrackNumbers.length ||
+        allAudioIndexes.length !== allOffsetsInMillis.length ||
+        allAudioIndexes.length !== allStartOffsetsInMillis.length ||
+        allAudioIndexes.length !== allEndOffsetsInMillis.length
+      ) {
         return;
       }
 
@@ -292,8 +306,12 @@ export const trackDetailsSlice = createSlice({
         const trackNumber = allTrackNumbers[index];
         const audioIndex = allAudioIndexes[index];
         const offsetInMillis = allOffsetsInMillis[index];
+        const startOffsetInMillis = allStartOffsetsInMillis[index];
+        const endOffsetInMillis = allEndOffsetsInMillis[index];
 
         state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMillis = offsetInMillis;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMillis = startOffsetInMillis;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMillis = endOffsetInMillis;
       }
 
       const maxTime = getMaxTime(state.trackDetails);
@@ -305,9 +323,13 @@ export const trackDetailsSlice = createSlice({
       const { payload: audioIdToDelete } = action;
 
       /// Filter all the tracks that contains this Audio
-      for (let trackDetails of state.trackDetails) {
-        trackDetails = trackDetails.filter(detail => detail.audioId === audioIdToDelete);
+      for (let index = 0; index < state.trackDetails.length; ++index) {
+        state.trackDetails[index] = state.trackDetails[index].filter(detail => detail.audioId !== audioIdToDelete);
       }
+
+      const maxTime = getMaxTime(state.trackDetails);
+      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      audioManager.setLoopEnd(maxTime);
     }
   }
 });

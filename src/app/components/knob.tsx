@@ -7,7 +7,7 @@ interface KnobSettings {
   pd: number,
   value?: number,
   scrollDelta?: number,
-  onKnobChange: (value: number) => void
+  onKnobChange: (value: number) => void,
 }
 
 function calcVectorX(value: number) {
@@ -51,12 +51,13 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
 
   const [holdAngle, setHoldAngle] = React.useState<number>(0);
 
-  function releaseKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
-    setHold(event.buttons === 1);
+  function releaseKnob() {
+    setHold(false);
   }
 
   function holdKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     setHold(event.buttons === 1);
+
     if (event.buttons === 1) {
       const x = event.nativeEvent.offsetX, y = event.nativeEvent.offsetY;
       const angle = normalizeAngle(x, y, centerX, centerY);
