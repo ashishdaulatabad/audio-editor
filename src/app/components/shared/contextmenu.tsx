@@ -27,7 +27,7 @@ export function ContextMenu(props: React.PropsWithoutRef<ContextMenuProps>) {
               className="item p-2 flex flex-row hover:bg-zinc-700 rounded-sm border border-solid border-zinc-900 select-none cursor-pointer"
               onClick={item.onSelect}
             >
-              <div className="context-menu-icon w-10 items-center justify-items-center content-center">{item.icon}</div>
+              <div className="context-menu-icon w-10 items-center px-2 py-1 content-center">{item.icon}</div>
               <div className="context-menu-icon">{item.name}</div>
             </button>
           )

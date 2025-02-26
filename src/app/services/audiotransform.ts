@@ -1,12 +1,22 @@
 import { AudioTrackDetails } from "../state/trackdetails";
 import { AudioTransformation } from "./interfaces";
 
+/**
+ * @description Performs the transformation to the Audio Buffer.
+ * - [ ] To do: Maybe keep note of exact-recoverable transformation types:
+ * There might be case where user wants to undo all the modification done in 
+ * waveform window?
+ * 
+ * @param audioInput audio to be transformed
+ * @param transformationType transformation to do.
+ * @returns Promise.
+ */
 export function transformAudio(
-  audioInputs: AudioTrackDetails,
+  audioInput: AudioTrackDetails,
   transformationType: AudioTransformation
 ): Promise<AudioBuffer> {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const audioBuffer = audioInputs.buffer as AudioBuffer;
+    const audioBuffer = audioInput.buffer as AudioBuffer;
     const totalChannels = audioBuffer.numberOfChannels;
     const allBuffers = [];
 
@@ -69,6 +79,11 @@ export function canvasRedraw(
   });
 }
 
+/**
+ * Creates a audio sample; a subsampling of a big audio file.
+ * @param audioInput Audio Input Details to be sample
+ * @returns Promise that hopefully returns success with resultant audio buffer.
+ */
 export function createAudioSample(
   audioInput: AudioTrackDetails,
 ) {

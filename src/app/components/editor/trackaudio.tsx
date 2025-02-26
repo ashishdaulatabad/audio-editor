@@ -10,6 +10,7 @@ import { FaCog, FaRegFileAudio, FaTrash, FaWaveSquare } from "react-icons/fa";
 import { createAudioSample } from "@/app/services/audiotransform";
 import { randomColor } from "@/app/services/color";
 import { useDispatch } from "react-redux";
+import { FaRepeat } from "react-icons/fa6";
 
 export enum AudioTrackManipulationMode {
   None,
@@ -146,6 +147,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   function contextMenu(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
     if (!isContextOpen()) {
       showContextMenu([
+        {
+          name: `Repeat this Sample and attach back`,
+          icon: <FaRepeat />,
+          onSelect: () => handleNewSampleCreation(track),
+        },
         {
           name: `Create New Sample`,
           icon: <FaRegFileAudio />,

@@ -90,20 +90,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     transform(AudioTransformation.Normalization);
   }
 
-  // function restoreDefault() {
-  //   dispatch(restoreAudioFromAudioId(props.track.audioId));
-  //   dispatch(resetChangesToAudio(props.track.audioId));
-  //   const newTrackDetails = {
-  //     ...props.track,
-  //     transformedBuffer: props.track.buffer as AudioBuffer
-  //   };
-  //   renderAudioWaveform(newTrackDetails, 200, 5, true);
-
-  //   // To do: Maybe reschedule track for all the audio instances,
-  //   // when one source changes.
-  //   audioManager.rescheduleTrackFromScheduledNodes(newTrackDetails);
-  // } 
-
   return (
     <>
       <div className="flex flex-col justify-between h-full p-2" ref={divRef}>

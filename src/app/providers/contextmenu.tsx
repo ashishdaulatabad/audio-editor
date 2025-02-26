@@ -1,7 +1,9 @@
 import React from "react";
 import { ContextMenu } from "../components/shared/contextmenu";
 
-export interface ContextItem {
+interface EndSection {}
+
+export type ContextItem = {
   name: string,
   icon?: React.JSX.Element,
   onSelect: () => void,
