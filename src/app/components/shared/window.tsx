@@ -1,6 +1,7 @@
 import { css } from "@/app/services/utils";
 import { Exit } from "@/assets/exit";
 import React from "react";
+import { FaWindowMaximize, FaWindowMinimize } from "react-icons/fa";
 
 /**
  * Creates a resizable window tile that shows the popup 
@@ -104,10 +105,17 @@ export function Window(props: React.PropsWithChildren<{
           {props.header || 'Navbar'}
         </div>
         <div
-          className="header-tool px-3 text-xl py-2 bg-red-500 cursor-pointer hover:bg-red-600 rounded-se-sm content-center"
-          onClick={triggerClose}
+          className="header-tool flex flex-row rounded-se-sm"
         >
-          <Exit w={10} h={10} />
+          <div className="px-3 text-center w-full h-full content-center text-yellow-500 cursor-pointer hover:text-yellow-600" onClick={triggerClose}>
+            <FaWindowMinimize width={10} height={10} />
+          </div>
+          <div className="px-3 text-center w-full h-full content-center text-green-500 cursor-pointer hover:text-green-600" onClick={triggerClose}>
+            <FaWindowMaximize width={10} height={10} />
+          </div>
+          <div className="px-3 text-center w-full h-full content-center bg-red-500 cursor-pointer hover:bg-red-600" onClick={triggerClose}>
+            <Exit w={10} h={10} fill={'white'} />
+          </div>
         </div>
       </div>
       <div className="content bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm">

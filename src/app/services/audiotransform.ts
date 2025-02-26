@@ -1,7 +1,6 @@
 import { AudioTrackDetails } from "../state/trackdetails";
 import { AudioTransformation } from "./interfaces";
 
-
 export function transformAudio(
   audioInputs: AudioTrackDetails,
   transformationType: AudioTransformation

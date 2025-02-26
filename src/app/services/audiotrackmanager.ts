@@ -12,9 +12,15 @@ export type SelectedAudioTrackDetails = AudioTrackDetails & {
 }
 
 export type TransformedAudioTrackDetails = SelectedAudioTrackDetails & {
-  finalPosition: number,
-  finalScrollLeft: number,
+  finalPosition: number
+  finalScrollLeft: number
   finalWidth: number
+}
+
+export type SelectedTrackInfo = {
+  trackNumbers: number[]
+  audioIndexes: number[]
+  scheduledKeys: symbol[]
 }
 
 class AudioTrackManager {
@@ -193,17 +199,21 @@ class AudioTrackManager {
       const initScrollLeft = selectedTrack.initialScrollLeft;
       const initWidth = selectedTrack.initialWidth;
 
-      selectedTrack.domElement.style.width = utils.fn.clamp(
-        initWidth - diffX,
-        initWidth - minShrinkValue,
-        initWidth + minExpandValue,
-      ) + 'px'
-
-      selectedTrack.domElement.style.left = utils.fn.clamp(
-        initPosition + diffX,
-        initPosition - minExpandValue,
-        initPosition + minShrinkValue,
-      ) + 'px'
+      Object.assign(
+        selectedTrack.domElement.style,
+        {
+          width: utils.fn.clamp(
+            initWidth - diffX,
+            initWidth - minShrinkValue,
+            initWidth + minExpandValue,
+          ) + 'px',
+          left: utils.fn.clamp(
+            initPosition + diffX,
+            initPosition - minExpandValue,
+            initPosition + minShrinkValue,
+          ) + 'px'
+        }
+      );
 
       selectedTrack.domElement.scrollLeft = utils.fn.clamp(
         initScrollLeft + diffX,
@@ -260,6 +270,33 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Retrieves all the positions of the current tracks.
+   * @returns 
+   */
+  getMultiSelectedTrackInformation(): SelectedTrackInfo {
+    const newElements: SelectedTrackInfo = {
+      trackNumbers: [],
+      audioIndexes: [],
+      scheduledKeys: []
+    };
+    
+    this.multiSelectedDOMElements.forEach(element => {
+      const trackNumber = parseInt(element.domElement.getAttribute('data-trackid') as string);
+      const audioIndex = parseInt(element.domElement.getAttribute('data-audioid') as string);
+
+      newElements.trackNumbers.push(trackNumber);
+      newElements.audioIndexes.push(audioIndex);
+      newElements.scheduledKeys.push(element.trackDetail.scheduledKey);
+    });
+
+    return newElements;
+  }
+
+  /**
+   * @description Retrieves all the positions of the current tracks.
+   * @returns 
+   */
   getNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
     const newElements: TransformedAudioTrackDetails[] = [];
     
@@ -370,6 +407,18 @@ class AudioTrackManager {
     }
   }
 
+  removeScheduledTracksFromScheduledKeys(scheduledKeys: symbol[]) {
+    for (const key of scheduledKeys) {
+      const node = this.scheduledNodes[key]
+
+      if (node) {
+        node.buffer.stop(0);
+        node.buffer.disconnect();
+        delete this.scheduledNodes[key];;
+      }
+    }
+  }
+
   removeAllAudioFromScheduledNodes(id: symbol) {
     const allKeys = Object.getOwnPropertySymbols(this.scheduledNodes);
 
@@ -433,7 +482,7 @@ class AudioTrackManager {
     const currentTime = context.currentTime;
 
     const {
-      transformedBuffer,
+      buffer,
       audioId,
       trackDetail: {
         scheduledKey
@@ -458,7 +507,7 @@ class AudioTrackManager {
     const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
 
     const bufferSource = context.createBufferSource();
-    bufferSource.buffer = transformedBuffer;
+    bufferSource.buffer = buffer;
     bufferSource.connect(this.pannerNodes[trackNumber]);
 
     const offsetStart = startTimeSecs + Math.max(distance, 0);
@@ -506,9 +555,10 @@ class AudioTrackManager {
   }
 
   /**
+   * Reschedule all audio tracks that are scheduled, or to be scheduled.
    * 
-   * @param audioTrackDetails 
-   * @param movedAudioTracks 
+   * @param audioTrackDetails All track details
+   * @param movedAudioTracks Moved scheduled that contains additional information to override.
    */
   rescheduleAllTracks(
     audioTrackDetails: AudioTrackDetails[][],
@@ -581,7 +631,10 @@ class AudioTrackManager {
     }
   }
 
-  /// Removes all scheduled tracks by the scheduler
+  /**
+   * @description Removes all scheduled nodes that are running/pending.
+   * @returns void
+   */
   removeAllScheduledTracks() {
     for (const symbolKey of Object.getOwnPropertySymbols(this.scheduledNodes)) {
       this.scheduledNodes[symbolKey].buffer.stop(0);

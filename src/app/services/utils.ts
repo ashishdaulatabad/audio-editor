@@ -26,12 +26,12 @@ export async function createAudioData(
     colorAnnotation: randomColor(),
     effects: [],
     buffer: bufferedData,
-    transformedBuffer: bufferedData
   }
 }
 
 export function getTrackAudioElement(element: Element) {
   let traverse: Element | null = element;
+
   while (traverse !== null && !traverse.classList.contains('track-audio')) {
     traverse = traverse.parentElement;
   }
@@ -41,6 +41,7 @@ export function getTrackAudioElement(element: Element) {
 
 export function getTrackAudioOrTrackElement(element: Element) {
   let traverse: Element | null = element;
+
   while (traverse !== null && !traverse.classList.contains('track-audio') && !traverse.classList.contains('track')) {
     traverse = traverse.parentElement;
   }

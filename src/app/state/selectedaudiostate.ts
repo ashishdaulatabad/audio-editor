@@ -11,6 +11,7 @@ const initialState: SelectedAudioTrack = {
     audioId: Symbol(),
     buffer: null,
     effects: [],
+    colorAnnotation: '',
     trackDetail: {
       startOffsetInMillis: 0,
       endOffsetInMillis: 0,

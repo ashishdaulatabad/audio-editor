@@ -3,11 +3,9 @@ import { Tracks } from './tracks';
 import { TrackInfo } from './trackinfo';
 import { AudioTrackList } from './audiotracklist';
 import { Seekbar } from './seekbar';
-import { createAudioData, getTrackAudioElement, getTrackAudioOrTrackElement, getTrackElement } from '@/app/services/utils';
 import { useDispatch, useSelector } from 'react-redux';
 import { addAudio } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
-import { addAudioToTrack, AudioTrackDetails, deleteAudioFromTrack, selectTracksWithinSpecifiedRegion, setOffsetInMillisToAudioTrack, setOffsetInMillisToMultipleAudioTrack, sliceAudioTracks, Status, togglePlay, TrackInformation } from '@/app/state/trackdetails';
 import { selectAudio } from '@/app/state/selectedaudiostate';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { Player } from '../player/player';
@@ -17,9 +15,27 @@ import { addWindow } from '@/app/state/windowstore';
 import { ModeType, Toolkit } from './toolkit';
 import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
-import { ScheduledInformation } from '../../state/trackdetails';
+import { cloneAudioTrack, cloneMultipleAudioTrack, deleteMultipleAudioTrack, ScheduledInformation } from '../../state/trackdetails';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
+import {
+  createAudioData,
+  getTrackAudioElement,
+  getTrackAudioOrTrackElement,
+  getTrackElement
+} from '@/app/services/utils';
+import {
+  addAudioToTrack,
+  AudioTrackDetails,
+  deleteAudioFromTrack,
+  selectTracksWithinSpecifiedRegion,
+  setOffsetInMillisToAudioTrack,
+  setOffsetInMillisToMultipleAudioTrack,
+  sliceAudioTracks,
+  Status,
+  togglePlay,
+  TrackInformation
+} from '@/app/state/trackdetails';
 
 export function Editor() {
   /// All states
@@ -33,7 +49,6 @@ export function Editor() {
   const [height, setHeight] = React.useState(98 * audioManager.totalTrackSize);
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
-  const [track, selectTrack] = React.useState<AudioTrackDetails | null>(null);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
@@ -67,9 +82,10 @@ export function Editor() {
   const heightPerTrack = (height / totalTracks) - 2;
   const thickLineData = {
     lw: 2,
-    content: Array.from({length: totalLines}, (_, index: number) => {
-      return `M ${index * lineDist} 0 L ${index * lineDist} ${heightPerTrack}`
-    }).join(' ')
+    content: Array.from(
+      { length: totalLines }, 
+      (_, index: number) => `M ${index * lineDist} 0 L ${index * lineDist} ${heightPerTrack}`
+    ).join(' ')
   }
 
   const lineDist4 = (lineDist / 4);
@@ -171,10 +187,6 @@ export function Editor() {
     }
   }
 
-  function setDragSliceMode(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-
-  }
-
   function setTrackDraggingMode(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     const targetElement = event.nativeEvent.target as HTMLElement;
     const element = getTrackAudioElement(targetElement) as HTMLElement;
@@ -205,7 +217,6 @@ export function Editor() {
       const audioIndex = audioId ? parseInt(audioId) : 0;
 
       if (!trackForEdit || (trackForEdit !== trackDetails[trackNumber][audioIndex])) {
-        selectTrack(trackDetails[trackNumber][audioIndex]);
         selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
         setTimeout(() => selectTrackForEdit(null), 300);
       } else {
@@ -226,13 +237,19 @@ export function Editor() {
 
       /// Manipulating multiple tracks at once.
       if (attribute === 'true') {
-
+        if (event.shiftKey) {
+          const allSelectedTracks = audioManager.getMultiSelectedTrackInformation();
+          dispatch(cloneMultipleAudioTrack(allSelectedTracks));
+        }
       } else {
-        /// Manipulating single track at once, based on the manipulation type
         const audioIndex = element?.getAttribute('data-audioid');
         const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
         const trackIndex = element?.getAttribute('data-trackid');
         const intIndex = trackIndex ? parseInt(trackIndex) : 0;
+
+        if (event.shiftKey) {
+          dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
+        }
 
         const leftString = (element.style.left) || '0px';
         const left = parseInt(leftString.substring(0, leftString.length - 2));
@@ -244,7 +261,7 @@ export function Editor() {
         ) {
           audioManager.clearSelection();
         }
-        
+
         dispatch(selectAudio(trackDetails[intIndex][audioIntIndex]));
       }
       setMovingTrack(element as HTMLElement);
@@ -267,37 +284,12 @@ export function Editor() {
   function settingDrag(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (event.buttons === 1) {
       event.preventDefault();
-
-      switch (currentMode) {
-        case ModeType.DefaultSelector: {
-          setTrackDraggingMode(event);
-          break;
-        }
-
-        case ModeType.Slicer: {
-          setDragSliceMode(event);
-          break;
-        }
-      }
+      setTrackDraggingMode(event);
     }
-  }
-
-  function unsetAndSliceIfPossible(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-
   }
 
   function unsetDragMode(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    switch (currentMode) {
-      case ModeType.DefaultSelector: {
-        unsetDrag(event);
-        break;
-      }
-
-      case ModeType.Slicer: {
-        unsetAndSliceIfPossible(event);
-        break;
-      }
-    }
+    unsetDrag(event);
   }
 
   function dragElement(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
@@ -340,11 +332,21 @@ export function Editor() {
             case AudioTrackManipulationMode.ResizeStart: {
               // Manipulate width, scrollLeft and offset based on the initial position.
               // The width cannot exceed the last point of the whole track (not the scrollwidth)
-              movingTrack.style.width = Math.min(initialScrollLeft + initialTrackWidth, initialTrackWidth - diffAnchorX) + 'px';
-              // Change left position
-              movingTrack.style.left = Math.max(0, 
-                Math.max(position - initialScrollLeft, position + diffAnchorX)
-              ) + 'px';
+              Object.assign(
+                movingTrack.style,
+                {
+                  width: Math.min(
+                    initialScrollLeft + initialTrackWidth,
+                    initialTrackWidth - diffAnchorX
+                  ) + 'px',
+                  left: Math.max(
+                    0,
+                    position - initialScrollLeft,
+                    position + diffAnchorX
+                  ) + 'px'
+                }
+              );
+
               movingTrack.scrollLeft = initialScrollLeft + diffAnchorX;
               setDragged(diffAnchorX !== 0);
               break;
@@ -383,8 +385,6 @@ export function Editor() {
    */
   function unsetDrag(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     if (!movingTrack) return;
-    const element = getTrackAudioElement(event.nativeEvent.target as HTMLElement) as HTMLElement;
-
     const selectedAttr = movingTrack.getAttribute('data-selected');
 
     if (selectedAttr === 'true') {
@@ -543,6 +543,7 @@ export function Editor() {
       const trackNumber = index ? parseInt(index) : 0;
       const offsetX = event.nativeEvent.offsetX;
       const offsetInMillis = Math.round((offsetX / lineDist) * 5000);
+
       const newTrack = {
         ...currentTrack,
         trackDetail: {
@@ -573,6 +574,15 @@ export function Editor() {
         const newStatus = status === Status.Play ? Status.Pause : Status.Play;
         dispatch(togglePlay(newStatus));
         break;
+      }
+
+      case 'Delete': {
+        if (audioManager.isMultiSelected()) {
+          const selectedTrackDetails = audioManager.getMultiSelectedTrackInformation();
+          audioManager.clearSelection();
+          audioManager.removeScheduledTracksFromScheduledKeys(selectedTrackDetails.scheduledKeys);
+          dispatch(deleteMultipleAudioTrack(selectedTrackDetails));
+        }
       }
       default: break;
     }
