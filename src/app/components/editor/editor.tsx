@@ -568,7 +568,6 @@ export function Editor() {
   }
 
   function keyPress(event: KeyboardEvent) {
-    console.log(event.key);
     switch (event.key) {
       case ' ': {
         event.preventDefault();
@@ -580,8 +579,9 @@ export function Editor() {
       case 'Delete': {
         if (audioManager.isMultiSelected()) {
           const selectedTrackDetails = audioManager.getMultiSelectedTrackInformation();
-          dispatch(deleteMultipleAudioTrack(selectedTrackDetails))
           audioManager.clearSelection();
+          audioManager.removeScheduledTracksFromScheduledKeys(selectedTrackDetails.scheduledKeys);
+          dispatch(deleteMultipleAudioTrack(selectedTrackDetails));
         }
       }
       default: break;

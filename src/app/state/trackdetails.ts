@@ -229,6 +229,10 @@ export const trackDetailsSlice = createSlice({
           aggregateIndex[index].indexOf(audioIndex) === -1
         ));
       }
+
+      const maxTime = getMaxTime(state.trackDetails);
+      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      audioManager.setLoopEnd(maxTime);
     },
     /**
      * Create a clone of the audio track.

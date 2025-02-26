@@ -20,6 +20,7 @@ export type TransformedAudioTrackDetails = SelectedAudioTrackDetails & {
 export type SelectedTrackInfo = {
   trackNumbers: number[]
   audioIndexes: number[]
+  scheduledKeys: symbol[]
 }
 
 class AudioTrackManager {
@@ -276,7 +277,8 @@ class AudioTrackManager {
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
     const newElements: SelectedTrackInfo = {
       trackNumbers: [],
-      audioIndexes: []
+      audioIndexes: [],
+      scheduledKeys: []
     };
     
     this.multiSelectedDOMElements.forEach(element => {
@@ -285,6 +287,7 @@ class AudioTrackManager {
 
       newElements.trackNumbers.push(trackNumber);
       newElements.audioIndexes.push(audioIndex);
+      newElements.scheduledKeys.push(element.trackDetail.scheduledKey);
     });
 
     return newElements;
@@ -401,6 +404,18 @@ class AudioTrackManager {
         element.trackDetail.scheduledKey !== symbolKey
       ));
       delete this.scheduledNodes[symbolKey];
+    }
+  }
+
+  removeScheduledTracksFromScheduledKeys(scheduledKeys: symbol[]) {
+    for (const key of scheduledKeys) {
+      const node = this.scheduledNodes[key]
+
+      if (node) {
+        node.buffer.stop(0);
+        node.buffer.disconnect();
+        delete this.scheduledNodes[key];;
+      }
     }
   }
 
