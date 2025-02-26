@@ -137,7 +137,6 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         audioId,
         audioName: track.audioName,
         buffer: data,
-        transformedBuffer: data,
         colorAnnotation: randomColor(),
         effects: []
       }));

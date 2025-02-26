@@ -1,10 +1,10 @@
+import React from "react";
 import { addAudio, AudioDetails, removeAudio } from "@/app/state/audiostate";
 import { RootState } from "@/app/state/store";
 import { Waveform } from "@/assets/wave";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAudio } from "../../state/selectedaudiostate";
 import { createAudioData, css } from "../../services/utils";
-import React from "react";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
 import { FaCopy, FaTrash } from "react-icons/fa";
 import { removeAudioFromAllTracks } from "@/app/state/trackdetails";
@@ -84,9 +84,9 @@ export function AudioTrackList() {
 
   return (
     <div className="bg-slate-700 h-full w-full rounded-sm">
-      <div className="import-button self-center p-8 border-solid border border-slate-900 shadow-lg">
+      <div className="import-button self-center text-center p-8 border-solid border border-transparent border-b-slate-900 shadow-lg">
         <button
-          className="select-none text-lg rounded-md py-3 px-4 bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
+          className="select-none text-lg rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
           onClick={selectFile}
         >
           Load Audio

@@ -87,8 +87,6 @@ function isWithinRegionAndNotSelected(
   return (
     // region consumed by track
     (pointStartSec <= startTime && pointEndSec >= endTime) ||
-    // Track consumed by region
-    (pointStartSec >= startTime && pointEndSec <= endTime) ||
     // End section of the region selection overlaps with the track
     (pointEndSec >= startTime && pointEndSec <= endTime) ||
     // Start section of the region selection overlaps with the track
@@ -168,6 +166,101 @@ export const trackDetailsSlice = createSlice({
         ++trackIndex;
       }
     },
+    /**
+     * Create a clone of multiple audio tracks.
+     * @param state current state
+     * @param action track details to be cloned.
+     */
+    cloneMultipleAudioTrack(
+      state,
+      action: PayloadAction<{
+        trackNumbers: number[],
+        audioIndexes: number[]
+      }>
+    ) {
+      const { trackNumbers, audioIndexes } = action.payload;
+      const length = trackNumbers.length;
+
+      for (let index = 0; index < length; ++index) {
+        const trackNumber = trackNumbers[index];
+        const audioIndex = audioIndexes[index];
+
+        const clonedDetails: AudioTrackDetails = {
+          ...state.trackDetails[trackNumber][audioIndex],
+          trackDetail: {
+            ...state.trackDetails[trackNumber][audioIndex].trackDetail,
+            scheduledKey: Symbol(),
+            selected: false
+          }
+        };
+  
+        state.trackDetails[trackNumber].push(clonedDetails);
+      }
+    },
+    /**
+     * Delete multiple audio track.
+     * @param state current state
+     * @param action track details to be cloned.
+     */
+    deleteMultipleAudioTrack(
+      state,
+      action: PayloadAction<{
+        trackNumbers: number[],
+        audioIndexes: number[]
+      }>
+    ) {
+      const { trackNumbers, audioIndexes } = action.payload;
+      const length = trackNumbers.length;
+
+      const aggregateIndex: Array<Array<number>> = Array.from(
+        { length: audioManager.totalTrackSize },
+        () => []
+      );
+
+      for (let index = 0; index < length; ++index) {
+        const trackNumber = trackNumbers[index];
+        const audioIndex = audioIndexes[index];
+
+        aggregateIndex[trackNumber].push(audioIndex);
+      }
+
+      for (let index = 0; index < audioManager.totalTrackSize; ++index) {
+        state.trackDetails[index] = state.trackDetails[index].filter((_, audioIndex) => (
+          aggregateIndex[index].indexOf(audioIndex) === -1
+        ));
+      }
+    },
+    /**
+     * Create a clone of the audio track.
+     * @param state current state
+     * @param action track details to be cloned.
+     */
+    cloneAudioTrack(
+      state,
+      action: PayloadAction<{
+        trackNumber: number,
+        audioIndex: number
+      }>
+    ) {
+      const { trackNumber, audioIndex } = action.payload;
+
+      const clonedDetails: AudioTrackDetails = {
+        ...state.trackDetails[trackNumber][audioIndex],
+        trackDetail: {
+          ...state.trackDetails[trackNumber][audioIndex].trackDetail,
+          scheduledKey: Symbol(),
+        }
+      };
+
+      state.trackDetails[trackNumber].push(clonedDetails);
+    },
+    /**
+     * Slice tracks into two different region based on information mentioned in Slicer
+     * selection
+     * 
+     * @param state Current state
+     * @param action action to perform
+     */
     sliceAudioTracks(state, action: PayloadAction<SlicerSelection>) {
       const { startTrack, endTrack, pointOfSliceSecs } = action.payload;
       const slicesToReschedule = [];
@@ -221,14 +314,30 @@ export const trackDetailsSlice = createSlice({
       // To do: call from source instead of from here.
       audioManager.rescheduleAllTracks(state.trackDetails, slicesToReschedule);
     },
-    /// Set offset to audio track
-    setOffsetInMillisToAudioTrack(state, action: PayloadAction<{
-      trackNumber: number,
-      audioIndex: number,
-      offsetInMillis: number,
-      startOffsetInMillis: number,
-      endOffsetInMillis: number
-    }>) {
+
+    /**
+     * All transformation that should made are calculated here; after releasing trigger from the mouse.
+     * The offsets calculated from the editor are brought here and are set to the particular scheduled audio track 
+     * that the user interacted with.
+     * 
+     * @param state Current State
+     * @param action Information related to the changes:
+     * - `trackNumber`: track number in which audio is scheduled.
+     * - `audioIndex`: index in this track, which can be referenced in 2d array as `state[trackNumber][audioIndex]`
+     * - `offsetInMillis`: Offset in track, measured from starting point of the **Workspace** `'00:00'` in millis.
+     * - `startOffsetInMillis`: Offset denoting where the track should start, measured from starting point of the **Audio**.
+     * - `endOffsetInMillis`: Offset denoting where the track should end, measured from starting point of the **Audio**
+     */
+    setOffsetInMillisToAudioTrack(
+      state,
+      action: PayloadAction<{
+        trackNumber: number,
+        audioIndex: number,
+        offsetInMillis: number,
+        startOffsetInMillis: number,
+        endOffsetInMillis: number
+      }>
+    ) {
       const {
         trackNumber,
         audioIndex,
@@ -242,7 +351,8 @@ export const trackDetailsSlice = createSlice({
 
       const trackDetails = state.trackDetails[trackNumber][audioIndex];
       const currentTime = state.maxTimeMillis - twoMinuteInMillis;
-      // Should always exist in seconds
+
+      // Should always exist in milliseconds
       const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMillis ?? 0;
       const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.buffer?.duration as number) * 1000);
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
@@ -259,7 +369,14 @@ export const trackDetailsSlice = createSlice({
       }
     },
 
-    applyChangesToModifiedAudio(state, action: PayloadAction<{ audioId: symbol, buffer: AudioBuffer, transformation: AudioTransformation }>) {
+    applyChangesToModifiedAudio(
+      state,
+      action: PayloadAction<{
+        audioId: symbol,
+        buffer: AudioBuffer,
+        transformation: AudioTransformation
+      }>
+    ) {
       const { audioId, buffer, transformation } = action.payload;
 
       for (const track of state.trackDetails) {
@@ -277,14 +394,30 @@ export const trackDetailsSlice = createSlice({
         }
       }
     },
-    
-    setOffsetInMillisToMultipleAudioTrack(state, action: PayloadAction<{
-      allTrackNumbers: number[],
-      allAudioIndexes: number[],
-      allOffsetsInMillis: number[],
-      allStartOffsetsInMillis: number[],
-      allEndOffsetsInMillis: number[]
-    }>) {
+
+    /**
+     * All transformation that should made are calculated here; after releasing trigger from the mouse.
+     * The offsets calculated from the editor are brought here and are set to *Multiple selected scheduled* audio track that 
+     * the user interacted with.
+     * 
+     * @param state Current State
+     * @param action Information related to the changes, all in array:
+     * - `trackNumber`: track number in which audio is scheduled.
+     * - `audioIndex`: index in this track, which can be referenced in 2d array as `state[trackNumber][audioIndex]`
+     * - `offsetInMillis`: Offset in track, measured from starting point of the **Workspace** `'00:00'` in millis.
+     * - `startOffsetInMillis`: Offset denoting where the track should start, measured from starting point of the **Audio**.
+     * - `endOffsetInMillis`: Offset denoting where the track should end, measured from starting point of the **Audio**
+     */
+    setOffsetInMillisToMultipleAudioTrack(
+      state,
+      action: PayloadAction<{
+        allTrackNumbers: number[],
+        allAudioIndexes: number[],
+        allOffsetsInMillis: number[],
+        allStartOffsetsInMillis: number[],
+        allEndOffsetsInMillis: number[]
+      }>) 
+    {
       const {
         allTrackNumbers,
         allAudioIndexes,
@@ -341,6 +474,10 @@ export const {
   setOffsetInMillisToAudioTrack,
   sliceAudioTracks,
   applyChangesToModifiedAudio,
+  cloneAudioTrack,
+  cloneMultipleAudioTrack,
+  deleteMultipleAudioTrack,
+  // resetChangesToAudio,
   setOffsetInMillisToMultipleAudioTrack,
   togglePlay,
   removeAudioFromAllTracks

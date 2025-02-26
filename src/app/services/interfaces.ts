@@ -7,7 +7,8 @@ export enum AudioTransformation {
   Reverse,
   ReversePolarity,
   SwapStereo,
-  Normalization
+  Normalization,
+  ForceReset
 }
 
 /**

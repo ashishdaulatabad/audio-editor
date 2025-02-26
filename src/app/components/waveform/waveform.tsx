@@ -1,6 +1,7 @@
+import React from "react";
+
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { applyChangesToModifiedAudio, AudioTrackDetails } from "@/app/state/trackdetails";
-import React from "react";
 import { Checkbox } from "../checkbox";
 import { transformAudio } from "@/app/services/audiotransform";
 import { useDispatch } from "react-redux";
@@ -10,8 +11,8 @@ import { AudioTransformation } from "@/app/services/interfaces";
 import { Knob } from "../knob";
 
 interface WaveformEditorProps {
-  track: AudioTrackDetails,
-  w: number,
+  track: AudioTrackDetails
+  w: number
   h: number
 }
 
@@ -29,6 +30,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const ref = React.createRef<HTMLCanvasElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
+
+  // States
+  const [transformationInProgress, setTransformationInProgress] = React.useState(false);
   const [pitch, setPitch] = React.useState(1);
 
   React.useEffect(() => {
@@ -41,129 +45,76 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     }
   });
 
-  function transformPolarity() {
-    transformAudio(props.track, AudioTransformation.ReversePolarity).then(data => {
-      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
-
-      dispatch(applyTransformationToAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.ReversePolarity
-      }));
-
-      dispatch(applyChangesToModifiedAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.ReversePolarity
-      }))
-      audioManager.rescheduleTrackFromScheduledNodes({
-        ...props.track,
-        buffer: data,
-      });
-    });
-  }
-
-  function transformReverse() {
+  function transform(transformation: AudioTransformation) {
+    setTransformationInProgress(true);
     transformAudio(
       props.track,
-      AudioTransformation.Reverse
+      transformation
     ).then(data => {
       renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
 
       dispatch(applyTransformationToAudio({
         buffer: data,
         audioId: props.track.audioId,
-        transformation: AudioTransformation.Reverse
+        transformation
       }));
 
       dispatch(applyChangesToModifiedAudio({
         buffer: data,
         audioId: props.track.audioId,
-        transformation: AudioTransformation.Reverse
+        transformation
       }))
 
       audioManager.rescheduleTrackFromScheduledNodes({
         ...props.track,
         buffer: data,
       });
+
+      setTransformationInProgress(false);
     });
+  }
+
+  function transformPolarity() {
+    transform(AudioTransformation.ReversePolarity);
+  }
+
+  function transformReverse() {
+    transform(AudioTransformation.Reverse);
   }
 
   function transformSwapStereo() {
-    transformAudio(props.track, AudioTransformation.SwapStereo).then(data => {
-      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
-
-      dispatch(applyTransformationToAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.SwapStereo
-      }));
-
-      dispatch(applyChangesToModifiedAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.SwapStereo
-      }))
-
-      audioManager.rescheduleTrackFromScheduledNodes({
-        ...props.track,
-        buffer: data,
-      });
-    });
+    transform(AudioTransformation.SwapStereo)
   }
 
   function normalize() {
-    transformAudio(props.track, AudioTransformation.Normalization).then(data => {
-      renderAudioWaveform({ ...props.track, buffer: data }, 200, 5, true);
-
-      dispatch(applyTransformationToAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.Normalization
-      }));
-
-      dispatch(applyChangesToModifiedAudio({
-        buffer: data,
-        audioId: props.track.audioId,
-        transformation: AudioTransformation.Normalization
-      }))
-
-      audioManager.rescheduleTrackFromScheduledNodes({
-        ...props.track,
-        buffer: data,
-      });
-    });
+    transform(AudioTransformation.Normalization);
   }
 
   // function restoreDefault() {
   //   dispatch(restoreAudioFromAudioId(props.track.audioId));
-
-  //   dispatch(applyChangesToModifiedAudio({
-  //     buffer: props.track.buffer,
-  //     audioId: props.track.audioId,
-  //     transformation: AudioTransformation.Normalization
-  //   }));
-
-  //   audioManager.rescheduleTrackFromScheduledNodes({
+  //   dispatch(resetChangesToAudio(props.track.audioId));
+  //   const newTrackDetails = {
   //     ...props.track,
-  //     transformedBuffer: props.track.buffer
-  //   });
+  //     transformedBuffer: props.track.buffer as AudioBuffer
+  //   };
+  //   renderAudioWaveform(newTrackDetails, 200, 5, true);
+
+  //   // To do: Maybe reschedule track for all the audio instances,
+  //   // when one source changes.
+  //   audioManager.rescheduleTrackFromScheduledNodes(newTrackDetails);
   // } 
 
   return (
     <>
       <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
         <div className="">
-          {/* <button
-            className="select-none text-lg rounded-md py-3 px-4 bg-lime-700 shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
-            onClick={restoreDefault}
-          >Restore Audio to Default</button> */}
           <div className="flex flex-row mt-4">
             <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
               <div className="flex flex-col w-full content-start">
                 <div className="box w-full py-1">
                   <Checkbox
                     checked={props.track.effects.indexOf(AudioTransformation.ReversePolarity) > -1}
+                    disabled={transformationInProgress}
                     onChange={transformPolarity}
                     label="Reverse Polarity"
                   />
@@ -171,6 +122,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <div className="box w-full py-1">
                   <Checkbox
                     checked={props.track.effects.indexOf(AudioTransformation.Reverse) > -1}
+                    disabled={transformationInProgress}
                     onChange={transformReverse}
                     label="Reverse"
                   />
@@ -178,6 +130,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <div className="box w-full py-1">
                   <Checkbox
                     checked={props.track.effects.indexOf(AudioTransformation.SwapStereo) > -1}
+                    disabled={transformationInProgress}
                     onChange={transformSwapStereo}
                     label="Swap Stereo"
                   />
@@ -187,6 +140,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <div className="box w-full py-1">
                   <Checkbox
                     checked={props.track.effects.indexOf(AudioTransformation.Normalization) > -1}
+                    disabled={transformationInProgress}
                     onChange={normalize}
                     label="Normalize"
                   />

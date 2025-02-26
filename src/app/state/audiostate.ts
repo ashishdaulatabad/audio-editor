@@ -20,11 +20,7 @@ export interface AudioDetails {
   /**
    * Raw Buffer
    */
-  buffer: AudioBuffer
-  /**
-   * Transformed buffer
-   */
-  transformedBuffer: AudioBuffer
+  buffer: AudioBuffer | null
   /**
    * Applied Effects of transformation
    */
@@ -67,12 +63,20 @@ const audioSlice = createSlice({
      * @param state 
      * @param action 
      */
-    applyTransformationToAudio(state, action: PayloadAction<{ buffer: AudioBuffer, audioId: symbol, transformation: AudioTransformation }>) {
+    applyTransformationToAudio(
+      state,
+      action: PayloadAction<{
+        buffer: AudioBuffer,
+        audioId: symbol,
+        transformation: AudioTransformation
+      }>
+    ) {
       const { audioId, buffer, transformation } = action.payload;
       
       const index = state.contents.findIndex(data => data.audioId === audioId);
+
       if (index > -1) {
-        state.contents[index].transformedBuffer = buffer;
+        state.contents[index].buffer = buffer;
         const value = state.contents[index].effects.indexOf(transformation);
 
         if (value > -1) {
@@ -82,20 +86,6 @@ const audioSlice = createSlice({
         }
       }
     },
-    /**
-     * Restore Original Audio
-     * 
-     * @param state original state
-     * @param action index of current track
-     */
-    restoreAudioFromAudioId(state, action: PayloadAction<symbol>) {
-      const index = state.contents.findIndex(({ audioId }) => audioId === action.payload);
-
-      if (index > -1) {
-        state.contents[index].transformedBuffer = state.contents[index].buffer;
-        state.contents[index].effects = [];
-      }
-    }
   }
 });
 
@@ -103,7 +93,6 @@ export const {
   addAudio,
   applyTransformationToAudio,
   removeAudio,
-  restoreAudioFromAudioId
 } = audioSlice.actions;
 
 export default audioSlice.reducer;
