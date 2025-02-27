@@ -15,9 +15,16 @@ import { addWindow } from '@/app/state/windowstore';
 import { ModeType, Toolkit } from './toolkit';
 import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
-import { cloneAudioTrack, cloneMultipleAudioTrack, deleteMultipleAudioTrack, ScheduledInformation } from '../../state/trackdetails';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
+
+import {
+  cloneAudioTrack,
+  cloneMultipleAudioTrack,
+  deleteMultipleAudioTrack,
+  ScheduledInformation,
+  selectAllTracks
+} from '../../state/trackdetails';
 import {
   createAudioData,
   getTrackAudioElement,
@@ -567,7 +574,7 @@ export function Editor() {
     }
   }
 
-  function keyPress(event: KeyboardEvent) {
+  function onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case ' ': {
         event.preventDefault();
@@ -577,14 +584,33 @@ export function Editor() {
       }
 
       case 'Delete': {
+        event.preventDefault();
+
         if (audioManager.isMultiSelected()) {
           const selectedTrackDetails = audioManager.getMultiSelectedTrackInformation();
           audioManager.clearSelection();
           audioManager.removeScheduledTracksFromScheduledKeys(selectedTrackDetails.scheduledKeys);
           dispatch(deleteMultipleAudioTrack(selectedTrackDetails));
         }
+        break;
       }
-      default: break;
+
+      // To do: Remove selected flag if exists.
+      case 'Escape': {
+        break;
+      }
+
+      case 'a':
+      case 'A': {
+        if (event.ctrlKey) {
+          event.preventDefault();
+          dispatch(selectAllTracks());
+        }
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
 
@@ -641,7 +667,7 @@ export function Editor() {
   }, [set, height])
 
   React.useEffect(() => {
-    document.addEventListener('keypress', keyPress);
+    document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
 
     if (scrollPageRef.current) {
@@ -649,7 +675,7 @@ export function Editor() {
     }
 
     return () => {
-      document.removeEventListener('keypress', keyPress);
+      document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }
   }, [lineDist, status]);
@@ -662,7 +688,10 @@ export function Editor() {
 
   return (
     <>
-      <div className="h-full flex flex-col max-h-screen" onClick={checkContextMenu}>
+      <div
+        className="h-full flex flex-col max-h-screen"
+        onClick={checkContextMenu}
+      >
         <div className="player">
           <Player />
         </div>
@@ -674,6 +703,7 @@ export function Editor() {
           <div
             className="workspace flex flex-row max-w-full overflow-y-auto max-h-[92dvh] ml-2 min-w-screen"
             ref={verticalScrollPageRef}
+            data-cursor={mode}
           >
             <div className="track-element flex flex-col min-h-28">
               <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />

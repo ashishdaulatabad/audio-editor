@@ -2,8 +2,9 @@ import { AudioTrackDetails } from "../state/trackdetails";
 import { utils } from "../utils";
 import { audioService } from "./audioservice";
 
-// To do: Maybe keep track of min width and min scroll left
-// to minimize calculation.
+/**
+ * @description Type of Multiselected DOM elements that are selected.
+ */
 export type SelectedAudioTrackDetails = AudioTrackDetails & {
   domElement: HTMLElement
   initialPosition: number
@@ -25,11 +26,22 @@ export type SelectedTrackInfo = {
 
 class AudioTrackManager {
   isInitialized = false;
+  paused = true;
+  scheduled = false;
+  startTimestamp = 0;
+  runningTimestamp = 0;
+  loopEnd = 5;
+
+  /// Audio-specific nodes
   masterGainNode: GainNode | null = null 
   gainNodes: GainNode[] = [];
   pannerNodes: StereoPannerNode[] = [];
-  paused = true;
-  scheduled = false;
+  leftAnalyserNode: AnalyserNode | null = null;
+  rightAnalyserNode: AnalyserNode | null = null;
+  splitChannel: ChannelSplitterNode | null = null;
+
+  /// Store objects
+  multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
   scheduledNodes: {
     [k: symbol]: {
       audioId: symbol,
@@ -45,13 +57,6 @@ class AudioTrackManager {
   audioCanvas: {
     [k: symbol]: OffscreenCanvas
   } = {};
-  startTimestamp = 0;
-  runningTimestamp = 0;
-  loopEnd = 5;
-  multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
-  leftAnalyserNode: AnalyserNode | null = null;
-  rightAnalyserNode: AnalyserNode | null = null;
-  splitChannel: ChannelSplitterNode | null = null;
 
   constructor(
     public totalTrackSize: number,

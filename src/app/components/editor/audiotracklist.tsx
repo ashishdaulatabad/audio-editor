@@ -3,7 +3,7 @@ import { addAudio, AudioDetails, removeAudio } from "@/app/state/audiostate";
 import { RootState } from "@/app/state/store";
 import { Waveform } from "@/assets/wave";
 import { useDispatch, useSelector } from "react-redux";
-import { selectAudio } from "../../state/selectedaudiostate";
+import { resetToDefault, selectAudio } from "../../state/selectedaudiostate";
 import { createAudioData, css } from "../../services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
 import { FaCopy, FaTrash } from "react-icons/fa";
@@ -60,6 +60,11 @@ export function AudioTrackList() {
     audioManager.removeAllAudioFromScheduledNodes(audio.audioId);
     dispatch(removeAudioFromAllTracks(audio.audioId));
     dispatch(removeAudio(index));
+
+    if (selected.audioId === files[index].audioId) {
+      dispatch(resetToDefault());
+    }
+
     deleteColor(files[index].colorAnnotation);
   }
 

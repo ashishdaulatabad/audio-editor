@@ -107,10 +107,10 @@ export function Window(props: React.PropsWithChildren<{
         <div
           className="header-tool flex flex-row rounded-se-sm"
         >
-          <div className="px-3 text-center w-full h-full content-center text-yellow-500 cursor-pointer hover:text-yellow-600" onClick={triggerClose}>
+          <div className="px-3 text-xs text-center w-full h-full content-center text-yellow-500 cursor-pointer hover:text-yellow-600" onClick={triggerClose}>
             <FaWindowMinimize width={10} height={10} />
           </div>
-          <div className="px-3 text-center w-full h-full content-center text-green-500 cursor-pointer hover:text-green-600" onClick={triggerClose}>
+          <div className="px-3 text-xs text-center w-full h-full content-center text-green-500 cursor-pointer hover:text-green-600" onClick={triggerClose}>
             <FaWindowMaximize width={10} height={10} />
           </div>
           <div className="px-3 text-center w-full h-full content-center bg-red-500 cursor-pointer hover:bg-red-600" onClick={triggerClose}>
