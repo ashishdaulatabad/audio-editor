@@ -57,6 +57,7 @@ export function Editor() {
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
+  const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
 
@@ -508,7 +509,31 @@ export function Editor() {
         dragElement(event);
         break;
       }
+
+      case ModeType.Fill: {
+        if (event.buttons === 1) {
+          attemptFilling(event);
+        }
+
+        break;
+      }
     }
+  }
+
+  /**
+   * @description attempt multiple paint on current selected audio track.
+   * @param event 
+   */
+  function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
+    const element = event.nativeEvent.target as HTMLElement;
+    const trackOrParent = getTrackAudioOrTrackElement(element) as HTMLElement;
+
+    if (trackOrParent.classList.contains('track-audio')) {
+      return;
+    }
+
+    const track = trackOrParent;
+    const trackIndex = parseInt(track.getAttribute('data-id') as string);
   }
 
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {

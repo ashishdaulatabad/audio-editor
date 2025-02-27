@@ -536,9 +536,6 @@ class AudioTrackManager {
           delete this.scheduledNodes[scheduledKey];
         } else {
           if (node.pendingReschedule) {
-            /// Copy of this track might be different from
-            /// the rescheduled key, after any alteration is done.
-            /// Should work on this ASAP.
             const {
               offsetInMillis,
               newTrack,
