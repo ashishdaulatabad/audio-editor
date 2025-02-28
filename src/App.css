@@ -12,3 +12,22 @@ body {
   width: 100%;
   height: 100%;
 }
+
+.list::-webkit-scrollbar {
+  width: 6px;
+  border-radius: 2px;
+}
+
+.list::-webkit-scrollbar-button {
+  background: #aaa;
+  border-radius: 2px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}

@@ -43,6 +43,7 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
+import { PromptMenuContext } from '@/app/providers/customprompt';
 
 export function Editor() {
   /// All states
@@ -57,6 +58,7 @@ export function Editor() {
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
+  const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
 
@@ -78,6 +80,11 @@ export function Editor() {
     isContextOpen,
     showContextMenu
   } = React.useContext(ContextMenuContext);
+
+  const {
+    hidePrompt,
+    isPromptOpen
+  } = React.useContext(PromptMenuContext);
 
   // Other variables
   const totalTracks = trackDetails.length;
@@ -508,7 +515,31 @@ export function Editor() {
         dragElement(event);
         break;
       }
+
+      case ModeType.Fill: {
+        if (event.buttons === 1) {
+          attemptFilling(event);
+        }
+
+        break;
+      }
     }
+  }
+
+  /**
+   * @description attempt multiple paint on current selected audio track.
+   * @param event 
+   */
+  function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
+    const element = event.nativeEvent.target as HTMLElement;
+    const trackOrParent = getTrackAudioOrTrackElement(element) as HTMLElement;
+
+    if (trackOrParent.classList.contains('track-audio')) {
+      return;
+    }
+
+    const track = trackOrParent;
+    const trackIndex = parseInt(track.getAttribute('data-id') as string);
   }
 
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {
@@ -574,6 +605,10 @@ export function Editor() {
     }
   }
 
+  /**
+   * - [ ] Need better way to use keyboard events.
+   * @param event 
+   */
   function onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case ' ': {
@@ -597,6 +632,7 @@ export function Editor() {
 
       // To do: Remove selected flag if exists.
       case 'Escape': {
+        hidePrompt();
         break;
       }
 
@@ -683,6 +719,10 @@ export function Editor() {
   function checkContextMenu() {
     if (isContextOpen()) {
       hideContextMenu();
+    }
+
+    if (isPromptOpen()) {
+      hidePrompt();
     }
   }
 

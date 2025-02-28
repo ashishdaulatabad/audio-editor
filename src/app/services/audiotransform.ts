@@ -33,9 +33,9 @@ export function transformAudio(
       for (let channel = 0; channel < totalChannels; ++channel) {
         audioBuffer.copyToChannel(buffer[channel], channel);
       }
-      resolve(audioBuffer);
 
       worklet.terminate();
+      resolve(audioBuffer);
     }
 
     worklet.postMessage({

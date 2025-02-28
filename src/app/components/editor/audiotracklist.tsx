@@ -10,6 +10,7 @@ import { FaCopy, FaTrash } from "react-icons/fa";
 import { removeAudioFromAllTracks } from "@/app/state/trackdetails";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { deleteColor } from "@/app/services/color";
+import { DialogContext } from "@/app/providers/dialog";
 
 export function AudioTrackList() {
   // Selectors
@@ -22,6 +23,11 @@ export function AudioTrackList() {
     // isContextOpen,
     showContextMenu
   } = React.useContext(ContextMenuContext);
+
+  const {
+    showDialog,
+    hideDialog
+  } = React.useContext(DialogContext);
  
   const dispatch = useDispatch();
 
@@ -39,12 +45,12 @@ export function AudioTrackList() {
   }
 
   function selectFile() {
-    const el = document.createElement("input") as HTMLInputElement;
-    el.type = "file";
-    el.accept = "audio/*";
+    const inputElement = document.createElement("input") as HTMLInputElement;
+    inputElement.type = "file";
+    inputElement.accept = "audio/*";
 
-    el.oninput = () => {
-      const file = el.files as FileList;
+    inputElement.oninput = () => {
+      const file = inputElement.files as FileList;
       createAudioData(files, file[0]).then((data) => {
         if (data !== null) {
           dispatch(addAudio(data));
@@ -52,7 +58,7 @@ export function AudioTrackList() {
       });
     };
 
-    el.click();
+    inputElement.click();
   }
 
   function deleteTrack(index: number) {
@@ -72,16 +78,22 @@ export function AudioTrackList() {
     event.preventDefault();
     showContextMenu([
       {
-        name: 'Create Copy',
-        icon: <FaCopy />,
-        onSelect: () => console.log('there'),
-      },
-      {
         name: 'Delete',
         icon: <FaTrash />,
         onSelect: () => {
-          deleteTrack(index);
-          hideContextMenu();
+          showDialog({
+            confirm: () => {
+              deleteTrack(index);
+              hideDialog();
+              hideContextMenu();
+            },
+            cancel: () => {
+              hideDialog();
+              hideContextMenu();
+            },
+            message: `Are you sure to delete this track?`,
+            messageHeader: <h1 className="text-xl">Confirm Delete Track <b>"{files[index].audioName}"</b></h1>
+          })
         },
       },
     ], event.nativeEvent.clientX, event.nativeEvent.clientY);
@@ -97,7 +109,7 @@ export function AudioTrackList() {
           Load Audio
         </button>
       </div>
-      <div className="list">
+      <div className="list w-full h-[80dvh] overflow-y-scroll">
         {files.map((file: AudioDetails, index: number) => {
           const isSame = selected.audioId === file.audioId;
 

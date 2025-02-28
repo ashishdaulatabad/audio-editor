@@ -65,7 +65,7 @@ function reverseAudio(buffer: Array<Float32Array>) {
 function reversePolarity(buffer: Array<Float32Array>) {
   const length = buffer.length;
   /// Just exchange the stereo
-  for (let index = 0; index < length - index - 1; ++index) {
+  for (let index = 0; index < length; ++index) {
     const channel = buffer[index];
     const channelLength = channel.length;
 
