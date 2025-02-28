@@ -18,7 +18,6 @@ export enum ModeType {
   Slicer,
   /**
    * Default, useful for editing clips.
-   * - [ ] To do: this thing.
    */
   DefaultSelector,
   /**

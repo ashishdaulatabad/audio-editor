@@ -1,8 +1,7 @@
+import React from "react";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status } from "@/app/state/trackdetails";
-import { utils } from "@/app/utils";
-import React from "react";
 import { useSelector } from "react-redux";
 
 export function Seeker(props: React.PropsWithoutRef<{

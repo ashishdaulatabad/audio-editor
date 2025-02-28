@@ -45,12 +45,12 @@ export function AudioTrackList() {
   }
 
   function selectFile() {
-    const el = document.createElement("input") as HTMLInputElement;
-    el.type = "file";
-    el.accept = "audio/*";
+    const inputElement = document.createElement("input") as HTMLInputElement;
+    inputElement.type = "file";
+    inputElement.accept = "audio/*";
 
-    el.oninput = () => {
-      const file = el.files as FileList;
+    inputElement.oninput = () => {
+      const file = inputElement.files as FileList;
       createAudioData(files, file[0]).then((data) => {
         if (data !== null) {
           dispatch(addAudio(data));
@@ -58,7 +58,7 @@ export function AudioTrackList() {
       });
     };
 
-    el.click();
+    inputElement.click();
   }
 
   function deleteTrack(index: number) {
@@ -77,11 +77,6 @@ export function AudioTrackList() {
   function openContextMenu(event: React.MouseEvent<HTMLDivElement, MouseEvent>, index: number) {
     event.preventDefault();
     showContextMenu([
-      {
-        name: 'Create Copy',
-        icon: <FaCopy />,
-        onSelect: () => console.log('there'),
-      },
       {
         name: 'Delete',
         icon: <FaTrash />,

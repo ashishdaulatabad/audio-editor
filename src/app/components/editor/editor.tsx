@@ -43,6 +43,7 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
+import { PromptMenuContext } from '@/app/providers/customprompt';
 
 export function Editor() {
   /// All states
@@ -79,6 +80,11 @@ export function Editor() {
     isContextOpen,
     showContextMenu
   } = React.useContext(ContextMenuContext);
+
+  const {
+    hidePrompt,
+    isPromptOpen
+  } = React.useContext(PromptMenuContext);
 
   // Other variables
   const totalTracks = trackDetails.length;
@@ -599,6 +605,10 @@ export function Editor() {
     }
   }
 
+  /**
+   * - [ ] Need better way to use keyboard events.
+   * @param event 
+   */
   function onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case ' ': {
@@ -622,6 +632,7 @@ export function Editor() {
 
       // To do: Remove selected flag if exists.
       case 'Escape': {
+        hidePrompt();
         break;
       }
 
@@ -708,6 +719,10 @@ export function Editor() {
   function checkContextMenu() {
     if (isContextOpen()) {
       hideContextMenu();
+    }
+
+    if (isPromptOpen()) {
+      hidePrompt();
     }
   }
 

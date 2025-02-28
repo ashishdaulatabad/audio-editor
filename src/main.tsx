@@ -4,12 +4,15 @@ import './index.css'
 import App from './App'
 import { ContextMenuProvider } from './app/providers/contextmenu'
 import { DialogBoxProvider } from './app/providers/dialog'
+import { PromptMenuProvider } from './app/providers/customprompt'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ContextMenuProvider>
       <DialogBoxProvider>
-        <App />
+        <PromptMenuProvider>
+          <App />
+        </PromptMenuProvider>
       </DialogBoxProvider>
     </ContextMenuProvider>
   </StrictMode>,

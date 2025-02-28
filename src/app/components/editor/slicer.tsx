@@ -19,9 +19,7 @@ interface SlicerProps {
 export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startX, setStartX] = React.useState(0);
   const [startY, setStartY] = React.useState(0);
-  const [endX, setEndX] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
-  // const [hold, setHold] = React.useState(0)
 
   function setupDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setStartX(event.nativeEvent.offsetX);

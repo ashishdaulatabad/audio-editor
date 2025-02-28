@@ -13,7 +13,7 @@ export function DialogBox(props: React.PropsWithoutRef<DialogProps>) {
             {props.messageHeader}
           </div>
         </div>
-        <div className="dialog-content h-full bg-slate-700 p-4 py-8">
+        <div className="dialog-content h-full bg-slate-600 p-4 py-8">
           {props.message}
         </div>
         <div className="dialog-footer h-fit p-4 border-t border-slate-400">

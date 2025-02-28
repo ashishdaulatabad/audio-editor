@@ -11,6 +11,8 @@ import { createAudioSample } from "@/app/services/audiotransform";
 import { randomColor } from "@/app/services/color";
 import { useDispatch } from "react-redux";
 import { FaRepeat } from "react-icons/fa6";
+import { addWindow } from "@/app/state/windowstore";
+import { AudioWaveformEditor } from "../waveform/waveform";
 
 export enum AudioTrackManipulationMode {
   None,
@@ -144,13 +146,17 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     })
   }
 
+  function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+    hideContextMenu();
+  }
+
   function contextMenu(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
     if (!isContextOpen()) {
       showContextMenu([
         {
           name: `Repeat this Sample and attach back`,
           icon: <FaRepeat />,
-          onSelect: () => handleNewSampleCreation(track),
+          onSelect: () => handleDuplicateSamplesCreation(event),
         },
         {
           name: `Create New Sample`,
@@ -168,7 +174,21 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         {
           name: 'Edit',
           icon: <FaCog />,
-          onSelect: () => console.log('here'),
+          onSelect: () => {
+            dispatch(addWindow({
+              header: <><b>Track</b>: {track.audioName}</>,
+              props: {
+                track,
+                w: 780,
+                h: 100,
+              },
+              windowSymbol: Symbol(),
+              view: AudioWaveformEditor,
+              x: 0,
+              y: 0
+            }));
+            hideContextMenu();
+          },
         },
       ], event.nativeEvent.clientX, event.nativeEvent.clientY);
     } else {
