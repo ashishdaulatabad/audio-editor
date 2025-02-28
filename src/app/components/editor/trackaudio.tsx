@@ -1,8 +1,8 @@
+import React from "react";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { addAudio, AudioDetails } from "@/app/state/audiostate";
 import { AudioTrackDetails, deleteAudioFromTrack } from "@/app/state/trackdetails";
 import { Waveform } from "@/assets/wave";
-import React from "react";
 import { Canvas } from "../shared/customcanvas";
 import { css } from "@/app/services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
