@@ -1,8 +1,13 @@
+export type Maybe<T> = T | null;
+
 
 export enum AudioRendering {
   PitchShift
 }
 
+/**
+ * Audio Transformation Details.
+ */
 export enum AudioTransformation {
   Reverse,
   ReversePolarity,

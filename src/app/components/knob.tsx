@@ -1,5 +1,5 @@
 import React from 'react';
-import { utils } from '../utils';
+import { clamp, svgxmlns } from '../utils';
 
 interface KnobSettings {
   r: number,
@@ -33,7 +33,7 @@ function normalizeAngle(x: number, y: number, centerX: number, centerY: number):
     angle += Math.PI;
   }
 
-  return utils.fn.clamp(angle, -startAngle, startAngle);
+  return clamp(angle, -startAngle, startAngle);
 }
 
 const baseCurveLength = 3 * Math.PI / 2;
@@ -70,7 +70,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
       let angle = normalizeAngle(x, y, centerX, centerY);
       
       const delta = holdAngle - angle;
-      angle = utils.fn.clamp(angle - delta, -startAngle, startAngle);
+      angle = clamp(angle - delta, -startAngle, startAngle);
  
       const currValue = (startAngle - angle) / baseCurveLength;
       setValue(currValue);
@@ -82,7 +82,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   function onScroll(event: WheelEvent) {
     event.preventDefault();
     const { deltaY } = event;
-    const newValue = utils.fn.clamp(value + (deltaY !== 0 ? (deltaY / Math.abs(deltaY)) : 0) * scrollDelta, 0, 1);
+    const newValue = clamp(value + (deltaY !== 0 ? (deltaY / Math.abs(deltaY)) : 0) * scrollDelta, 0, 1);
 
     setValue(newValue);
     props.onKnobChange(newValue);
@@ -118,12 +118,38 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
       onMouseLeave={releaseKnob}
       onMouseMove={moveKnob}
     >
-      <svg xmlns={utils.constants.svgxmlns} width={centerX * 2} height={centerY * 2}>
-        <path stroke="#666" fill="none" strokeWidth={2} d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${baseCurveLength} 1 1 ${arcEndX} ${arcEndY}`}></path>
-        <path stroke="#58AB6C" fill="none" strokeWidth={2} d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${eyeAngle} ${Math.PI < eyeAngle ? '1 1' : '0 1'} ${valueEndX} ${valueEndY}`}></path>
-        <circle fill="#F2F5FC" cx={centerX} cy={centerY} r={props.r}></circle>
-        <circle fill="#58AB6C" cx={eyeX} cy={eyeY} r={2}></circle>
-        <circle fill="none" stroke="#999" cx={centerX} cy={centerY} r={props.r - 2}></circle>
+      <svg xmlns={svgxmlns} width={centerX * 2} height={centerY * 2}>
+        <path
+          stroke="#666"
+          fill="none"
+          strokeWidth={2}
+          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${baseCurveLength} 1 1 ${arcEndX} ${arcEndY}`}
+        ></path>
+        <path
+          stroke="#58AB6C"
+          fill="none"
+          strokeWidth={2}
+          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${eyeAngle} ${Math.PI < eyeAngle ? '1 1' : '0 1'} ${valueEndX} ${valueEndY}`}
+        ></path>
+        <circle
+          fill="#F2F5FC"
+          cx={centerX}
+          cy={centerY}
+          r={props.r}
+        ></circle>
+        <circle
+          fill="#58AB6C"
+          cx={eyeX}
+          cy={eyeY}
+          r={2}
+        ></circle>
+        <circle
+          fill="none"
+          stroke="#999"
+          cx={centerX}
+          cy={centerY}
+          r={props.r - 2}
+        ></circle>
       </svg>
     </div>
   )

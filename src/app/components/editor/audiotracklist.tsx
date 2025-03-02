@@ -1,17 +1,24 @@
 import React from "react";
-import { addAudio, AudioDetails, removeAudio } from "@/app/state/audiostate";
 import { RootState } from "@/app/state/store";
 import { Waveform } from "@/assets/wave";
 import { useDispatch, useSelector } from "react-redux";
 import { resetToDefault, selectAudio } from "../../state/selectedaudiostate";
 import { createAudioData, css } from "../../services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { FaCopy, FaTrash } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import { removeAudioFromAllTracks } from "@/app/state/trackdetails";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { deleteColor } from "@/app/services/color";
 import { DialogContext } from "@/app/providers/dialog";
+import {
+  addAudio,
+  AudioDetails,
+  removeAudio
+} from "@/app/state/audiostate";
 
+/**
+ * @description Audio track list component
+ */
 export function AudioTrackList() {
   // Selectors
   const files = useSelector((state: RootState) => state.audioReducer.contents);
@@ -31,6 +38,10 @@ export function AudioTrackList() {
  
   const dispatch = useDispatch();
 
+  /**
+   * Select audio.
+   * @param index nth index in audio store in redux.
+   */
   function selectAudioSlice(index: number) {
     const file = files[index];
 
@@ -44,6 +55,9 @@ export function AudioTrackList() {
     }));
   }
 
+  /**
+   * @description Load audio in workspace.
+   */
   function selectFile() {
     const inputElement = document.createElement("input") as HTMLInputElement;
     inputElement.type = "file";
@@ -61,6 +75,10 @@ export function AudioTrackList() {
     inputElement.click();
   }
 
+  /**
+   * Delete track from the tracking.
+   * @param index index in redux.
+   */
   function deleteTrack(index: number) {
     const audio = files[index];
     audioManager.removeAllAudioFromScheduledNodes(audio.audioId);
@@ -109,7 +127,7 @@ export function AudioTrackList() {
           Load Audio
         </button>
       </div>
-      <div className="list w-full h-[80dvh] overflow-y-scroll">
+      <div className="list w-full h-[76dvh] overflow-y-scroll">
         {files.map((file: AudioDetails, index: number) => {
           const isSame = selected.audioId === file.audioId;
 

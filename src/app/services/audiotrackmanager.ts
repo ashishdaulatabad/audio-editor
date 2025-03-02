@@ -1,5 +1,5 @@
 import { AudioTrackDetails } from "../state/trackdetails";
-import { utils } from "../utils";
+import { clamp } from "../utils";
 import { audioService } from "./audioservice";
 
 /**
@@ -207,12 +207,12 @@ class AudioTrackManager {
       Object.assign(
         selectedTrack.domElement.style,
         {
-          width: utils.fn.clamp(
+          width: clamp(
             initWidth - diffX,
             initWidth - minShrinkValue,
             initWidth + minExpandValue,
           ) + 'px',
-          left: utils.fn.clamp(
+          left: clamp(
             initPosition + diffX,
             initPosition - minExpandValue,
             initPosition + minShrinkValue,
@@ -220,7 +220,7 @@ class AudioTrackManager {
         }
       );
 
-      selectedTrack.domElement.scrollLeft = utils.fn.clamp(
+      selectedTrack.domElement.scrollLeft = clamp(
         initScrollLeft + diffX,
         initScrollLeft - minExpandValue,
         initScrollLeft + minShrinkValue,
@@ -267,7 +267,7 @@ class AudioTrackManager {
     for (const selectedTrack of this.multiSelectedDOMElements) {
       const initWidth = selectedTrack.initialWidth;
 
-      selectedTrack.domElement.style.width = utils.fn.clamp(
+      selectedTrack.domElement.style.width = clamp(
         initWidth + diffX,
         initWidth - minShrinkValue,
         initWidth + minExpandValue,

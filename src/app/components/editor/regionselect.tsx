@@ -1,4 +1,4 @@
-import { utils } from '@/app/utils';
+import { svgxmlns } from '@/app/utils';
 import React from "react";
 
 export interface RegionSelection {
@@ -97,7 +97,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
       onMouseUp={leaveRegionSelect}
       onMouseMove={dragRectangle}
     >
-      <svg xmlns={utils.constants.svgxmlns} width={props.w} height={props.h}>
+      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
         <rect
           x={Math.min(startX, endX)}
           y={Math.min(startY, endY)} 

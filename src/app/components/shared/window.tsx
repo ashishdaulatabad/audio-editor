@@ -1,72 +1,30 @@
+import React from "react";
 import { css } from "@/app/services/utils";
 import { Exit } from "@/assets/exit";
-import React from "react";
 import { FaWindowMaximize, FaWindowMinimize } from "react-icons/fa";
 
 /**
- * Creates a resizable window tile that shows the popup 
- * To-do: Create a window manager that handles z-indexes of multiple
- * windows
+ * Creates a resizable window tile that shows the popup.
+ * 
  * @param props 
  * @returns 
  */
 export function Window(props: React.PropsWithChildren<{
-  w: number,
-  h: number,
-  x: number,
-  y: number,
-  onClose?: () => void,
-  onClick: () => void,
-  onPositionChange: (top: number, left: number) => void,
-  zLevel: number,
+  w: number
+  h: number
+  x: number
+  y: number
+  index: number
+  onClose?: () => void
+  onMinimize?: () => void
+  onClick: () => void
+  onPositionChange: (top: number, left: number) => void
+  zLevel: number
   header?: React.JSX.Element 
 }>) {
   /// States
-  const [width, setWidth] = React.useState(props.w);
-  const [height, setHeight] = React.useState(props.h);
-  const [left, setLeft] = React.useState(props.x);
-  const [top, setTop] = React.useState(props.y);
   const [hold, setHold] = React.useState(false);
-  const [anchorX, setAnchorX] = React.useState(0);
-  const [anchorY, setAnchorY] = React.useState(0);
   const windowRef = React.createRef<HTMLDivElement>();
-  
-  function initHold(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    setHold(true);
-    setAnchorX(event.nativeEvent.clientX);
-    setAnchorY(event.nativeEvent.clientY);
-
-    if (windowRef.current) {
-      setLeft(windowRef.current.offsetLeft);
-      setTop(windowRef.current.offsetTop);
-    }
-  }
-  
-  function move(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (hold && event.buttons === 1) {
-      event.preventDefault();
-      const changeX = event.nativeEvent.clientX - anchorX;
-      const changeY = event.nativeEvent.clientY - anchorY;
-
-      if (windowRef.current) {
-        windowRef.current.style.left = left + changeX + 'px';
-        windowRef.current.style.top = top + changeY + 'px';
-      }
-    }
-  }
-
-  function deinitHold() {
-    setHold(false);
-
-    if (windowRef.current) {
-      props.onPositionChange(windowRef.current.offsetTop, windowRef.current.offsetLeft);
-    }
-
-    setAnchorX(0);
-    setAnchorY(0);
-    setLeft(0);
-    setTop(0);
-  }
 
   function onWindowClick() {
     props.onClick();
@@ -76,17 +34,22 @@ export function Window(props: React.PropsWithChildren<{
     props.onClose?.call(null);
   }
 
+  function triggerMinimize() {
+    props.onMinimize?.call(null);
+  }
+
   return (
     <div
       className={css(
         "absolute border flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
         hold ? 'shadow-lg' : 'shadow-md'
       )}
+      data-windowid={props.index}
       ref={windowRef}
       onClick={onWindowClick}
       style={{ 
-        width: width + 'px',
-        height: height + 'px',
+        width: props.w + 'px',
+        height: props.h + 'px',
         left: props.x + 'px',
         top: props.y + 'px',
         zIndex: props.zLevel + 100,
@@ -96,19 +59,24 @@ export function Window(props: React.PropsWithChildren<{
         className="topbar bg-slate-700 flex flex-row justify-between"
       >
         <div
-          className={css("header-content select-none px-3 py-2 rounded-ss-sm w-full", !hold ? 'cursor-grab' : 'cursor-grabbing')}
-          onMouseDown={initHold}
-          onMouseMove={move}
-          onMouseLeave={deinitHold}
-          onMouseUp={deinitHold}
+          className={css("header-content select-none px-3 py-2 rounded-ss-sm w-full text-left", !hold ? 'cursor-grab' : 'cursor-grabbing')}
+          onMouseDown={() => setHold(true)}
+          onMouseUp={() => setHold(false)}
+          onMouseLeave={() => setHold(false)}
         >
           {props.header || 'Navbar'}
         </div>
         <div
           className="header-tool flex flex-row rounded-se-sm"
         >
-          <div className="px-3 text-xs text-center w-full h-full content-center text-yellow-500 cursor-pointer hover:text-yellow-600" onClick={triggerClose}>
-            <FaWindowMinimize width={10} height={10} />
+          <div 
+            className="px-3 text-xs text-center w-full h-full content-center text-yellow-500 cursor-pointer hover:text-yellow-600"
+            onClick={triggerMinimize}
+          >
+            <FaWindowMinimize
+              width={10}
+              height={10} 
+            />
           </div>
           <div className="px-3 text-xs text-center w-full h-full content-center text-green-500 cursor-pointer hover:text-green-600" onClick={triggerClose}>
             <FaWindowMaximize width={10} height={10} />

@@ -11,7 +11,7 @@ import { audioManager } from '@/app/services/audiotrackmanager';
 import { Player } from '../player/player';
 import { AudioWaveformEditor } from '../waveform/waveform';
 import { WindowManager } from '../shared/windowmanager';
-import { addWindow } from '@/app/state/windowstore';
+import { addWindow, setWindowPosition } from '@/app/state/windowstore';
 import { ModeType, Toolkit } from './toolkit';
 import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
@@ -22,6 +22,7 @@ import {
   cloneAudioTrack,
   cloneMultipleAudioTrack,
   deleteMultipleAudioTrack,
+  deselectAllTracks,
   ScheduledInformation,
   selectAllTracks
 } from '../../state/trackdetails';
@@ -29,7 +30,8 @@ import {
   createAudioData,
   getTrackAudioElement,
   getTrackAudioOrTrackElement,
-  getTrackElement
+  getTrackElement,
+  traverseParentUntilOneCondition
 } from '@/app/services/utils';
 import {
   addAudioToTrack,
@@ -44,16 +46,31 @@ import {
   TrackInformation
 } from '@/app/state/trackdetails';
 import { PromptMenuContext } from '@/app/providers/customprompt';
+import { clamp } from '@/app/utils';
 
+export enum MovableType {
+  None,
+  ScheduledTrack,
+  Window
+}
+
+/**
+ * Main editor for creating a workspace.
+ * @returns editor JSX.Element
+ */
 export function Editor() {
-  /// All states
+  // All states
   const [set, isSet] = React.useState(false);
   const [anchorX, setAnchorX] = React.useState(0);
+  const [anchorY, setAnchorY] = React.useState(0);
   const [mode, setMode] = React.useState<AudioTrackManipulationMode>(AudioTrackManipulationMode.None);
   const [initialTrackWidth, setInitialTrackWidth] = React.useState(0);
   const [initialScrollLeft, setInitialScrollLeft] = React.useState(0);
   const [position, setPosition] = React.useState(0);
-  const [movingTrack, setMovingTrack] = React.useState<HTMLElement | null>(null)
+  // The entity that is movable is either a track or a window.
+  const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
+  const [movableType, setMovableType] = React.useState(MovableType.None);
+
   const [height, setHeight] = React.useState(98 * audioManager.totalTrackSize);
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
@@ -62,12 +79,13 @@ export function Editor() {
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
 
-  /// Redux states
+  // Redux states
   const store = useSelector((state: RootState) => state.audioReducer.contents);
   const currentTrack = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
   const trackDetails = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const trackTimeDurationMillis = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMillis);
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+  const windows = useSelector((state: RootState) => state.windowStoreReducer.contents);
 
   // Refs
   const ref = React.createRef<HTMLDivElement>();
@@ -115,9 +133,14 @@ export function Editor() {
 
   const drawData = [thickLineData, thinLineData];
 
+  /**
+   * Set offset relative to the offset of current workspace.
+   * 
+   * @param track Track to move
+   * @param lineDist Line Distance Info.
+   * @returns Modified information about the audio track.
+   */
   function setOffset(track: HTMLElement, lineDist: number) {
-    // 1. Delete from current track
-    // 2. Add to different track
     const audioElement = getTrackAudioElement(track) as HTMLElement;
 
     if (audioElement) {
@@ -158,6 +181,11 @@ export function Editor() {
     }
   }
 
+  /**
+   * @description Performing action on dropping an audio file.
+   * @param event Drop Event
+   * @returns void.
+   */
   function onFileDrop(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     event.preventDefault();
     event.stopPropagation();
@@ -201,93 +229,132 @@ export function Editor() {
     }
   }
 
-  function setTrackDraggingMode(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    const targetElement = event.nativeEvent.target as HTMLElement;
-    const element = getTrackAudioElement(targetElement) as HTMLElement;
+  /**
+   * @description Set Dragging Mode, either resizing or moving track, one or multiple tracks.
+   * @param event Event triggered
+   * @param desiredAudioElement Anchor Audio Element.
+   */
+  function setTrackDraggingMode(
+    event: React.MouseEvent<HTMLDivElement, DragEvent>,
+    desiredAudioElement: HTMLElement
+  ) {
+    const element = desiredAudioElement;
 
-    if (element) {
-      setAnchorX(event.nativeEvent.clientX);
-      const attribute = element.getAttribute('data-selected');
+    setAnchorX(event.nativeEvent.clientX);
+    const attribute = element.getAttribute('data-selected');
 
-      if (element.classList.contains('cursor-e-resize')) {
-        setInitialTrackWidth(element.clientWidth);
-        setInitialScrollLeft(element.scrollLeft);
-        setMode(AudioTrackManipulationMode.ResizeEnd);
-      } else if (element.classList.contains('cursor-w-resize')) {
-        setInitialTrackWidth(element.clientWidth);
-        setInitialScrollLeft(element.scrollLeft);
+    if (
+      element.classList.contains('cursor-e-resize') ||
+      element.classList.contains('cursor-w-resize')
+    ) {
+      setInitialTrackWidth(element.clientWidth);
+      setInitialScrollLeft(element.scrollLeft);
+
+      if (element.classList.contains('cursor-w-resize')) {
+        setAnchorX(event.nativeEvent.clientX - 2 * (event.nativeEvent.offsetX - desiredAudioElement.scrollLeft));
         setMode(AudioTrackManipulationMode.ResizeStart);
-      } else if (element.classList.contains('cursor-grab')) {
-        setMode(AudioTrackManipulationMode.Move);
       } else {
-        setMode(AudioTrackManipulationMode.None);
+        setAnchorX(event.nativeEvent.clientX);
+        setMode(AudioTrackManipulationMode.ResizeEnd);
       }
-
-      setDragged(false);
-      
-      const trackId = element.getAttribute('data-trackid');
-      const audioId = element.getAttribute('data-audioid');
-      const trackNumber = trackId ? parseInt(trackId) : 0;
-      const audioIndex = audioId ? parseInt(audioId) : 0;
-
-      if (!trackForEdit || (trackForEdit !== trackDetails[trackNumber][audioIndex])) {
-        selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
-        setTimeout(() => selectTrackForEdit(null), 300);
-      } else {
-        dispatch(addWindow({
-          header: <><b>Track</b>: {trackForEdit.audioName}</>,
-          props: {
-            track: trackForEdit,
-            w: 780,
-            h: 100,
-          },
-          windowSymbol: Symbol(),
-          view: AudioWaveformEditor,
-          x: 0,
-          y: 0
-        }));
-        selectTrackForEdit(null);
-      }
-
-      /// Manipulating multiple tracks at once.
-      if (attribute === 'true') {
-        if (event.shiftKey) {
-          const allSelectedTracks = audioManager.getMultiSelectedTrackInformation();
-          dispatch(cloneMultipleAudioTrack(allSelectedTracks));
-        }
-      } else {
-        const audioIndex = element?.getAttribute('data-audioid');
-        const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
-        const trackIndex = element?.getAttribute('data-trackid');
-        const intIndex = trackIndex ? parseInt(trackIndex) : 0;
-
-        if (event.shiftKey) {
-          dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
-        }
-
-        const leftString = (element.style.left) || '0px';
-        const left = parseInt(leftString.substring(0, leftString.length - 2));
-        setPosition(left);
-        
-        if (
-          !trackDetails[intIndex][audioIntIndex].trackDetail.selected &&
-          audioManager.isMultiSelected()
-        ) {
-          audioManager.clearSelection();
-        }
-
-        dispatch(selectAudio(trackDetails[intIndex][audioIntIndex]));
-      }
-      setMovingTrack(element as HTMLElement);
+    } else if (element.classList.contains('cursor-grab')) {
+      setMode(AudioTrackManipulationMode.Move);
+      setAnchorX(event.nativeEvent.clientX);
     } else {
-      addCurrentTrack(event);
+      setMode(AudioTrackManipulationMode.None);
     }
+
+    setDragged(false);
+    
+    const trackId = element.getAttribute('data-trackid');
+    const audioId = element.getAttribute('data-audioid');
+    const trackNumber = trackId ? parseInt(trackId) : 0;
+    const audioIndex = audioId ? parseInt(audioId) : 0;
+
+    if (!trackForEdit || (trackForEdit !== trackDetails[trackNumber][audioIndex])) {
+      selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
+      setTimeout(() => selectTrackForEdit(null), 300);
+    } else {
+      dispatch(addWindow({
+        header: <><b>Track</b>: {trackForEdit.audioName}</>,
+        props: {
+          track: trackForEdit,
+          w: 780,
+          h: 100,
+        },
+        windowSymbol: Symbol(),
+        view: AudioWaveformEditor,
+        x: scrollPageRef.current?.scrollLeft ?? 0,
+        y: scrollPageRef.current?.scrollTop ?? 0,
+        visible: true,
+      }));
+
+      selectTrackForEdit(null);
+    }
+
+    /// Manipulating multiple tracks at once.
+    if (attribute === 'true') {
+      if (event.shiftKey) {
+        const allSelectedTracks = audioManager.getMultiSelectedTrackInformation();
+        dispatch(cloneMultipleAudioTrack(allSelectedTracks));
+      }
+    } else {
+      const audioIndex = element?.getAttribute('data-audioid');
+      const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
+      const trackIndex = element?.getAttribute('data-trackid');
+      const intIndex = trackIndex ? parseInt(trackIndex) : 0;
+
+      if (event.shiftKey) {
+        dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
+      }
+
+      const leftString = (element.style.left) || '0px';
+      const left = parseInt(leftString.substring(0, leftString.length - 2));
+      setPosition(left);
+      
+      if (
+        !trackDetails[intIndex][audioIntIndex].trackDetail.selected &&
+        audioManager.isMultiSelected()
+      ) {
+        dispatch(deselectAllTracks());
+        audioManager.clearSelection();
+      }
+
+      dispatch(selectAudio(trackDetails[intIndex][audioIntIndex]));
+    }
+    setMovableEntity(element as HTMLElement);
+    setMovableType(MovableType.ScheduledTrack);
+  }
+
+  /**
+   * Check if element track is audio
+   * @param element 
+   * @returns 
+   */
+  function isAudioTrack(element: HTMLElement) {
+    return element.classList.contains('track-audio');
+  }
+
+  /**
+   * Check if element track is audio
+   * @param element 
+   * @returns 
+   */
+  function isTrack(element: HTMLElement) {
+    return element.classList.contains('track');
+  }
+
+  /**
+   * Check if element is a top of headbar.
+   * @param element 
+   * @returns 
+   */
+  function isWindowHeader(element: HTMLElement) {
+    return element.classList.contains('topbar');
   }
 
   /**
    * Setting drag type
-   * 
-   * - [ ] To do: Decide according to the position of a cursor
    * 
    * 1. If the cursor is just at the start or end of the track, then let user
    * change the start point of the track
@@ -298,93 +365,201 @@ export function Editor() {
   function settingDrag(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (event.buttons === 1) {
       event.preventDefault();
-      setTrackDraggingMode(event);
+      const element = event.target as HTMLElement;
+      const fnArray = [isAudioTrack, isTrack, isWindowHeader];
+
+      // Improvement: Perform until workspace is encountered instead of nullcheck
+      const {
+        index,
+        expectedNode
+      } = traverseParentUntilOneCondition(element, fnArray);
+
+      switch (index) {
+        case 0: {
+          setTrackDraggingMode(event, expectedNode);
+          break;
+        }
+
+        case 1: {
+          addCurrentTrack(event, expectedNode);
+          break;
+        }
+
+        case 2: {
+          setupDraggingWindow(event, expectedNode);
+          break;
+        }
+
+        case -1: {
+          break;
+        }
+      }
     }
   }
 
+  /**
+   * Unset drag mode
+   * @param event 
+   */
   function unsetDragMode(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    unsetDrag(event);
+    switch (movableType) {
+      case MovableType.ScheduledTrack: {
+        unsetDrag(event);
+        break;
+      }
+
+      case MovableType.Window: {
+        unsetWindowDrag(event);
+        break;
+      }
+    }
   }
 
-  function dragElement(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movingTrack) {
+  /**
+   * @description Set drag event for the window element.
+   * This should also focus the current window, while moving rest of them at the last.
+   * 
+   * @param event 
+   * @param topbarElement 
+   */
+  function setupDraggingWindow(
+    event: React.MouseEvent<HTMLElement, DragEvent>,
+    topbarElement: HTMLElement
+  ) {
+    const parentElement = topbarElement.parentElement as HTMLElement;
+    setAnchorX(event.nativeEvent.clientX);
+    setAnchorY(event.nativeEvent.clientY);
+    setMovableEntity(parentElement);
+    setMovableType(MovableType.Window);
+  }
+
+  /**
+   * @description Drag Window based on the current limits
+   * @param event 
+   * @returns void.
+   */
+  function dragWindow(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
+    const element: HTMLElement = movableEntity as HTMLElement;
+
+    const diffAnchorX = event.nativeEvent.clientX - anchorX;
+    const diffAnchorY = event.nativeEvent.clientY - anchorY;
+    const windowIdString = element.getAttribute('data-windowid') as string;
+    const windowId = parseInt(windowIdString);
+    const left = windows[windowId].x;
+    const top = windows[windowId].y;
+
+    Object.assign(
+      element.style,
+      {
+        left: left + diffAnchorX + 'px',
+        top: top + diffAnchorY + 'px'
+      }
+    );
+  }
+
+  /**
+   * Drag the track onto new position.
+   * @param event 
+   * @returns void
+   */
+  function dragTrack(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
+    if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movableEntity) {
       event.preventDefault();
-      const audioElement = getTrackAudioElement(movingTrack) as HTMLElement;
+      const selectedAttr = movableEntity.getAttribute('data-selected');
+      const diffAnchorX = Math.max((scrollPageRef.current?.offsetLeft ?? 0), event.nativeEvent.clientX) - anchorX;
 
-      if (audioElement) {
-        const selectedAttr = audioElement.getAttribute('data-selected');
-        const diffAnchorX = event.nativeEvent.clientX - anchorX;
-
-        if (selectedAttr === 'true') {
-          switch (mode) {
-            case AudioTrackManipulationMode.Move: {
-              audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            case AudioTrackManipulationMode.ResizeStart: {
-              audioManager.applyResizingStartToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            case AudioTrackManipulationMode.ResizeEnd: {
-              audioManager.applyResizingEndToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            default: break;
+      if (selectedAttr === 'true') {
+        switch (mode) {
+          case AudioTrackManipulationMode.Move: {
+            audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
+            break;
           }
-        } else {
-          switch (mode) {
-            case AudioTrackManipulationMode.Move: {
-              // Change position
-              movingTrack.style.left = Math.max(0, Math.min(width, position + diffAnchorX)) + 'px';
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
-  
-            case AudioTrackManipulationMode.ResizeStart: {
-              // Manipulate width, scrollLeft and offset based on the initial position.
-              // The width cannot exceed the last point of the whole track (not the scrollwidth)
-              Object.assign(
-                movingTrack.style,
-                {
-                  width: Math.min(
-                    initialScrollLeft + initialTrackWidth,
-                    initialTrackWidth - diffAnchorX
-                  ) + 'px',
-                  left: Math.max(
-                    0,
-                    position - initialScrollLeft,
-                    position + diffAnchorX
-                  ) + 'px'
-                }
-              );
 
-              movingTrack.scrollLeft = initialScrollLeft + diffAnchorX;
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
+          case AudioTrackManipulationMode.ResizeStart: {
+            audioManager.applyResizingStartToMultipleSelectedTracks(diffAnchorX);
+            break;
+          }
 
-            case AudioTrackManipulationMode.ResizeEnd: {
-              // Manipulate width, scrollLeft and offset based on the initial position.
-              // The width cannot exceed the scroll width.
-              movingTrack.style.width = Math.min(
-                movingTrack.scrollWidth - 2 * initialScrollLeft,
-                initialTrackWidth + diffAnchorX
-              ) + 'px';
+          case AudioTrackManipulationMode.ResizeEnd: {
+            audioManager.applyResizingEndToMultipleSelectedTracks(diffAnchorX);
+            break;
+          }
 
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
+          default: break;
+        }
+      } else {
+        switch (mode) {
+          case AudioTrackManipulationMode.Move: {
+            // Change position
+            movableEntity.style.left = clamp(position + diffAnchorX, 0, width) + 'px';
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
 
-            default: {
-              break;
-            }
+          case AudioTrackManipulationMode.ResizeStart: {
+            // Manipulate width, scrollLeft and offset based on the initial position.
+            // The width cannot exceed the last point of the whole track (not the scrollwidth)
+            Object.assign(
+              movableEntity.style,
+              {
+                width: clamp(
+                  initialTrackWidth - diffAnchorX,
+                  0,
+                  initialScrollLeft + initialTrackWidth,
+                ) + 'px',
+                left: Math.max(
+                  0,
+                  position - initialScrollLeft,
+                  position + diffAnchorX
+                ) + 'px'
+              }
+            );
+
+            movableEntity.scrollLeft = initialScrollLeft + diffAnchorX;
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
+
+          case AudioTrackManipulationMode.ResizeEnd: {
+            // Manipulate width, scrollLeft and offset based on the initial position.
+            // The width cannot exceed the scroll width.
+            movableEntity.style.width = Math.min(
+              movableEntity.scrollWidth - 2 * initialScrollLeft,
+              initialTrackWidth + diffAnchorX
+            ) + 'px';
+
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
+
+          default: {
+            break;
           }
         }
       }
     }
+  }
+
+  /**
+   * Apply changes to states after releasing mouse event by user.
+   * @param event event details.
+   */
+  function unsetWindowDrag(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+    const element: HTMLElement = movableEntity as HTMLElement;
+
+    const diffAnchorX = event.nativeEvent.clientX - anchorX;
+    const diffAnchorY = event.nativeEvent.clientY - anchorY;
+    const windowIdString = element.getAttribute('data-windowid') as string;
+    const windowId = parseInt(windowIdString);
+    const left = windows[windowId].x;
+    const top = windows[windowId].y;
+
+    dispatch(setWindowPosition({ x: left + diffAnchorX, y: top + diffAnchorY, index: windowId }));
+
+    setMovableEntity(null);
+    setMovableType(MovableType.None);
+    setAnchorX(0);
+    setAnchorY(0);
   }
 
   /**
@@ -398,8 +573,8 @@ export function Editor() {
    * @returns void
    */
   function unsetDrag(event: React.MouseEvent<HTMLElement, MouseEvent>) {
-    if (!movingTrack) return;
-    const selectedAttr = movingTrack.getAttribute('data-selected');
+    if (!movableEntity) return;
+    const selectedAttr = movableEntity.getAttribute('data-selected');
 
     if (selectedAttr === 'true') {
       const allElements = audioManager.useManager().getNewPositionForMultipleSelectedTracks();
@@ -458,12 +633,12 @@ export function Editor() {
 
       audioManager.rescheduleAllTracks(trackDetails, movedTrackInfo);
     } else {
-      if (movingTrack) {
-        if (movingTrack.classList.contains('track-audio')) {
+      if (movableEntity) {
+        if (movableEntity.classList.contains('track-audio')) {
           if (!dragged) {
             setAnchorX(0);
             setMode(AudioTrackManipulationMode.None);
-            setMovingTrack(null);
+            setMovableEntity(null);
             return;
           }
           setInitialTrackWidth(0);
@@ -473,9 +648,9 @@ export function Editor() {
             offsetInMillis,
             startOffsetInMillis,
             endOffsetInMillis
-          } = setOffset(movingTrack, lineDist);
+          } = setOffset(movableEntity, lineDist);
 
-          const audioElement = getTrackAudioElement(movingTrack) as HTMLElement;
+          const audioElement = getTrackAudioElement(movableEntity) as HTMLElement;
           const audioIndex = audioElement.getAttribute('data-audioid');
           const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
 
@@ -506,21 +681,19 @@ export function Editor() {
     }
     setAnchorX(0);
     setMode(AudioTrackManipulationMode.None);
-    setMovingTrack(null);
+    setMovableEntity(null);
+    setMovableType(MovableType.None);
   }
 
   function dragOrResizeElement(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    switch (currentMode) {
-      case ModeType.DefaultSelector: {
-        dragElement(event);
+    switch (movableType) {
+      case MovableType.ScheduledTrack: {
+        dragTrack(event);
         break;
       }
 
-      case ModeType.Fill: {
-        if (event.buttons === 1) {
-          attemptFilling(event);
-        }
-
+      case MovableType.Window: {
+        dragWindow(event);
         break;
       }
     }
@@ -528,18 +701,11 @@ export function Editor() {
 
   /**
    * @description attempt multiple paint on current selected audio track.
+   * - [ ] To do: this function
    * @param event 
    */
   function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    const element = event.nativeEvent.target as HTMLElement;
-    const trackOrParent = getTrackAudioOrTrackElement(element) as HTMLElement;
-
-    if (trackOrParent.classList.contains('track-audio')) {
-      return;
-    }
-
-    const track = trackOrParent;
-    const trackIndex = parseInt(track.getAttribute('data-id') as string);
+    
   }
 
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {
@@ -567,42 +733,44 @@ export function Editor() {
     }
   }
 
-  function addCurrentTrack(event: React.MouseEvent<HTMLElement, MouseEvent>) {
-    // If not selected, just return
+  /**
+   * @description Add currently selected track to one of the tracks the
+   * user last interacted with.
+   * 
+   * @param event Event related to interacted details.
+   * @param desiredElement Element to work on
+   * @returns void
+   */
+  function addCurrentTrack(
+    event: React.MouseEvent<HTMLElement, MouseEvent>,
+    desiredElement: HTMLElement
+  ) {
     if (!currentTrack.buffer) return;
+    const index = desiredElement.getAttribute('data-id');
+    const trackNumber = index ? parseInt(index) : 0;
+    const offsetX = event.nativeEvent.offsetX;
+    const offsetInMillis = Math.round((offsetX / lineDist) * 5000);
 
-    const element = event.nativeEvent.target as HTMLElement;
-    // Add timeout interval for the click, and check if selected track is the same
-    // otherwise
-    const parTrackElement = getTrackElement(event.nativeEvent.target as HTMLElement) as HTMLElement;
-
-    if (parTrackElement) {
-      const index = parTrackElement.getAttribute('data-id');
-      const trackNumber = index ? parseInt(index) : 0;
-      const offsetX = event.nativeEvent.offsetX;
-      const offsetInMillis = Math.round((offsetX / lineDist) * 5000);
-
-      const newTrack = {
-        ...currentTrack,
-        trackDetail: {
-          ...currentTrack.trackDetail,
-          offsetInMillis,
-          trackNumber,
-          scheduledKey: Symbol(),
-        }
-      };
-
-      dispatch(addAudioToTrack({
+    const newTrack = {
+      ...currentTrack,
+      trackDetail: {
+        ...currentTrack.trackDetail,
+        offsetInMillis,
         trackNumber,
-        trackDetails: newTrack
-      }));
+        scheduledKey: Symbol(),
+      }
+    };
 
-      audioManager.useManager().scheduleSingleTrack(
-        newTrack,
-        trackNumber,
-        offsetInMillis
-      );
-    }
+    dispatch(addAudioToTrack({
+      trackNumber,
+      trackDetails: newTrack
+    }));
+
+    audioManager.useManager().scheduleSingleTrack(
+      newTrack,
+      trackNumber,
+      offsetInMillis
+    );
   }
 
   /**
@@ -662,6 +830,11 @@ export function Editor() {
     }
   }
 
+  /**
+   * Zooming-in or zooming-out
+   * @param event Wheel Event
+   * @returns void
+   */
   function maybeZoom(event: WheelEvent) {
     /// Use custom zoom-in/zoom-out logic
     if (event.ctrlKey) {
@@ -687,10 +860,24 @@ export function Editor() {
     }
   }
 
+  /**
+   * @description Slice intersected tracks in new track.
+   * 
+   * Improvement; move slicing logic in different file instead of dispatching,
+   * to prevent audio scheduling inside the reducer method.
+   * 
+   * @param sliceInformation Information related to slicing of audio track.
+   * @returns void.
+   */
   function sliceIntersectingTracks(sliceInformation: SlicerSelection) {
     dispatch(sliceAudioTracks(sliceInformation));
   }
 
+  /**
+   * @description Select tracks that intersects the region selector.
+   * @param event RegionSelection, describes the rectangular coordinates of selection
+   * @returns void
+   */
   function selectTracksEnveloped(event: RegionSelection) {
     dispatch(selectTracksWithinSpecifiedRegion(event));
   }
@@ -731,12 +918,18 @@ export function Editor() {
       <div
         className="h-full flex flex-col max-h-screen"
         onClick={checkContextMenu}
+        onDrop={onFileDrop}
+        onMouseDown={settingDrag}
+        onMouseMove={dragOrResizeElement}
+        onMouseUp={unsetDragMode}
+        onMouseLeave={unsetDragMode}
+        onContextMenu={deleteAudio}
       >
         <div className="player">
           <Player />
+          <WindowManager />
         </div>
         <div className="editor flex flex-row h-full box-border min-w-screen">
-          <WindowManager />
           <div className="track-files min-w-96 max-w-96">
             <AudioTrackList />
           </div>
@@ -779,12 +972,6 @@ export function Editor() {
                 <div
                   className="tracks relative"
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={onFileDrop}
-                  onMouseDown={settingDrag}
-                  onMouseMove={dragOrResizeElement}
-                  onMouseUp={unsetDragMode}
-                  onMouseLeave={unsetDragMode}
-                  onContextMenu={deleteAudio}
                 >
                   {
                     currentMode === ModeType.RegionSelect && 

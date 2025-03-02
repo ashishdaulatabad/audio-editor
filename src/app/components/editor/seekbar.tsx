@@ -1,7 +1,5 @@
-"use client";
-
-import { utils } from "@/app/utils";
 import React from "react";
+import { svgxmlns } from "@/app/utils";
 import { Seeker } from "./seeker";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { useSelector } from "react-redux";
@@ -29,19 +27,15 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const thickLineData = {
     lw: 2,
     content: Array.from({ length: props.totalLines }, (_, index: number) => {
-      return ["M", index * lineDist, 15, "L", index * lineDist, 30];
-    })
-      .flat()
-      .join(" "),
+      return ["M", index * lineDist, 15, "L", index * lineDist, 30].join(' ');
+    }).join(" "),
   };
 
   const thinLineData = {
     lw: 1,
     content: Array.from({ length: props.totalLines }, (_, index: number) => {
-      return ["M", index * lineDist + lineDist / 2, 23, "L", index * lineDist + lineDist / 2, 30];
-    })
-      .flat()
-      .join(" "),
+      return ["M", index * lineDist + lineDist / 2, 23, "L", index * lineDist + lineDist / 2, 30].join(' ');
+    }).join(" "),
   };
 
   function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -103,10 +97,10 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         seekOffset={leftSeek}
         setLeft={setLeftSeek}
       />
-      <svg xmlns={utils.constants.svgxmlns} width={props.w} height={30}>
+      <svg xmlns={svgxmlns} width={props.w} height={30}>
         {timeData}
       </svg>
-      <svg xmlns={utils.constants.svgxmlns} width={props.w} height={30}>
+      <svg xmlns={svgxmlns} width={props.w} height={30}>
         {svgLines.map((svgLine, index: number) => (
           <path
             d={svgLine.content}
