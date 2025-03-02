@@ -46,6 +46,7 @@ import {
   TrackInformation
 } from '@/app/state/trackdetails';
 import { PromptMenuContext } from '@/app/providers/customprompt';
+import { clamp } from '@/app/utils';
 
 export enum MovableType {
   None,
@@ -242,16 +243,23 @@ export function Editor() {
     setAnchorX(event.nativeEvent.clientX);
     const attribute = element.getAttribute('data-selected');
 
-    if (element.classList.contains('cursor-e-resize')) {
+    if (
+      element.classList.contains('cursor-e-resize') ||
+      element.classList.contains('cursor-w-resize')
+    ) {
       setInitialTrackWidth(element.clientWidth);
       setInitialScrollLeft(element.scrollLeft);
-      setMode(AudioTrackManipulationMode.ResizeEnd);
-    } else if (element.classList.contains('cursor-w-resize')) {
-      setInitialTrackWidth(element.clientWidth);
-      setInitialScrollLeft(element.scrollLeft);
-      setMode(AudioTrackManipulationMode.ResizeStart);
+
+      if (element.classList.contains('cursor-w-resize')) {
+        setAnchorX(event.nativeEvent.clientX - 2 * (event.nativeEvent.offsetX - desiredAudioElement.scrollLeft));
+        setMode(AudioTrackManipulationMode.ResizeStart);
+      } else {
+        setAnchorX(event.nativeEvent.clientX);
+        setMode(AudioTrackManipulationMode.ResizeEnd);
+      }
     } else if (element.classList.contains('cursor-grab')) {
       setMode(AudioTrackManipulationMode.Move);
+      setAnchorX(event.nativeEvent.clientX);
     } else {
       setMode(AudioTrackManipulationMode.None);
     }
@@ -457,78 +465,75 @@ export function Editor() {
   function dragTrack(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movableEntity) {
       event.preventDefault();
-      const audioElement = getTrackAudioElement(movableEntity) as HTMLElement;
+      const selectedAttr = movableEntity.getAttribute('data-selected');
+      const diffAnchorX = Math.max((scrollPageRef.current?.offsetLeft ?? 0), event.nativeEvent.clientX) - anchorX;
 
-      if (audioElement) {
-        const selectedAttr = audioElement.getAttribute('data-selected');
-        const diffAnchorX = event.nativeEvent.clientX - anchorX;
-
-        if (selectedAttr === 'true') {
-          switch (mode) {
-            case AudioTrackManipulationMode.Move: {
-              audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            case AudioTrackManipulationMode.ResizeStart: {
-              audioManager.applyResizingStartToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            case AudioTrackManipulationMode.ResizeEnd: {
-              audioManager.applyResizingEndToMultipleSelectedTracks(diffAnchorX);
-              break;
-            }
-
-            default: break;
+      if (selectedAttr === 'true') {
+        switch (mode) {
+          case AudioTrackManipulationMode.Move: {
+            audioManager.applyTransformationToMultipleSelectedTracks(diffAnchorX);
+            break;
           }
-        } else {
-          switch (mode) {
-            case AudioTrackManipulationMode.Move: {
-              // Change position
-              movableEntity.style.left = Math.max(0, Math.min(width, position + diffAnchorX)) + 'px';
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
-  
-            case AudioTrackManipulationMode.ResizeStart: {
-              // Manipulate width, scrollLeft and offset based on the initial position.
-              // The width cannot exceed the last point of the whole track (not the scrollwidth)
-              Object.assign(
-                movableEntity.style,
-                {
-                  width: Math.min(
-                    initialScrollLeft + initialTrackWidth,
-                    initialTrackWidth - diffAnchorX
-                  ) + 'px',
-                  left: Math.max(
-                    0,
-                    position - initialScrollLeft,
-                    position + diffAnchorX
-                  ) + 'px'
-                }
-              );
 
-              movableEntity.scrollLeft = initialScrollLeft + diffAnchorX;
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
+          case AudioTrackManipulationMode.ResizeStart: {
+            audioManager.applyResizingStartToMultipleSelectedTracks(diffAnchorX);
+            break;
+          }
 
-            case AudioTrackManipulationMode.ResizeEnd: {
-              // Manipulate width, scrollLeft and offset based on the initial position.
-              // The width cannot exceed the scroll width.
-              movableEntity.style.width = Math.min(
-                movableEntity.scrollWidth - 2 * initialScrollLeft,
-                initialTrackWidth + diffAnchorX
-              ) + 'px';
+          case AudioTrackManipulationMode.ResizeEnd: {
+            audioManager.applyResizingEndToMultipleSelectedTracks(diffAnchorX);
+            break;
+          }
 
-              setDragged(diffAnchorX !== 0);
-              break;
-            }
+          default: break;
+        }
+      } else {
+        switch (mode) {
+          case AudioTrackManipulationMode.Move: {
+            // Change position
+            movableEntity.style.left = clamp(position + diffAnchorX, 0, width) + 'px';
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
 
-            default: {
-              break;
-            }
+          case AudioTrackManipulationMode.ResizeStart: {
+            // Manipulate width, scrollLeft and offset based on the initial position.
+            // The width cannot exceed the last point of the whole track (not the scrollwidth)
+            Object.assign(
+              movableEntity.style,
+              {
+                width: clamp(
+                  initialTrackWidth - diffAnchorX,
+                  0,
+                  initialScrollLeft + initialTrackWidth,
+                ) + 'px',
+                left: Math.max(
+                  0,
+                  position - initialScrollLeft,
+                  position + diffAnchorX
+                ) + 'px'
+              }
+            );
+
+            movableEntity.scrollLeft = initialScrollLeft + diffAnchorX;
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
+
+          case AudioTrackManipulationMode.ResizeEnd: {
+            // Manipulate width, scrollLeft and offset based on the initial position.
+            // The width cannot exceed the scroll width.
+            movableEntity.style.width = Math.min(
+              movableEntity.scrollWidth - 2 * initialScrollLeft,
+              initialTrackWidth + diffAnchorX
+            ) + 'px';
+
+            setDragged(diffAnchorX !== 0);
+            break;
+          }
+
+          default: {
+            break;
           }
         }
       }
@@ -914,9 +919,15 @@ export function Editor() {
         className="h-full flex flex-col max-h-screen"
         onClick={checkContextMenu}
         onDrop={onFileDrop}
+        onMouseDown={settingDrag}
+        onMouseMove={dragOrResizeElement}
+        onMouseUp={unsetDragMode}
+        onMouseLeave={unsetDragMode}
+        onContextMenu={deleteAudio}
       >
         <div className="player">
           <Player />
+          <WindowManager />
         </div>
         <div className="editor flex flex-row h-full box-border min-w-screen">
           <div className="track-files min-w-96 max-w-96">
@@ -961,13 +972,7 @@ export function Editor() {
                 <div
                   className="tracks relative"
                   onDragOver={(e) => e.preventDefault()}
-                  onMouseDown={settingDrag}
-                  onMouseMove={dragOrResizeElement}
-                  onMouseUp={unsetDragMode}
-                  onMouseLeave={unsetDragMode}
-                  onContextMenu={deleteAudio}
                 >
-                  <WindowManager />
                   {
                     currentMode === ModeType.RegionSelect && 
                       <RegionSelect
