@@ -1,5 +1,5 @@
 import React from "react"
-import { utils } from "../utils"
+import { svgxmlns } from "../utils"
 import { css } from "../services/utils";
 
 interface RadioProps {
@@ -25,7 +25,7 @@ export function Checkbox(props: React.PropsWithoutRef<RadioProps>) {
         }
       }}
     >
-      <svg xmlns={utils.constants.svgxmlns} width={14} height={14} className="self-center">
+      <svg xmlns={svgxmlns} width={14} height={14} className="self-center">
         <defs>
           <filter id="f1">
             <feDropShadow floodColor="#82F596" dx="-5" dy="-5" accentHeight="6" stdDeviation="10" floodOpacity="0.5" />

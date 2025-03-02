@@ -1,5 +1,5 @@
 import React from "react";
-import { utils } from "../utils";
+import { svgxmlns } from "../utils";
 
 interface SliderSettings {
   h: number,
@@ -41,7 +41,7 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
       onMouseLeave={releaseKnob}
       onMouseMove={moveKnob}
     >
-      <svg xmlns={utils.constants.svgxmlns} width={width} height={props.h + props.pd}>
+      <svg xmlns={svgxmlns} width={width} height={props.h + props.pd}>
         <path stroke="#888" strokeWidth={3} d={`M ${width / 2} ${props.h} L ${width / 2} 0`}></path>
         <path stroke="#2135EF" strokeWidth={3} d={`M ${width / 2} ${props.h} L ${width / 2} ${level}`}></path>
         <g>

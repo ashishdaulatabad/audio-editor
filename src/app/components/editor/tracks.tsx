@@ -1,6 +1,6 @@
-import { RootState } from "@/app/state/store";
-import { utils } from "@/app/utils"
 import React, { useEffect } from "react";
+import { RootState } from "@/app/state/store";
+import { svgxmlns } from "@/app/utils"
 import { useSelector } from "react-redux";
 import { TrackAudio } from "./trackaudio";
 
@@ -36,7 +36,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
           />
         ))
       }
-      <svg xmlns={utils.constants.svgxmlns} width={props.w} height={props.h}>
+      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
         {
           props.svgLines.map((svgLine, index: number) => (
             <path

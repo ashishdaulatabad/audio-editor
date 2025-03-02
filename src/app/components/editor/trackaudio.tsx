@@ -6,7 +6,7 @@ import { Waveform } from "@/assets/wave";
 import { Canvas } from "../shared/customcanvas";
 import { css } from "@/app/services/utils";
 import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { FaCog, FaRegFileAudio, FaTrash, FaWaveSquare } from "react-icons/fa";
+import { FaCog, FaRegFileAudio, FaTrash } from "react-icons/fa";
 import { createAudioSample } from "@/app/services/audiotransform";
 import { randomColor } from "@/app/services/color";
 import { useDispatch } from "react-redux";
@@ -185,7 +185,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
               windowSymbol: Symbol(),
               view: AudioWaveformEditor,
               x: 0,
-              y: 0
+              y: 0,
+              visible: true,
             }));
             hideContextMenu();
           },

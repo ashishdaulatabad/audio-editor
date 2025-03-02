@@ -10,7 +10,7 @@ import { renderAudioWaveform } from "../editor/trackaudio";
 import { AudioTransformation } from "@/app/services/interfaces";
 import { Knob } from "../knob";
 
-interface WaveformEditorProps {
+export interface WaveformEditorProps {
   track: AudioTrackDetails
   w: number
   h: number
@@ -45,6 +45,10 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     }
   });
 
+  /**
+   * General transformation of Audio.
+   * @param transformation Details.
+   */
   function transform(transformation: AudioTransformation) {
     setTransformationInProgress(true);
     transformAudio(
@@ -155,9 +159,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   />
                   <label>Playback Rate</label>
                 </div>
-                {/* <div className="box w-full py-1">
-                  
-                </div> */}
               </div>
             </div>
           </div>

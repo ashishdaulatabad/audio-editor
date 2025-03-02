@@ -1,3 +1,4 @@
+import { svgxmlns } from "@/app/utils";
 import React from "react";
 
 interface IconProps {
@@ -9,7 +10,7 @@ interface IconProps {
 
 export function Waveform(props: React.PropsWithoutRef<IconProps>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" style={{display: 'inline'}} width={props.w} height={props.h} viewBox={props.vb}>
+    <svg xmlns={svgxmlns} style={{display: 'inline'}} width={props.w} height={props.h} viewBox={props.vb}>
       <g fill="none" fillRule="evenodd" stroke={props.color} strokeLinecap="round" strokeLinejoin="round">
       <path d="m6.5 8.5v4"/>
       <path d="m8.5 6.5v9"/>

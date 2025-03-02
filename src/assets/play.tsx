@@ -1,8 +1,8 @@
-import { utils } from "@/app/utils";
+import { svgxmlns } from "@/app/utils";
 
 export function Play(props: React.PropsWithoutRef<{ w: number, h: number,  c: string, f: string }>) {
   return (
-    <svg xmlns={utils.constants.svgxmlns} width={props.w} height={props.h} viewBox="0 0 40 40">
+    <svg xmlns={svgxmlns} width={props.w} height={props.h} viewBox="0 0 40 40">
       <path 
         fill={props.f}
         stroke={props.c} 

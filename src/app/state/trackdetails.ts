@@ -177,6 +177,17 @@ export const trackDetailsSlice = createSlice({
         ++trackIndex;
       }
     },
+    /// Selecting all tracks.
+    deselectAllTracks(state) {
+      let trackIndex = 0;
+
+      for (let index = 0; index < state.trackDetails.length; ++index) {
+        for (const track of state.trackDetails[index]) {
+          track.trackDetail.selected = false;
+        }
+        ++trackIndex;
+      }
+    },
     /**
      * Create a clone of multiple audio tracks.
      * @param state current state
@@ -493,6 +504,7 @@ export const {
   cloneMultipleAudioTrack,
   deleteMultipleAudioTrack,
   selectAllTracks,
+  deselectAllTracks,
   setOffsetInMillisToMultipleAudioTrack,
   togglePlay,
   removeAudioFromAllTracks
