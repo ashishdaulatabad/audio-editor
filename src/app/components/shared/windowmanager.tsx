@@ -92,6 +92,7 @@ export function WindowManager() {
     // dispatch()
   }
 
+  // console.log(windowStore);
   return (
     <>
       {/* <div className="window-manager custom-scroll min-h-[4dvh] overflow-x-scroll flex z-[11] flex-row bg-slate-700">

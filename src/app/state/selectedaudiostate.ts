@@ -21,18 +21,7 @@ export function getDefaultSelectedTrack() {
 }
 
 const initialState: SelectedAudioTrack = {
-  value: {
-    audioName: '',
-    audioId: Symbol(),
-    buffer: null,
-    effects: [],
-    colorAnnotation: '',
-    trackDetail: {
-      startOffsetInMillis: 0,
-      endOffsetInMillis: 0,
-      selected: false
-    }
-  }
+  value: getDefaultSelectedTrack()
 };
 
 export const selectedAudioSlice = createSlice({

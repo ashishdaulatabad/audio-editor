@@ -17,6 +17,7 @@ export interface WindowView<TProps> {
   x: number
   y: number
   visible: boolean
+  propsUniqueIdentifier: symbol
 }
 
 export type InitialType<TProps> = {
@@ -47,7 +48,15 @@ const windowManagerSlice = createSlice({
       state: InitialType<any>, 
       action: PayloadAction<WindowView<any>>
     ) {
-      state.contents.push(action.payload);
+      const { propsUniqueIdentifier } = action.payload;
+
+      const index = state.contents.findIndex(window => window.propsUniqueIdentifier === propsUniqueIdentifier);
+      
+      if (index === -1) {
+        state.contents.push(action.payload);
+      } else {
+        // Focus on the window referenced by `index`
+      }
     },
     /**
      * Remove the window from the system.
@@ -61,6 +70,30 @@ const windowManagerSlice = createSlice({
       if (index > -1) {
         state.contents.splice(index, 1);
       }
+    },
+    /**
+     * Remove the window identified by unique identifier.
+
+     * @param state current state
+     * @param action action containing the windowSymbol
+     */
+    removeWindowWithUniqueIdentifier(state, action: PayloadAction<symbol>) {
+      const index = state.contents.findIndex(window => window.propsUniqueIdentifier === action.payload);
+
+      if (index > -1) {
+        state.contents.splice(index, 1);
+      }
+    },
+    /**
+     * Batch remove the window identified by unique identifier.
+
+     * @param state current state
+     * @param action action containing the windowSymbol
+     */
+    batchRemoveWindowWithUniqueIdentifier(state, action: PayloadAction<symbol[]>) {
+      state.contents = state.contents.filter(window => (
+        action.payload.indexOf(window.propsUniqueIdentifier) === -1
+      ));
     },
     /**
      * Focuses the window that user interacted with
@@ -107,7 +140,9 @@ export const {
   addWindow,
   focusWindow,
   removeWindow,
-  setWindowPosition
+  setWindowPosition,
+  removeWindowWithUniqueIdentifier,
+  batchRemoveWindowWithUniqueIdentifier
 } = windowManagerSlice.actions;
 
 export default windowManagerSlice.reducer;
