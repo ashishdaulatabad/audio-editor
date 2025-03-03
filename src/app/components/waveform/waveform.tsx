@@ -136,7 +136,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
           <div className="flex flex-row mt-4">
             <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
               <div className="flex flex-col w-full content-start">
-                <div className="box w-full py-1">
+                <div className="box w-full py-2">
                   <Checkbox
                     checked={track.effects.indexOf(AudioTransformation.ReversePolarity) > -1}
                     disabled={transformationInProgress}
@@ -144,7 +144,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                     label="Reverse Polarity"
                   />
                 </div>
-                <div className="box w-full py-1">
+                <div className="box w-full py-2">
                   <Checkbox
                     checked={track.effects.indexOf(AudioTransformation.Reverse) > -1}
                     disabled={transformationInProgress}
@@ -152,7 +152,17 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                     label="Reverse"
                   />
                 </div>
-                <div className="box w-full py-1">
+              </div>
+              <div className="flex flex-col w-full">
+                <div className="box w-full py-2">
+                  <Checkbox
+                    checked={track.effects.indexOf(AudioTransformation.Normalization) > -1}
+                    disabled={transformationInProgress}
+                    onChange={normalize}
+                    label="Normalize"
+                  />
+                </div>
+                <div className="box w-full py-2">
                   <Checkbox
                     checked={track.effects.indexOf(AudioTransformation.SwapStereo) > -1}
                     disabled={transformationInProgress}
@@ -161,20 +171,10 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   />
                 </div>
               </div>
-              <div className="flex flex-col w-full">
-                <div className="box w-full py-1">
-                  <Checkbox
-                    checked={track.effects.indexOf(AudioTransformation.Normalization) > -1}
-                    disabled={transformationInProgress}
-                    onChange={normalize}
-                    label="Normalize"
-                  />
-                </div>
-              </div>
             </div>
             <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
               <div className="flex w-full content-start">
-                {/* <div className="box w-full inline-grid justify-items-center py-1">
+                {/* <div className="box w-full inline-grid justify-items-center py-2">
                   <Knob
                     r={16}
                     onKnobChange={(e) => console.log(e)}
@@ -184,7 +184,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   />
                   <label>Pitch</label>
                 </div>
-                <div className="box w-full inline-grid justify-items-center py-1">
+                <div className="box w-full inline-grid justify-items-center py-2">
                   <Knob
                     r={16}
                     onKnobChange={(e) => console.log(e)}
