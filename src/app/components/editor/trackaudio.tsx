@@ -167,7 +167,10 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
           name: 'Delete',
           icon: <FaTrash />,
           onSelect: () => {
-            dispatch(deleteAudioFromTrack({ trackNumber: props.trackId, audioIndex: props.index }));
+            dispatch(deleteAudioFromTrack({
+              trackNumber: props.trackId,
+              audioIndex: props.index 
+            }));
             hideContextMenu();
           },
         },
@@ -178,7 +181,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
             dispatch(addWindow({
               header: <><b>Track</b>: {track.audioName}</>,
               props: {
-                track,
+                trackNumber: props.trackId,
+                audioId: props.index,
                 w: 780,
                 h: 100,
               },
@@ -187,6 +191,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
               x: 0,
               y: 0,
               visible: true,
+              propsUniqueIdentifier: track.trackDetail.scheduledKey
             }));
             hideContextMenu();
           },

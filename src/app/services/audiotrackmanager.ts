@@ -143,6 +143,21 @@ class AudioTrackManager {
   }
 
   /**
+   * Set element as Multi-selected.
+   * 
+   * @param track Track to add into selected elements
+   * @param domElement DOM element associated with the selection
+   * @returns void
+   */
+  deleteAudioFromSelectedAudioTracks(
+    audioId: symbol,
+  ) {
+    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(element => (
+      element.audioId === audioId
+    ));
+  }
+
+  /**
    * Apply move transformation to these selected DOM elements
    * 
    * @param diffX Move track by `diffX` from `initialPosition`
@@ -374,6 +389,10 @@ class AudioTrackManager {
     this.audioCanvas[audioSymbolKey] = canvas;
   }
 
+  removeOffscreenCanvas(audioSymbolKey: symbol) {
+    delete this.audioCanvas[audioSymbolKey];
+  }
+
   getOffscreenCanvasDrawn(audioKey: symbol) {
     return this.audioCanvas[audioKey];
   }
@@ -419,6 +438,7 @@ class AudioTrackManager {
       if (node) {
         node.buffer.stop(0);
         node.buffer.disconnect();
+        delete node.pendingReschedule;
         delete this.scheduledNodes[key];;
       }
     }
@@ -433,7 +453,8 @@ class AudioTrackManager {
       if (node.audioId === id) {
         node.buffer.stop(0);
         node.buffer.disconnect();
-        delete this.scheduledNodes[key];;
+        delete node.pendingReschedule;
+        delete this.scheduledNodes[key];
       }
     }
   }
@@ -567,6 +588,7 @@ class AudioTrackManager {
     movedAudioTracks?: AudioTrackDetails[]
   ) {
     let trackNumber = 0;
+
     for (const track of audioTrackDetails) {
       for (const audio of track) {
         const symbolKey = audio.trackDetail.scheduledKey;
@@ -589,6 +611,7 @@ class AudioTrackManager {
             };
           }
           node.buffer.stop(0);
+          node.buffer.disconnect();
         } else {
           this._scheduleInternal(audio, audio.trackDetail.offsetInMillis, trackNumber);
         }
@@ -611,6 +634,7 @@ class AudioTrackManager {
       };
 
       node.buffer.stop(0);
+      node.buffer.disconnect();
     }
   }
 
@@ -630,6 +654,7 @@ class AudioTrackManager {
       };
 
       node.buffer.stop(0);
+      node.buffer.disconnect();
     }
   }
 

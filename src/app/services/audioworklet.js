@@ -28,7 +28,6 @@ class Processor extends AudioWorkletProcessor {
         }
       }
     }
-    console.log(inputs);
   }
 }
 

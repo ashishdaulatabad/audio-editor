@@ -36,6 +36,8 @@ export const ContextMenuProvider = (props: React.PropsWithChildren) => {
   }
 
   const hideContextMenu = () => {
+    // Important, can keep references of audio buffers, and that is no goo.
+    setItems([]);
     setVisible(false);
   }
 
