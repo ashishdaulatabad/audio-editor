@@ -3,14 +3,14 @@ import { svgxmlns } from "../utils"
 import { css } from "../services/utils";
 
 interface RadioProps {
-  label: string,
+  label: string
   checked?: boolean
-  disabled?: boolean,
+  disabled?: boolean
   onChange: (checked: boolean) => void
 }
 
 export function Checkbox(props: React.PropsWithoutRef<RadioProps>) {
-  const [value, setValue] = React.useState(typeof props.checked === 'boolean' ? props.checked : false);
+  const value = typeof props.checked === 'boolean' ? props.checked : false;
 
   return (
     <div 
@@ -20,8 +20,7 @@ export function Checkbox(props: React.PropsWithoutRef<RadioProps>) {
       )}
       onClick={() => {
         if (!props.disabled) {
-          setValue(!value)
-          props.onChange(!value)
+          props.onChange(!value);
         }
       }}
     >

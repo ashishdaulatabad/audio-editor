@@ -394,7 +394,11 @@ export const trackDetailsSlice = createSlice({
         audioManager.setLoopEnd(maxTime);
       }
     },
-
+    /**
+     * @description Set new buffer to audio.
+     * @param state current state 
+     * @param action action to perform.
+     */
     applyChangesToModifiedAudio(
       state,
       action: PayloadAction<{

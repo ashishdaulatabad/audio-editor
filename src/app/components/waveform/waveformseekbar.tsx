@@ -15,25 +15,39 @@ interface WaveformSeekbarProps {
   timeUnitPerLineDistInSeconds: number
 }
 
+export function setTimeInterval(timeUnit: number, totalLines: number, lineDist: number) {
+  while (totalLines < 4) {
+    timeUnit /= 5;
+    lineDist /= 5;
+    totalLines *= 5;
+  }
+
+  return [timeUnit, totalLines, lineDist];
+}
+
 export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProps>) {
   const { trackNumber, audioId } = props;
-  const lineDist = props.lineDist;
   const [leftSeek, setLeftSeek] = React.useState(0);
 
   const divRef = React.createRef<HTMLDivElement>();
 
-  const timeUnit = props.timeUnitPerLineDistInSeconds;
+  let lineDist = props.lineDist;
+  let timeUnit = props.timeUnitPerLineDistInSeconds;
+  let totalLines = props.totalLines;
+
+  [timeUnit, totalLines, lineDist] = setTimeInterval(timeUnit, totalLines, lineDist);
+  const showMillis = timeUnit - Math.floor(timeUnit) !== 0;
 
   const thickLineData = {
     lw: 2,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => {
+    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => {
       return ["M", index * lineDist, 15, "L", index * lineDist, 30].join(' ');
     }).join(" "),
   };
 
   const thinLineData = {
     lw: 1,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => {
+    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => {
       return ["M", index * lineDist + lineDist / 2, 23, "L", index * lineDist + lineDist / 2, 30].join(' ');
     }).join(" "),
   };
@@ -43,16 +57,20 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
     setLeftSeek(offsetX);
   }
 
-  const labelMultiplier = Math.ceil(50 / lineDist);
+  const labelMultiplier = Math.ceil((showMillis ? 80 : 50) / lineDist);
 
-  const timeData = Array.from(
-    { length: Math.floor(props.totalLines / labelMultiplier) },
+  const svgTimeData = Array.from(
+    { length: Math.floor(totalLines / labelMultiplier) },
     (_, index: number) => {
       const currMinute = Math.floor(
         (timeUnit * labelMultiplier * (index + 1)) / 60,
       );
       const currSecond = Math.floor(
         (timeUnit * labelMultiplier * (index + 1)) % 60,
+      );
+
+      const currMillis = Math.floor(
+        (timeUnit * labelMultiplier * (index + 1) * 1000) % 1000 / 10,
       );
 
       return (
@@ -69,12 +87,13 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
         >
           {(currMinute < 10 ? "0" : "") + currMinute}:
           {(currSecond < 10 ? "0" : "") + currSecond}
+          {showMillis && (':'+currMillis.toString().padStart(2, '0'))}
         </text>
       );
     },
   );
 
-  const svgLines = [thickLineData, thinLineData];
+  const svgLinePathDetails = [thickLineData, thinLineData];
   const isPartial = props.isPartial;
   const startOffsetSecs = props.startOffsetInMillis / 1000;
   const endOffsetSecs = props.endOffsetInMillis / 1000;
@@ -95,11 +114,11 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
         audioId={audioId}
       />
       <svg xmlns={svgxmlns} width={props.w} height={30}>
-        {timeData}
+        {svgTimeData}
         {isPartial && <rect fill="#C5645466" x={startLimit} y={0} width={endLimit - startLimit} height={30}></rect>}
       </svg>
       <svg xmlns={svgxmlns} width={props.w} height={30}>
-        {svgLines.map((svgLine, index: number) => (
+        {svgLinePathDetails.map((svgLine, index: number) => (
           <path
             d={svgLine.content}
             key={index}

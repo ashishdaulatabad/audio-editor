@@ -515,7 +515,9 @@ class AudioTrackManager {
       }
     } = track;
 
+    // Not scaled with playback rate.
     const startTime = track.trackDetail.startOffsetInMillis;
+    // Not scaled with playback rate.
     const endTime = track.trackDetail.endOffsetInMillis;
 
     if (trackOffsetMillis + (endTime - startTime) < seekbarOffsetInMillis) {

@@ -1,16 +1,34 @@
 import React from "react";
 import { CustomPrompt } from "../components/shared/customprompt";
 
+/**
+ * @description Prompt Input Type
+ */
 export enum PromptInputType {
   Number,
   Text,
   Range
 }
 
+/**
+ * @description Information Related to Floating Prompt.
+ */
 export type PromptInputInformation = {
+  /**
+   * @description Set placeholder
+   */
   placeholder: string,
+  /**
+   * @description Input Type (see `PromptInputType`)
+   */
   type: PromptInputType,
+  /**
+   * @description If set, needs user input.
+   */
   required: boolean
+  /**
+   * @description Default value.
+   */
   default?: string
 }
 
@@ -32,18 +50,25 @@ export const PromptMenuProvider = (props: React.PropsWithChildren) => {
     return visible;
   }
 
-  const showPrompt = (contextItems: PromptInputInformation[], x: number, y: number) => {
-    setItems(contextItems);
+  /**
+   * @description Show Prompt at certain location.
+   * @param promptDetails Details that the prompt needs to ask.
+   * @param x x location in client window.
+   * @param y y location in client window.
+   */
+  function showPrompt(promptDetails: PromptInputInformation[], x: number, y: number) {
+    setItems(promptDetails);
     setX(x);
     setY(y);
     setVisible(true);
   }
 
-  const onPromptAccepted = (values: string[]) => {
-
+  function onPromptAccepted(values: string[]) {
+    setItems([]);
+    setVisible(false);
   }
 
-  const hidePrompt = () => {
+  function hidePrompt() {
     setVisible(false);
   }
 

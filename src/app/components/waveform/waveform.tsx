@@ -73,6 +73,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
    */
   function transform(transformation: AudioTransformation) {
     setTransformationInProgress(true);
+
     transformAudio(
       track,
       transformation
@@ -128,6 +129,11 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     transform(AudioTransformation.Normalization);
   }
 
+  const { effects } = track;
+  const isPolarityReversed = effects.includes(AudioTransformation.ReversePolarity);
+  const isAudioReversed = effects.includes(AudioTransformation.Reverse);
+  const isNormalized = effects.includes(AudioTransformation.Normalization);
+  const isStereoSwapped = effects.includes(AudioTransformation.SwapStereo);
 
   return (
     <>
@@ -138,7 +144,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               <div className="flex flex-col w-full content-start">
                 <div className="box w-full py-2">
                   <Checkbox
-                    checked={track.effects.indexOf(AudioTransformation.ReversePolarity) > -1}
+                    checked={isPolarityReversed}
                     disabled={transformationInProgress}
                     onChange={transformPolarity}
                     label="Reverse Polarity"
@@ -146,7 +152,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 </div>
                 <div className="box w-full py-2">
                   <Checkbox
-                    checked={track.effects.indexOf(AudioTransformation.Reverse) > -1}
+                    checked={isAudioReversed}
                     disabled={transformationInProgress}
                     onChange={transformReverse}
                     label="Reverse"
@@ -156,7 +162,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               <div className="flex flex-col w-full">
                 <div className="box w-full py-2">
                   <Checkbox
-                    checked={track.effects.indexOf(AudioTransformation.Normalization) > -1}
+                    checked={isNormalized}
                     disabled={transformationInProgress}
                     onChange={normalize}
                     label="Normalize"
@@ -164,7 +170,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 </div>
                 <div className="box w-full py-2">
                   <Checkbox
-                    checked={track.effects.indexOf(AudioTransformation.SwapStereo) > -1}
+                    checked={isStereoSwapped}
                     disabled={transformationInProgress}
                     onChange={transformSwapStereo}
                     label="Swap Stereo"

@@ -2,7 +2,7 @@ import React from 'react';
 import { Tracks } from './tracks';
 import { TrackInfo } from './trackinfo';
 import { AudioTrackList } from './audiotracklist';
-import { Seekbar } from './seekbar';
+import { Seekbar, TimeSectionSelection } from './seekbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { addAudio } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
@@ -16,7 +16,6 @@ import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
-
 
 import {
   addWindow,
@@ -891,6 +890,10 @@ export function Editor() {
     dispatch(selectTracksWithinSpecifiedRegion(event));
   }
 
+  function onSelectingTime(event: TimeSectionSelection) {
+    // console.log(event, 'hehehe');
+  }
+
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
@@ -969,12 +972,14 @@ export function Editor() {
               ref={scrollPageRef}
             >
               <div className="workspace relative bg-slate-600 min-h-full min-w-screen" style={{ width: width + 'px' }}>
-                <Seekbar 
+                <Seekbar
+                  mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
+                  onTimeSelection={onSelectingTime}
                 />
                 <div
                   className="tracks relative"
