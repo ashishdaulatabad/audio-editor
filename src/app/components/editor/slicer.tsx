@@ -1,26 +1,70 @@
 import { svgxmlns } from "@/app/utils";
 import React from "react";
 
+/**
+ * @description Slicer information
+ */
 export interface SlicerSelection {
-  startTrack: number,
-  endTrack: number,
+  /**
+   * @description Starting track for the slicer
+   */
+  startTrack: number
+  /**
+   * @description Ending track of slicer.
+   */
+  endTrack: number
+  /**
+   * @description Exact point of time where a track is sliced
+   */
   pointOfSliceSecs: number
 }
 
+/**
+ * @description Slicer Component details.
+ */
 interface SlicerProps {
-  w: number,
-  h: number,
-  trackHeight: number,
-  lineDist: number,
+  /**
+   * @description Width of workspace
+   */
+  w: number
+  /**
+   * @description height of workspace
+   */
+  h: number
+  /**
+   * @description Height of each track
+   */
+  trackHeight: number
+  /**
+   * @description Distance between two line
+   */
+  lineDist: number
+  /**
+   * @description  Time difference between two thick lines
+   */
   unitTime: number
+  /**
+   * @description On Slice select interacted by user.
+   * @param slicer Slicer information (see `SlicerSelection`).
+   * @returns void.
+   */
   onSliceSelect: (slicer: SlicerSelection) => void
 }
 
+/**
+ * @description Slicer component that tracks
+ * @param props Metadata of workspace
+ * @returns Slice component
+ */
 export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startX, setStartX] = React.useState(0);
   const [startY, setStartY] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
 
+  /**
+   * @description Setup dragging for slicing tracks.
+   * @param event Event details
+   */
   function setupDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setStartX(event.nativeEvent.offsetX);
     const multiplier = event.nativeEvent.offsetY / props.trackHeight;
@@ -29,7 +73,10 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(level);
   }
 
-  /** */
+  /** 
+   * @description End slicing operation
+   * @returns void
+   */
   function leaveSlicer() {
     const pointOfSliceSecs = (startX / props.lineDist) * props.unitTime;
     const trackFirst = Math.round(startY / props.trackHeight);
@@ -49,6 +96,10 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(0);
   }
 
+  /**
+   * @description Drag slicer.
+   * @param event Event details.
+   */
   function dragSlicer(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (event.buttons === 1) {
       const multiplier = event.nativeEvent.offsetY / props.trackHeight;

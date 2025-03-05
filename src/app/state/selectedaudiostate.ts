@@ -1,11 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AudioNonScheduledDetails, AudioTrackDetails } from "./trackdetails";
 
+/**
+ * @description Stores currently selected audio track to schedule.
+ */
 export interface SelectedAudioTrack {
   value: AudioNonScheduledDetails
 }
 
-export function getDefaultSelectedTrack() {
+function getDefaultSelectedTrack() {
   return {
     audioName: '',
     audioId: Symbol(),
@@ -28,10 +31,20 @@ export const selectedAudioSlice = createSlice({
   name: 'selectAudioLibSlice',
   initialState: initialState,
   reducers: {
-    selectAudio: function (state, action: PayloadAction<AudioNonScheduledDetails>) {
+    /**
+     * @description Select current audio for scheduling in workspace. 
+     * @param state current state.
+     * @param action Action to set
+     */
+    selectAudio(state, action: PayloadAction<AudioNonScheduledDetails>) {
       state.value = action.payload;
     },
-    resetToDefault(state, action: PayloadAction<void>) {
+    /**
+     * Reset to default, an empty audio.
+     * @param state current state
+     * @param _ void action
+     */
+    resetToDefault(state, _: PayloadAction<void>) {
       state.value = getDefaultSelectedTrack();
     }
   }

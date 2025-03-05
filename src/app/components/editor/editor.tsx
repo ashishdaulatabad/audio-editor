@@ -2,7 +2,7 @@ import React from 'react';
 import { Tracks } from './tracks';
 import { TrackInfo } from './trackinfo';
 import { AudioTrackList } from './audiotracklist';
-import { Seekbar } from './seekbar';
+import { Seekbar, TimeSectionSelection } from './seekbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { addAudio } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
@@ -17,7 +17,6 @@ import { AudioTrackManipulationMode } from './trackaudio';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 
-
 import {
   addWindow,
   batchRemoveWindowWithUniqueIdentifier,
@@ -30,7 +29,8 @@ import {
   deleteMultipleAudioTrack,
   deselectAllTracks,
   ScheduledInformation,
-  selectAllTracks
+  selectAllTracks,
+  selectTracksWithinSelectedSeekbarSection
 } from '../../state/trackdetails';
 import {
   createAudioData,
@@ -82,6 +82,7 @@ export function Editor() {
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
   const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
+  const [selectedRegion, setSelectedRegion] = React.useState<TimeSectionSelection | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
 
@@ -315,8 +316,7 @@ export function Editor() {
         dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
       }
 
-      const leftString = (element.style.left) || '0px';
-      const left = parseInt(leftString.substring(0, leftString.length - 2));
+      const left = element.offsetLeft;
       setPosition(left);
       
       if (
@@ -891,6 +891,16 @@ export function Editor() {
     dispatch(selectTracksWithinSpecifiedRegion(event));
   }
 
+  function onSelectingTime(event: TimeSectionSelection | null) {
+    if (event) {
+      dispatch(selectTracksWithinSelectedSeekbarSection(event));
+    } else {
+      dispatch(deselectAllTracks());
+    }
+
+    setSelectedRegion(event);
+  }
+
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
@@ -969,12 +979,14 @@ export function Editor() {
               ref={scrollPageRef}
             >
               <div className="workspace relative bg-slate-600 min-h-full min-w-screen" style={{ width: width + 'px' }}>
-                <Seekbar 
+                <Seekbar
+                  mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
+                  onTimeSelection={onSelectingTime}
                 />
                 <div
                   className="tracks relative"
@@ -1009,6 +1021,8 @@ export function Editor() {
                         id={index}
                         key={index}
                         w={width}
+                        selectedContent={selectedRegion}
+                        timeUnitPerLineDistance={timeUnitPerLineDistInSeconds}
                         svgLines={drawData}
                         h={(height/totalTracks) - 2}
                       />

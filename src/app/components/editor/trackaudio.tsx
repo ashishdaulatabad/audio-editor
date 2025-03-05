@@ -1,32 +1,47 @@
-import React from "react";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { addAudio, AudioDetails } from "@/app/state/audiostate";
-import { AudioTrackDetails, deleteAudioFromTrack } from "@/app/state/trackdetails";
-import { Waveform } from "@/assets/wave";
-import { Canvas } from "../shared/customcanvas";
-import { css } from "@/app/services/utils";
-import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { FaCog, FaRegFileAudio, FaTrash } from "react-icons/fa";
-import { createAudioSample } from "@/app/services/audiotransform";
-import { randomColor } from "@/app/services/color";
-import { useDispatch } from "react-redux";
-import { FaRepeat } from "react-icons/fa6";
-import { addWindow } from "@/app/state/windowstore";
-import { AudioWaveformEditor } from "../waveform/waveform";
+import React from 'react';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { addAudio, AudioDetails } from '@/app/state/audiostate';
+import { AudioTrackDetails, deleteAudioFromTrack } from '@/app/state/trackdetails';
+import { Waveform } from '@/assets/wave';
+import { Canvas } from '../shared/customcanvas';
+import { css } from '@/app/services/utils';
+import { ContextMenuContext } from '@/app/providers/contextmenu';
+import { FaCog, FaRegFileAudio, FaTrash } from 'react-icons/fa';
+import { createAudioSample } from '@/app/services/audiotransform';
+import { randomColor } from '@/app/services/color';
+import { useDispatch } from 'react-redux';
+import { FaRepeat } from 'react-icons/fa6';
+import { addWindow } from '@/app/state/windowstore';
+import { AudioWaveformEditor } from '../waveform/waveform';
 
+/**
+ * @description Mode for detecting current manipulation mode via user mouse.
+ */
 export enum AudioTrackManipulationMode {
+  /**
+   * @description No manipulation
+   */
   None,
+  /**
+   * @description Moving track
+   */
   Move,
+  /**
+   * @description Resizing from start.
+   */
   ResizeStart,
+  /**
+   * @description Resizing from end.
+   */
   ResizeEnd
 }
 
 interface TrackAudioProps {
-  height: number,
-  index: number,
-  audioDetails: AudioTrackDetails,
-  trackId: number,
-  lineDist: number,
+  height: number
+  index: number
+  audioDetails: AudioTrackDetails
+  trackId: number
+  lineDist: number
 }
 
 export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
@@ -143,7 +158,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         colorAnnotation: randomColor(),
         effects: []
       }));
-    })
+      hideContextMenu();
+    });
   }
 
   function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {

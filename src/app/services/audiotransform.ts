@@ -100,26 +100,18 @@ export function createAudioSample(
     offlineAudioContext.audioWorklet.addModule(new URL('./audioworklet.js', import.meta.url)).then(() => {
       // To do: Assign certain details to perform before rendering the audio.
       // const workletNode = new AudioWorkletNode(offlineAudioContext, 'transformation');
-      const bufferSourceNode = new AudioBufferSourceNode(offlineAudioContext, {
-        buffer
-      });
+      const bufferSourceNode = new AudioBufferSourceNode(offlineAudioContext);
+      bufferSourceNode.buffer = buffer;
       bufferSourceNode.connect(offlineAudioContext.destination);
 
       bufferSourceNode.start(0, offsetStartTimeSecs, duration);
-      bufferSourceNode.stop(duration);
-      offlineAudioContext.startRendering().then(data => {
+
+      offlineAudioContext.startRendering().then(function(data) {
+        bufferSourceNode.stop(0);
         bufferSourceNode.disconnect();
+        bufferSourceNode.buffer = null;
         resolve(data);
       });
-
-      /// Acknowledged that the message is processed successfully.
-      // workletNode.port.onmessage = function (event: MessageEvent<any>) {
-      //   if (event.data.received) {
-      //   offlineAudioContext.startRendering();
-      //   } else {
-      //     reject();
-      //   }
-      // }
     });
   });
 }
