@@ -42,7 +42,7 @@ interface SeekbarProps {
   /**
    * @description Emits an event when a region is selected.
    */
-  onTimeSelection: (timeSection: TimeSectionSelection) => void
+  onTimeSelection: (timeSection: TimeSectionSelection | null) => void
 }
 
 export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
@@ -79,14 +79,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
    * @param event 
    */
   function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    const { offsetX } = event.nativeEvent;
-    const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
+    if (!isUserSelectingRegion && props.mode === ModeType.DefaultSelector) {
+      const { offsetX } = event.nativeEvent;
+      const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
 
-    // First time, force use manager to initialize all the audiocontext
-    // variables; since they cannot be used without user interaction.
-    audioManager.useManager().setTimestamp(currentTimeInSeconds);
-    audioManager.rescheduleAllTracks(tracks);
-    setLeftSeek(offsetX);
+      // First time, force use manager to initialize all the audiocontext
+      // variables; since they cannot be used without user interaction.
+      audioManager.useManager().setTimestamp(currentTimeInSeconds);
+      audioManager.rescheduleAllTracks(tracks);
+      setLeftSeek(offsetX);
+    }
   }
 
   /**
@@ -112,6 +114,15 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       setStartRegionSelection(offsetX);
       setEndRegionSelection(offsetX);
       setIsUserSelectingRegion(true);
+
+      const point = offsetX;
+
+      const currentTimeSecs = (point / lineDist) * timeUnit;
+
+      props.onTimeSelection({
+        startTimeMillis: currentTimeSecs * 1000,
+        endTimeMillis: currentTimeSecs * 1000
+      });
     }
   }
 
@@ -163,6 +174,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         setStartRegionSelection(0);
         setEndRegionSelection(0);
         setIsUserSelectingRegion(false);
+
+        props.onTimeSelection(null);
       }
     }
     setIsUserSelectingRegion(false);

@@ -5,6 +5,7 @@ import { audioManager } from '../services/audiotrackmanager';
 import { RegionSelection } from '../components/editor/regionselect';
 import { SlicerSelection } from '../components/editor/slicer';
 import { AudioTransformation } from '../services/interfaces';
+import { TimeSectionSelection } from '../components/editor/seekbar';
 
 /**
  * Information of the track, like start offset, end offset and selection.
@@ -154,16 +155,29 @@ export const trackDetailsSlice = createSlice({
     selectTracksWithinSpecifiedRegion(state, action: PayloadAction<RegionSelection>) {
       const { trackStart, trackEnd, pointEndSec, pointStartSec } = action.payload;
 
-      let trackIndex = 0;
       for (let index = 0; index < state.trackDetails.length; ++index) {
         for (const track of state.trackDetails[index]) {
-          if (trackIndex < trackStart || trackIndex > trackEnd) {
+          if (index < trackStart || index > trackEnd) {
             track.trackDetail.selected = false;
           } else {
             track.trackDetail.selected = isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
           }
         }
-        ++trackIndex;
+      }
+    },
+    /// Selecting multiple tracks at once.
+    selectTracksWithinSelectedSeekbarSection(state, action: PayloadAction<TimeSectionSelection>) {
+      const {
+        startTimeMillis,
+        endTimeMillis
+      } = action.payload;
+      const pointStartSec = startTimeMillis / 1000;
+      const pointEndSec = endTimeMillis / 1000;
+
+      for (let index = 0; index < state.trackDetails.length; ++index) {
+        for (const track of state.trackDetails[index]) {
+          track.trackDetail.selected = isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
+        }
       }
     },
     /// Selecting all tracks.
@@ -501,6 +515,7 @@ export const {
   addAudioToTrack,
   deleteAudioFromTrack,
   selectTracksWithinSpecifiedRegion,
+  selectTracksWithinSelectedSeekbarSection,
   setOffsetInMillisToAudioTrack,
   sliceAudioTracks,
   applyChangesToModifiedAudio,

@@ -1,7 +1,7 @@
 import React from "react";
 import { css } from "@/app/services/utils";
 import { Exit } from "@/assets/exit";
-import { FaWindowMaximize, FaWindowMinimize } from "react-icons/fa";
+import { FaWindowMinimize } from "react-icons/fa";
 
 /**
  * Creates a resizable window tile that shows the popup.
@@ -77,9 +77,6 @@ export function Window(props: React.PropsWithChildren<{
               width={10}
               height={10} 
             />
-          </div>
-          <div className="px-3 text-xs text-center w-full h-full content-center text-green-500 cursor-pointer hover:text-green-600" onClick={triggerClose}>
-            <FaWindowMaximize width={10} height={10} />
           </div>
           <div className="px-3 text-center w-full h-full content-center bg-red-500 cursor-pointer hover:bg-red-600" onClick={triggerClose}>
             <Exit w={10} h={10} fill={'white'} />

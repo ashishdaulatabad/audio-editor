@@ -29,7 +29,8 @@ import {
   deleteMultipleAudioTrack,
   deselectAllTracks,
   ScheduledInformation,
-  selectAllTracks
+  selectAllTracks,
+  selectTracksWithinSelectedSeekbarSection
 } from '../../state/trackdetails';
 import {
   createAudioData,
@@ -81,6 +82,7 @@ export function Editor() {
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
   const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
+  const [selectedRegion, setSelectedRegion] = React.useState<TimeSectionSelection | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
   const [scroll, setScroll] = React.useState(0);
 
@@ -314,8 +316,7 @@ export function Editor() {
         dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
       }
 
-      const leftString = (element.style.left) || '0px';
-      const left = parseInt(leftString.substring(0, leftString.length - 2));
+      const left = element.offsetLeft;
       setPosition(left);
       
       if (
@@ -890,8 +891,14 @@ export function Editor() {
     dispatch(selectTracksWithinSpecifiedRegion(event));
   }
 
-  function onSelectingTime(event: TimeSectionSelection) {
-    // console.log(event, 'hehehe');
+  function onSelectingTime(event: TimeSectionSelection | null) {
+    if (event) {
+      dispatch(selectTracksWithinSelectedSeekbarSection(event));
+    } else {
+      dispatch(deselectAllTracks());
+    }
+
+    setSelectedRegion(event);
   }
 
   React.useEffect(() => {
@@ -1014,6 +1021,8 @@ export function Editor() {
                         id={index}
                         key={index}
                         w={width}
+                        selectedContent={selectedRegion}
+                        timeUnitPerLineDistance={timeUnitPerLineDistInSeconds}
                         svgLines={drawData}
                         h={(height/totalTracks) - 2}
                       />

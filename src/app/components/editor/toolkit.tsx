@@ -5,23 +5,23 @@ import { FaPencil, FaScissors } from "react-icons/fa6";
 import { PiSelectionPlus } from "react-icons/pi";
 
 /**
- * Mode Type Selection.
+ * @description Mode Type Selection.
  */
 export enum ModeType {
   /**
-   * Multiple Selecting Tracks for editing.
+   * @description Multiple Selecting Tracks for editing.
    */
   RegionSelect,
   /**
-   * Slicer (or cutter) to split tracks in sections.
+   * @description Slicer (or cutter) to split tracks in sections.
    */
   Slicer,
   /**
-   * Default, useful for editing clips.
+   * @description Default, useful for editing clips.
    */
   DefaultSelector,
   /**
-   * Add multiple consecutive tracks. 
+   * @description Add multiple consecutive tracks. 
    * - [ ] To do: this thing.
    */
   Fill
@@ -33,8 +33,7 @@ interface ToolkitProps {
 }
 
 /**
- * Creates Toolkit to easily edit the audio contents
- * 
+ * @description Creates Toolkit to easily edit the audio contents
  * @param props 
  * @returns 
  */

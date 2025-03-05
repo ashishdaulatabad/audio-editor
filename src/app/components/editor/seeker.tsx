@@ -4,11 +4,16 @@ import { RootState } from "@/app/state/store";
 import { Status } from "@/app/state/trackdetails";
 import { useSelector } from "react-redux";
 
+/**
+ * @description Seeker component
+ * @param props Props.
+ * @returns void
+ */
 export function Seeker(props: React.PropsWithoutRef<{
-  lineDist: number,
-  h: number,
-  seekOffset?: number,
-  onLoopEnd: () => void,
+  lineDist: number
+  h: number
+  seekOffset?: number
+  onLoopEnd: () => void
   setLeft: (e: number) => void
 }>) {
   const seekbarRef = React.createRef<HTMLDivElement>();
@@ -25,6 +30,9 @@ export function Seeker(props: React.PropsWithoutRef<{
       value = requestAnimationFrame(animateSeekbar);
     }
 
+    /**
+     * @description Animate seekbar to move as per timestamp
+     */
     function animateSeekbar() {
       if (seekbarRef.current) {
         const isLoopEnd = audioManager.updateTimestamp();
