@@ -1,12 +1,12 @@
-import React from "react";
-import { RootState } from "@/app/state/store";
-import { useDispatch, useSelector } from "react-redux";
-import { createAudioData, css } from "../../services/utils";
+import React from 'react';
+import { RootState } from '@/app/state/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { createAudioData, css } from '../../services/utils';
+import { AudioTrackFile } from './audiotrackfile';
 import {
   addAudio,
   AudioDetails,
-} from "@/app/state/audiostate";
-import { AudioTrackFile } from "./audiotrackfile";
+} from '@/app/state/audiostate';
 
 /**
  * @description Audio track list component

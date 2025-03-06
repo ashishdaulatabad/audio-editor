@@ -1,17 +1,17 @@
-import React from "react";
-import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { DialogContext } from "@/app/providers/dialog";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { deleteColor } from "@/app/services/color";
-import { removeAudio } from "@/app/state/audiostate";
-import { resetToDefault, selectAudio } from "@/app/state/selectedaudiostate";
-import { RootState } from "@/app/state/store";
-import { AudioTrackDetails, removeAudioFromAllTracks } from "@/app/state/trackdetails";
-import { batchRemoveWindowWithUniqueIdentifier } from "@/app/state/windowstore";
-import { useDispatch, useSelector } from "react-redux";
-import { FaTrash } from "react-icons/fa";
-import { css } from "@/app/services/utils";
-import { Waveform } from "@/assets/wave";
+import React from 'react';
+import { ContextMenuContext } from '@/app/providers/contextmenu';
+import { DialogContext } from '@/app/providers/dialog';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { deleteColor } from '@/app/services/color';
+import { removeAudio } from '@/app/state/audiostate';
+import { resetToDefault, selectAudio } from '@/app/state/selectedaudiostate';
+import { RootState } from '@/app/state/store';
+import { AudioTrackDetails, removeAudioFromAllTracks } from '@/app/state/trackdetails';
+import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
+import { useDispatch, useSelector } from 'react-redux';
+import { FaTrash } from 'react-icons/fa';
+import { css } from '@/app/services/utils';
+import { Waveform } from '@/assets/wave';
 
 interface AudioTrackFileProps {
   isSame: boolean
