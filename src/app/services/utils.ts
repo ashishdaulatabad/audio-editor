@@ -1,5 +1,6 @@
 import { AudioDetails } from "../state/audiostate";
 import { audioService } from "./audioservice";
+import { audioManager } from "./audiotrackmanager";
 import { randomColor } from "./color";
 import { Maybe } from "./interfaces";
 
@@ -21,13 +22,19 @@ export async function createAudioData(
     .useAudioContext()
     .decodeAudioData(buffer);
 
-  return {
+  const trackDetails = {
     audioName: name,
-    audioId: Symbol(),
+    duration: bufferedData.duration,
     colorAnnotation: randomColor(),
     effects: [],
-    buffer: bufferedData,
-  }
+  };
+
+  const audioId = audioManager.registerAudioInAudioBank(trackDetails, bufferedData);
+
+  return {
+    ...trackDetails,
+    audioId
+  };
 }
 
 /**

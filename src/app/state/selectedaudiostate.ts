@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AudioNonScheduledDetails, AudioTrackDetails } from "./trackdetails";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AudioNonScheduledDetails } from './trackdetails';
 
 /**
  * @description Stores currently selected audio track to schedule.
@@ -12,8 +12,8 @@ function getDefaultSelectedTrack() {
   return {
     audioName: '',
     audioId: Symbol(),
-    buffer: null,
     effects: [],
+    duration: 0,
     colorAnnotation: '',
     trackDetail: {
       startOffsetInMillis: 0,

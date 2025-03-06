@@ -1,6 +1,7 @@
-import { AudioTrackDetails } from "../state/trackdetails";
-import { clamp } from "../utils";
-import { audioService } from "./audioservice";
+import { AudioDetails } from '../state/audiostate';
+import { AudioTrackDetails } from '../state/trackdetails';
+import { clamp } from '../utils';
+import { audioService } from './audioservice';
 
 /**
  * @description Type of Multiselected DOM elements that are selected.
@@ -24,6 +25,13 @@ export type SelectedTrackInfo = {
   scheduledKeys: symbol[]
 }
 
+export type AudioBank = {
+  [audioId: symbol]: {
+    audioDetails: Omit<AudioDetails, 'audioId'>
+    buffer: AudioBuffer
+  }
+};
+
 class AudioTrackManager {
   isInitialized = false;
   paused = true;
@@ -32,13 +40,14 @@ class AudioTrackManager {
   runningTimestamp = 0;
   loopEnd = 5;
 
-  /// Audio-specific nodes
+  // Audio-specific nodes
   masterGainNode: GainNode | null = null 
   gainNodes: GainNode[] = [];
   pannerNodes: StereoPannerNode[] = [];
   leftAnalyserNode: AnalyserNode | null = null;
   rightAnalyserNode: AnalyserNode | null = null;
   splitChannel: ChannelSplitterNode | null = null;
+  audioBank: AudioBank = {};
 
   /// Store objects
   multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
@@ -78,6 +87,59 @@ class AudioTrackManager {
     });
 
     this.isInitialized = true;
+  }
+
+  /**
+   * @description Store registered audio bank in an audio bank registry
+   * @param audioDetails details regarding the Audio
+   * @param audioBuffer Audio Buffer
+   * @returns A unique symbol that identifies this audio reference.
+   */
+  registerAudioInAudioBank(
+    audioDetails: Omit<AudioDetails, 'audioId'>,
+    audioBuffer: AudioBuffer
+  ): symbol {
+    const symbol = Symbol();
+
+    this.audioBank[symbol] = {
+      audioDetails,
+      buffer: audioBuffer
+    };
+
+    return symbol;
+  }
+
+  /**
+   * @description Unregister Audio from Audio Buffer
+   * @returns boolean value where audio buffer is successfully removed or not.
+   */
+  updateRegisteredAudioFromAudioBank(sym: symbol, updatedBuffer: AudioBuffer) {
+    if (Object.hasOwn(this.audioBank, sym)) {
+      this.audioBank[sym].buffer = updatedBuffer;
+    }
+  }
+
+  /**
+   * @description Unregister Audio from Audio Buffer
+   * @returns boolean value where audio buffer is successfully removed or not.
+   */
+  unregisterAudioFromAudioBank(sym: symbol): boolean {
+    if (Object.hasOwn(this.audioBank, sym)) {
+      delete this.audioBank[sym];
+      return true;
+    }
+
+    console.warn('Audio Bank not found');
+    return false;
+  }
+
+  /**
+   * @description Get Raw Audio Buffer.
+   * @param symbol identifier of audio in audio bank
+   * @returns buffer reference
+   */
+  getAudioBuffer(symbol: symbol) {
+    return this.audioBank[symbol].buffer;
   }
 
   /**
@@ -444,6 +506,11 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Remove all scheduled nodes from this audio
+   * @param id audio id to remove
+   * @returns void
+   */
   removeAllAudioFromScheduledNodes(id: symbol) {
     const allKeys = Object.getOwnPropertySymbols(this.scheduledNodes);
 
@@ -474,41 +541,12 @@ class AudioTrackManager {
     this._scheduleInternal(track, trackOffsetMillis, trackNumber);
   }
 
-  /**
-   * Reschedule all audio that are scheduled in the tracks.
-   * 
-   * @param audio Audio Details
-   * @return void.
-   */
-  // rescheduleAudioFromScheduledNodes(
-  //   audioId: symbol
-  // ) {
-  //   let trackNumber = 0;
-
-  //   for (const audioKey of Object.getOwnPropertySymbols(this.scheduledNodes)) {
-  //     if (audioKey === audioId) {
-  //       const scheduledKey = audio.trackDetail.scheduledKey;
-        
-  //       if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
-  //         const node = this.scheduledNodes[scheduledKey];
-          
-  //         node.pendingReschedule = {
-  //           offsetInMillis: audio.trackDetail.offsetInMillis,
-  //           newTrack: audio,
-  //           trackNumber
-  //         };
-  //       }
-  //     }
-  //   }
-  // }
-
   private _scheduleInternal(track: AudioTrackDetails, trackOffsetMillis: number, trackNumber: number) {
     const seekbarOffsetInMillis = this.runningTimestamp * 1000;
     const context = audioService.useAudioContext();
     const currentTime = context.currentTime;
 
     const {
-      buffer,
       audioId,
       trackDetail: {
         scheduledKey
@@ -535,7 +573,7 @@ class AudioTrackManager {
     const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
 
     const bufferSource = context.createBufferSource();
-    bufferSource.buffer = buffer;
+    bufferSource.buffer = this.getAudioBuffer(audioId);
     bufferSource.connect(this.pannerNodes[trackNumber]);
 
     const offsetStart = startTimeSecs + Math.max(distance, 0);

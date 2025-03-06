@@ -13,10 +13,11 @@ import { AudioTransformation } from "./interfaces";
  */
 export function transformAudio(
   audioInput: AudioTrackDetails,
+  buffer: AudioBuffer,
   transformationType: AudioTransformation
 ): Promise<AudioBuffer> {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const audioBuffer = audioInput.buffer as AudioBuffer;
+    const audioBuffer = buffer;
     const totalChannels = audioBuffer.numberOfChannels;
     const allBuffers = [];
 
@@ -86,10 +87,9 @@ export function canvasRedraw(
  */
 export function createAudioSample(
   audioInput: AudioTrackDetails,
+  buffer: AudioBuffer
 ) {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const buffer = audioInput.buffer as AudioBuffer;
-
     const offsetStartTimeSecs = audioInput.trackDetail.startOffsetInMillis / 1000;
     const offsetEndTimeSecs = audioInput.trackDetail.endOffsetInMillis / 1000;
     const duration = offsetEndTimeSecs - offsetStartTimeSecs;
@@ -125,10 +125,10 @@ export function createAudioSample(
  */
 export function renderAudio(
   audioInput: AudioTrackDetails,
+  buffer: AudioBuffer,
   options?: Array<any>
 ) {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const buffer = audioInput.buffer as AudioBuffer;
     const offlineAudioContext = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
 
     offlineAudioContext.audioWorklet.addModule(new URL('./audioworklet.js', import.meta.url)).then(() => {

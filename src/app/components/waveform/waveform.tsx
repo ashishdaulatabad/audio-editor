@@ -1,10 +1,9 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { applyChangesToModifiedAudio, AudioTrackDetails } from '@/app/state/trackdetails';
+import { applyChangesToModifiedAudio } from '@/app/state/trackdetails';
 import { Checkbox } from '../checkbox';
 import { transformAudio } from '@/app/services/audiotransform';
 import { useDispatch, useSelector } from 'react-redux';
-import { applyTransformationToAudio } from '@/app/state/audiostate';
 import { renderAudioWaveform } from '../editor/trackaudio';
 import { AudioTransformation } from '@/app/services/interfaces';
 import { Knob } from '../knob';
@@ -39,7 +38,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const [transformationInProgress, setTransformationInProgress] = React.useState(false);
   const [pitch, setPitch] = React.useState(1);
 
-  const endTime = track.buffer?.duration as number;
+  const endTime = track.duration as number;
   const totalLines = endTime / 5;
   const lineDist = props.w / totalLines;
   const { startOffsetInMillis, endOffsetInMillis } = track.trackDetail;
@@ -76,25 +75,19 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
 
     transformAudio(
       track,
+      audioManager.getAudioBuffer(track.audioId),
       transformation
     ).then(data => {
-      renderAudioWaveform({ ...track, buffer: data }, 200, 5, true);
-
-      dispatch(applyTransformationToAudio({
-        buffer: data,
-        audioId: track.audioId,
-        transformation
-      }));
+      audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
+      renderAudioWaveform({ ...track }, 200, 5, true);
 
       dispatch(applyChangesToModifiedAudio({
-        buffer: data,
         audioId: track.audioId,
         transformation
       }))
 
       audioManager.rescheduleTrackFromScheduledNodes({
-        ...track,
-        buffer: data,
+        ...track
       });
 
       setTransformationInProgress(false);

@@ -1,17 +1,17 @@
-import React from "react";
-import { ContextMenuContext } from "@/app/providers/contextmenu";
-import { DialogContext } from "@/app/providers/dialog";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { deleteColor } from "@/app/services/color";
-import { removeAudio } from "@/app/state/audiostate";
-import { resetToDefault, selectAudio } from "@/app/state/selectedaudiostate";
-import { RootState } from "@/app/state/store";
-import { AudioTrackDetails, removeAudioFromAllTracks } from "@/app/state/trackdetails";
-import { batchRemoveWindowWithUniqueIdentifier } from "@/app/state/windowstore";
-import { useDispatch, useSelector } from "react-redux";
-import { FaTrash } from "react-icons/fa";
-import { css } from "@/app/services/utils";
-import { Waveform } from "@/assets/wave";
+import React from 'react';
+import { ContextMenuContext } from '@/app/providers/contextmenu';
+import { DialogContext } from '@/app/providers/dialog';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { deleteColor } from '@/app/services/color';
+import { removeAudio } from '@/app/state/audiostate';
+import { resetToDefault, selectAudio } from '@/app/state/selectedaudiostate';
+import { RootState } from '@/app/state/store';
+import { AudioTrackDetails, removeAudioFromAllTracks } from '@/app/state/trackdetails';
+import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
+import { useDispatch, useSelector } from 'react-redux';
+import { FaTrash } from 'react-icons/fa';
+import { css } from '@/app/services/utils';
+import { Waveform } from '@/assets/wave';
 
 interface AudioTrackFileProps {
   isSame: boolean
@@ -30,7 +30,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       ...file,
       trackDetail: {
         startOffsetInMillis: 0,
-        endOffsetInMillis: (file.buffer?.duration as number * 1000),
+        endOffsetInMillis: (file.duration as number * 1000),
         selected: false,
       }
     }));
@@ -55,6 +55,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     audioManager.removeAllAudioFromScheduledNodes(file.audioId);
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
+    audioManager.unregisterAudioFromAudioBank(file.audioId);
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
@@ -85,6 +86,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     audioManager.removeAllAudioFromScheduledNodes(file.audioId);
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
+    audioManager.unregisterAudioFromAudioBank(file.audioId);
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
