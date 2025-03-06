@@ -126,7 +126,7 @@ export const trackDetailsSlice = createSlice({
       const currentTime = state.maxTimeMillis - twoMinuteInMillis;
       // Should always exist in seconds
       const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMillis ?? 0;
-      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.buffer?.duration as number) * 1000);
+      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.duration as number) * 1000);
 
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
       const endTime = trackDetails.trackDetail.offsetInMillis + trackTotalTime;
@@ -394,7 +394,7 @@ export const trackDetailsSlice = createSlice({
 
       // Should always exist in milliseconds
       const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMillis ?? 0;
-      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.buffer?.duration as number) * 1000);
+      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.duration as number) * 1000);
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
 
       const endTime = offsetInMillis + trackTotalTime;
@@ -417,16 +417,14 @@ export const trackDetailsSlice = createSlice({
       state,
       action: PayloadAction<{
         audioId: symbol,
-        buffer: AudioBuffer,
         transformation: AudioTransformation
       }>
     ) {
-      const { audioId, buffer, transformation } = action.payload;
+      const { audioId, transformation } = action.payload;
 
       for (const track of state.trackDetails) {
         for (const audio of track) {
           if (audio.audioId === audioId) {
-            audio.buffer = buffer;
             const index = audio.effects.indexOf(transformation);
 
             if (index > -1) {

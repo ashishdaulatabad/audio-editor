@@ -6,23 +6,23 @@ import { AudioTransformation } from '../services/interfaces';
  */
 export interface AudioDetails {
   /**
-   * Audio Name
+   * @description Audio Name
    */
   audioName: string
   /**
-   * Audio Identifier
+   * @description Duration of audio
+   */
+  duration: number
+  /**
+   * @description Audio Identifier
    */
   audioId: symbol
   /**
-   * Color depiction
+   * @description Color annotation
    */
-  colorAnnotation: string,
+  colorAnnotation: string
   /**
-   * Raw Buffer
-   */
-  buffer: AudioBuffer | null
-  /**
-   * Applied Effects of transformation
+   * @description Applied Effects of transformation
    */
   effects: AudioTransformation[]
 }
@@ -56,42 +56,12 @@ const audioSlice = createSlice({
      */
     removeAudio(state, action: PayloadAction<number>) {
       state.contents.splice(action.payload, 1);
-    },
-    /**
-     * Add transformed audio 
-     * 
-     * @param state 
-     * @param action 
-     */
-    applyTransformationToAudio(
-      state,
-      action: PayloadAction<{
-        buffer: AudioBuffer,
-        audioId: symbol,
-        transformation: AudioTransformation
-      }>
-    ) {
-      const { audioId, buffer, transformation } = action.payload;
-      
-      const index = state.contents.findIndex(data => data.audioId === audioId);
-
-      if (index > -1) {
-        state.contents[index].buffer = buffer;
-        const value = state.contents[index].effects.indexOf(transformation);
-
-        if (value > -1) {
-          state.contents[index].effects.splice(value, 1);
-        } else {
-          state.contents[index].effects.push(transformation);
-        }
-      }
-    },
+    }
   }
 });
 
 export const {
   addAudio,
-  applyTransformationToAudio,
   removeAudio,
 } = audioSlice.actions;
 

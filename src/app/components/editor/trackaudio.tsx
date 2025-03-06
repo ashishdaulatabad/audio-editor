@@ -59,7 +59,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
 
   // Variables
   // Track should exist
-  const duration = track.buffer?.duration as number;
+  const duration = track.duration as number;
   const width = (duration / 5) * props.lineDist;
 
   const {
@@ -148,15 +148,18 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }
 
   function handleNewSampleCreation(track: AudioTrackDetails) {
-    createAudioSample(track).then(data => {
-      const audioId = Symbol();
-
-      dispatch(addAudio({
-        audioId,
+    createAudioSample(track, audioManager.getAudioBuffer(track.audioId)).then(data => {
+      const newTrackDetails = {
         audioName: track.audioName,
-        buffer: data,
+        duration: data.duration,
         colorAnnotation: randomColor(),
         effects: []
+      };
+      const audioId = audioManager.registerAudioInAudioBank(newTrackDetails, data);
+
+      dispatch(addAudio({
+        ...newTrackDetails,
+        audioId
       }));
       hideContextMenu();
     });
@@ -269,12 +272,12 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
     }
   }
 
-  const time = data.buffer?.duration as number;
+  const time = data.duration as number;
   const width = Math.max((time / unitTime) * lineDist, 800);
   const height = 200;
   let offcanvas = new OffscreenCanvas(width, height);
   const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-  const buffer = data.buffer as AudioBuffer;
+  const buffer = audioManager.getAudioBuffer(data.audioId) as AudioBuffer;
  
   context.strokeStyle = '#ccc';
   context.fillStyle = '#fff0';

@@ -225,7 +225,7 @@ export function Editor() {
                 offsetInMillis: timeOffset,
                 scheduledKey: Symbol(),
                 startOffsetInMillis: 0,
-                endOffsetInMillis: data.buffer?.duration as number,
+                endOffsetInMillis: data.duration as number,
                 selected: false
               }
             }
@@ -640,8 +640,6 @@ export function Editor() {
 
       audioManager.rescheduleAllTracks(trackDetails, movedTrackInfo);
     } else {
-      // if (!dragged) {
-
       const {
         offsetInMillis,
         startOffsetInMillis,
@@ -748,7 +746,7 @@ export function Editor() {
     event: React.MouseEvent<HTMLElement, MouseEvent>,
     desiredElement: HTMLElement
   ) {
-    if (!currentTrack.buffer) {
+    if (!audioManager.getAudioBuffer(currentTrack.audioId)) {
       return;
     }
 

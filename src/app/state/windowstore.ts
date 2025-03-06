@@ -8,15 +8,50 @@ type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => Re
  * @description Window view
  */
 export interface WindowView<TProps> {
+  /**
+   * @description Unique identifier for this window
+   */
   windowSymbol: symbol
+  /**
+   * @description Header.
+   */
   header: string | React.JSX.Element
+  /**
+   * @description Component to attach on, requires to set the props in this object.
+   * @param props Props of this component
+   * @returns JSX.Element
+   */
   view: (props: TProps) => React.JSX.Element
+  /**
+   * @description Props of the component; this will be supplied to the view Component.
+   */
   props: PropsType<TProps>
+  /**
+   * @description Width of the window.
+   */
   w?: number
+  /**
+   * @description Height of the window.
+   */
   h?: number
+  /**
+   * @description Absolute Left Position
+   */
   x: number
+  /**
+   * @description Absolute Top Position
+   */
   y: number
+  /**
+   * @description Visibility of this window.
+   */
   visible: boolean
+  /**
+   * @description To maintain window that is unique to an opened entity, an 
+   * identifier is supplied, so that there are no duplicate window for 
+   * same thing the user opens (for e.g., for scheduled track, 
+   * it would be `trackDetail.scheduledKey`).
+   */
   propsUniqueIdentifier: symbol
 }
 

@@ -30,7 +30,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       ...file,
       trackDetail: {
         startOffsetInMillis: 0,
-        endOffsetInMillis: (file.buffer?.duration as number * 1000),
+        endOffsetInMillis: (file.duration as number * 1000),
         selected: false,
       }
     }));
@@ -55,6 +55,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     audioManager.removeAllAudioFromScheduledNodes(file.audioId);
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
+    audioManager.unregisterAudioFromAudioBank(file.audioId);
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
@@ -85,6 +86,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     audioManager.removeAllAudioFromScheduledNodes(file.audioId);
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
+    audioManager.unregisterAudioFromAudioBank(file.audioId);
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
