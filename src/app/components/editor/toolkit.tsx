@@ -1,8 +1,8 @@
-import { css } from "@/app/services/utils";
-import React from "react";
-import { FaBrush } from "react-icons/fa";
-import { FaPencil, FaScissors } from "react-icons/fa6";
-import { PiSelectionPlus } from "react-icons/pi";
+import React from 'react';
+import { css } from '@/app/services/utils';
+import { FaBrush } from 'react-icons/fa';
+import { FaPencil, FaScissors } from 'react-icons/fa6';
+import { PiSelectionPlus } from 'react-icons/pi';
 
 /**
  * @description Mode Type Selection.

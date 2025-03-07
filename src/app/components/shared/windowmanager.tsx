@@ -1,11 +1,11 @@
-import React from "react";
-import { RootState } from "@/app/state/store";
-import { useDispatch, useSelector } from "react-redux";
+import React from 'react';
+import { RootState } from '@/app/state/store';
+import { useDispatch, useSelector } from 'react-redux';
 import { focusWindow, removeWindow, setWindowPosition, WindowView } from '../../state/windowstore';
-import { Window } from "./window";
-import { FaWindowMaximize } from "react-icons/fa";
-import { css } from "@/app/services/utils";
-import { Exit } from "@/assets/exit";
+import { Window } from './window';
+import { FaWindowMaximize } from 'react-icons/fa';
+import { css } from '@/app/services/utils';
+import { Exit } from '@/assets/exit';
 
 /**
  * @description Window Manager Tab that handles opened windows.

@@ -1,5 +1,5 @@
-import React from "react";
-import { svgxmlns } from "../utils";
+import React from 'react';
+import { svgxmlns } from '../utils';
 
 interface SliderSettings {
   h: number,

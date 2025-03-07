@@ -1,7 +1,7 @@
 import React from 'react';
 import { RootState } from '@/app/state/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { createAudioData, css } from '../../services/utils';
+import { createAudioData } from '../../services/utils';
 import { AudioTrackFile } from './audiotrackfile';
 import {
   addAudio,
@@ -13,6 +13,7 @@ import {
  */
 export function AudioTrackList() {
   // Selectors
+  // const [search, setSearch] = React.useState('');
   const files = useSelector((state: RootState) => state.audioReducer.contents);
   const selected = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
  
@@ -39,17 +40,28 @@ export function AudioTrackList() {
   }
 
   const selectedId = selected.audioId;
+
   return (
-    <div className="bg-slate-700 h-full w-full rounded-sm">
-      <div className="import-button self-center text-center p-8 border-solid border border-transparent border-b-slate-900 shadow-lg">
+    <div className="bg-slate-700 w-full flex flex-col rounded-sm h-full">
+      <div className="import-button self-center flex flex-row justify-center w-full text-center p-8 border-solid border border-transparent border-b-slate-900 shadow-lg">
+        {/* <input
+          type="text"
+          value={search}
+          onClick={(e) => (e.target as HTMLElement).focus()}
+          onInput={(e) => {
+            setSearch((e.target as HTMLInputElement).value)
+          }}
+          className="bg-slate-500 rounded-md p-2 px-4"
+          placeholder="Search"
+        /> */}
         <button
-          className="select-none text-lg rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
+          className="ml-4 select-none rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
           onClick={selectFile}
         >
           Load Audio
         </button>
       </div>
-      <div className="list w-full h-[76dvh] overflow-y-scroll">
+      <div className="list w-full flex-grow overflow-y-scroll">
         {files.map((file: AudioDetails, index: number) => {
           const isSame = selectedId === file.audioId;
 

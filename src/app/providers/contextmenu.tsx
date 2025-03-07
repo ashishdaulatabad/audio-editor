@@ -1,12 +1,27 @@
-import React from "react";
-import { ContextMenu } from "../components/shared/contextmenu";
+import React from 'react';
+import { ContextMenu } from '../components/shared/contextmenu';
 
-interface EndSection {}
-
+/**
+ * @description Menu Item to be shown in context menu.
+ */
 export type ContextItem = {
+  /**
+   * @Description Name of context menu option
+   */
   name: string,
+  /**
+   * @description Optional icon
+   */
   icon?: React.JSX.Element,
+  /**
+   * @description Action to perform on selection.
+   * @returns void
+   */
   onSelect: () => void,
+  /**
+   * @description If item is expandable 
+   * - [ ] to do: this
+   */
   children?: ContextItem[],
 }
 

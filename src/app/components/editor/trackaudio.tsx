@@ -148,7 +148,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }
 
   function handleNewSampleCreation(track: AudioTrackDetails) {
-    createAudioSample(track, audioManager.getAudioBuffer(track.audioId)).then(data => {
+    createAudioSample(track, audioManager.getAudioBuffer(track.audioId) as AudioBuffer).then(data => {
       const newTrackDetails = {
         audioName: track.audioName,
         duration: data.duration,

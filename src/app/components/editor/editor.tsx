@@ -53,6 +53,7 @@ import {
 } from '@/app/state/trackdetails';
 import { PromptMenuContext } from '@/app/providers/customprompt';
 import { clamp } from '@/app/utils';
+import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
 export enum MovableType {
   None,
@@ -815,6 +816,7 @@ export function Editor() {
           event.preventDefault();
           dispatch(selectAllTracks());
         }
+
         break;
       }
       default: {
@@ -825,10 +827,12 @@ export function Editor() {
 
   function adjustZooming(event: WheelEvent, newLineDist: number) {
     if (scrollPageRef.current) {
-      const cursorPosition = event.offsetX;
+      const target = event.target as HTMLElement;
+      const trackAudio = getTrackAudioElement(target) as HTMLElement | null;
+      const cursorPosition = (trackAudio !== null ? trackAudio.offsetLeft + event.offsetX : event.offsetX);
       const time = (cursorPosition / lineDist) * timeUnitPerLineDistInSeconds;
       const newCursorPosition = (time * newLineDist) / timeUnitPerLineDistInSeconds;
-      const offsetFromScreen = event.offsetX - scrollPageRef.current.scrollLeft;
+      const offsetFromScreen = cursorPosition - scrollPageRef.current.scrollLeft;
 
       // Based on these calculations, calculate scrollTo for new position
       setScroll(newCursorPosition - offsetFromScreen);
@@ -899,6 +903,9 @@ export function Editor() {
     setSelectedRegion(event);
   }
 
+  // Manage key events on last interacted 
+  // If it was workspace, then manage onKeyDown
+  // if not, then don't fire events at all.
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
@@ -931,7 +938,7 @@ export function Editor() {
   return (
     <>
       <div
-        className="h-full flex flex-col max-h-screen"
+        className="h-screen flex flex-col max-h-screen"
         onClick={checkContextMenu}
         onDrop={onFileDrop}
         onMouseDown={settingDrag}
@@ -944,12 +951,13 @@ export function Editor() {
           <Player />
           <WindowManager />
         </div>
-        <div className="editor flex flex-row h-full box-border min-w-screen">
-          <div className="track-files min-w-96 max-w-96">
+        <ResizingGroup>
+          <ResizingWindowPanel className="track-files">
             <AudioTrackList />
-          </div>
-          <div
-            className="workspace flex flex-row max-w-full overflow-y-auto max-h-[92dvh] ml-2 min-w-screen"
+          </ResizingWindowPanel>
+          <ResizingHandle />
+          <ResizingWindowPanel
+            className="workspace flex flex-row max-w-full overflow-y-auto max-h-[92dvh] min-w-screen"
             ref={verticalScrollPageRef}
             data-cursor={mode}
           >
@@ -1029,8 +1037,8 @@ export function Editor() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </ResizingWindowPanel>
+        </ResizingGroup>
       </div>
     </>
   );

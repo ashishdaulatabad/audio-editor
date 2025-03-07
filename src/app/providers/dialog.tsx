@@ -1,5 +1,5 @@
-import React from "react"
-import { DialogBox } from "../components/shared/dialog";
+import React from 'react'
+import { DialogBox } from '../components/shared/dialog';
 
 export interface DialogInformation {
   messageHeader: string | React.JSX.Element,

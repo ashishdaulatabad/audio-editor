@@ -1,10 +1,10 @@
-import React from "react";
-import { svgxmlns } from "@/app/utils";
-import { Seeker } from "./seeker";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { useSelector } from "react-redux";
-import { RootState } from "@/app/state/store";
-import { ModeType } from "./toolkit";
+import React from 'react';
+import { svgxmlns } from '@/app/utils';
+import { Seeker } from './seeker';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/state/store';
+import { ModeType } from './toolkit';
 
 export interface TimeSectionSelection {
   startTimeMillis: number
@@ -111,13 +111,11 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       (props.mode === ModeType.DefaultSelector && event.buttons === 2)
     ) {
       const { offsetX } = event.nativeEvent;
-      setStartRegionSelection(offsetX);
-      setEndRegionSelection(offsetX);
+      const currentTimeSecs = (offsetX / lineDist) * timeUnit;
+
+      setStartRegionSelection(currentTimeSecs);
+      setEndRegionSelection(currentTimeSecs);
       setIsUserSelectingRegion(true);
-
-      const point = offsetX;
-
-      const currentTimeSecs = (point / lineDist) * timeUnit;
 
       props.onTimeSelection({
         startTimeMillis: currentTimeSecs * 1000,
@@ -134,18 +132,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   function handleMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (isUserSelectingRegion && event.buttons > 0) {
       const { offsetX } = event.nativeEvent;
-      setEndRegionSelection(offsetX);
+      const endTimeSecs = (offsetX / lineDist) * timeUnit;
+      setEndRegionSelection(endTimeSecs);
 
-      const startPoint = Math.min(startRegionSelection, offsetX);
-      const endPoint = Math.max(startRegionSelection, offsetX);
-
-      const startTimeSecs = (startPoint / lineDist) * timeUnit;
-      const endTimeSecs = (endPoint / lineDist) * timeUnit;
+      const startPoint = Math.min(startRegionSelection, endTimeSecs);
+      const endPoint = Math.max(startRegionSelection, endTimeSecs);
       
       props.onTimeSelection({
-        startTimeMillis: startTimeSecs * 1000,
-        endTimeMillis: endTimeSecs * 1000
-      });
+        startTimeMillis: startPoint * 1000,
+        endTimeMillis: endPoint * 1000
+      });0.1
     }
   }
 
@@ -157,18 +153,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   function handleMouseRelease(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (isUserSelectingRegion) {
       const { offsetX } = event.nativeEvent;
+      const endTimeSecs = (offsetX / lineDist) * timeUnit;
 
-      const startPoint = Math.min(startRegionSelection, offsetX);
-      const endPoint = Math.max(startRegionSelection, offsetX);
-
-      if (Math.abs(endPoint - startPoint) > 10) {
-        setEndRegionSelection(offsetX);
-        const startTimeSecs = (startPoint / lineDist) * timeUnit;
-        const endTimeSecs = (endPoint / lineDist) * timeUnit;
+      if (Math.abs(endTimeSecs - startRegionSelection) > 0.5) {
+        setEndRegionSelection(endTimeSecs);
+        const startPoint = Math.min(startRegionSelection, endTimeSecs);
+        const endPoint = Math.max(startRegionSelection, endTimeSecs);
 
         props.onTimeSelection({
-          startTimeMillis: startTimeSecs * 1000,
-          endTimeMillis: endTimeSecs * 1000
+          startTimeMillis: startPoint * 1000,
+          endTimeMillis: endPoint * 1000
         });
       } else {
         setStartRegionSelection(0);
@@ -207,8 +201,10 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   );
 
   const svgLines = [thickLineData, thinLineData];
-  const startRegion = Math.min(startRegionSelection, endRegionSelection);
-  const endRegion = Math.max(startRegionSelection, endRegionSelection);
+  const startSecs = Math.min(startRegionSelection, endRegionSelection);
+  const endSecs = Math.max(startRegionSelection, endRegionSelection);
+  const startRegion = (startSecs / timeUnit) * lineDist;
+  const endRegion = (endSecs / timeUnit) * lineDist;
 
   return (
     <div
