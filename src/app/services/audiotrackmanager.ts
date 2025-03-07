@@ -678,6 +678,12 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Reschedules moved track with new details.
+   * @param track current track to modify
+   * @param trackNumber track number for this scheduled audio: to attach it to gain node.
+   * @param trackOffsetMillis new offset of scheduled track in millis.
+   */
   rescheduleMovedTrackFromScheduledNodes(
     track: AudioTrackDetails,
     trackNumber: number,
@@ -710,6 +716,9 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @returns Status; true if context is paused, else false.
+   */
   isPaused() {
     return this.paused;
   }

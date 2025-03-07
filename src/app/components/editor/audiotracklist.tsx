@@ -1,7 +1,7 @@
 import React from 'react';
 import { RootState } from '@/app/state/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { createAudioData, css } from '../../services/utils';
+import { createAudioData } from '../../services/utils';
 import { AudioTrackFile } from './audiotrackfile';
 import {
   addAudio,
@@ -49,7 +49,7 @@ export function AudioTrackList() {
           Load Audio
         </button>
       </div>
-      <div className="list w-full h-[76dvh] overflow-y-scroll">
+      <div className="list w-full h-screen overflow-y-scroll">
         {files.map((file: AudioDetails, index: number) => {
           const isSame = selectedId === file.audioId;
 

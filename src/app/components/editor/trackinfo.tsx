@@ -1,6 +1,6 @@
-import React from "react";
-import { Knob } from "../knob";
-import { audioManager } from "@/app/services/audiotrackmanager";
+import React from 'react';
+import { Knob } from '../knob';
+import { audioManager } from '@/app/services/audiotrackmanager';
 
 interface TrackInfoProps {
   id: number,

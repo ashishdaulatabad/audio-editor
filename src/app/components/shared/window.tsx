@@ -4,7 +4,7 @@ import { Exit } from "@/assets/exit";
 import { FaWindowMinimize } from "react-icons/fa";
 
 /**
- * Creates a resizable window tile that shows the popup.
+ * @description Creates a resizable window tile that shows the popup.
  * 
  * @param props 
  * @returns 
@@ -24,7 +24,7 @@ export function Window(props: React.PropsWithChildren<{
 }>) {
   /// States
   const [hold, setHold] = React.useState(false);
-  const windowRef = React.createRef<HTMLDivElement>();
+  const windowRef = React.useRef<HTMLDivElement | null>(null);
 
   function onWindowClick() {
     props.onClick();
@@ -41,7 +41,7 @@ export function Window(props: React.PropsWithChildren<{
   return (
     <div
       className={css(
-        "absolute border flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
+        "absolute border-2 flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
         hold ? 'shadow-lg' : 'shadow-md'
       )}
       data-windowid={props.index}
