@@ -143,7 +143,7 @@ class AudioTrackManager {
       return this.audioBank[symbol].buffer;
     }
 
-    return null;
+    return null;  
   }
 
   /**
