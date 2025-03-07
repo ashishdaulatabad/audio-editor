@@ -75,7 +75,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
 
     transformAudio(
       track,
-      audioManager.getAudioBuffer(track.audioId),
+      audioManager.getAudioBuffer(track.audioId) as AudioBuffer,
       transformation
     ).then(data => {
       audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
@@ -86,9 +86,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         transformation
       }))
 
-      audioManager.rescheduleTrackFromScheduledNodes({
-        ...track
-      });
+      audioManager.rescheduleTrackFromScheduledNodes({ ...track });
 
       setTransformationInProgress(false);
     });

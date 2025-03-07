@@ -138,8 +138,12 @@ class AudioTrackManager {
    * @param symbol identifier of audio in audio bank
    * @returns buffer reference
    */
-  getAudioBuffer(symbol: symbol) {
-    return this.audioBank[symbol].buffer;
+  getAudioBuffer(symbol: symbol): AudioBuffer | null {
+    if (Object.hasOwn(this.audioBank, symbol)) {
+      return this.audioBank[symbol].buffer;
+    }
+
+    return null;
   }
 
   /**

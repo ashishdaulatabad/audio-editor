@@ -816,6 +816,7 @@ export function Editor() {
           event.preventDefault();
           dispatch(selectAllTracks());
         }
+
         break;
       }
       default: {
@@ -902,6 +903,9 @@ export function Editor() {
     setSelectedRegion(event);
   }
 
+  // Manage key events on last interacted 
+  // If it was workspace, then manage onKeyDown
+  // if not, then don't fire events at all.
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
@@ -934,7 +938,7 @@ export function Editor() {
   return (
     <>
       <div
-        className="h-full flex flex-col max-h-screen"
+        className="h-screen flex flex-col max-h-screen"
         onClick={checkContextMenu}
         onDrop={onFileDrop}
         onMouseDown={settingDrag}
