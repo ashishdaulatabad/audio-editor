@@ -55,9 +55,21 @@ import { PromptMenuContext } from '@/app/providers/customprompt';
 import { clamp } from '@/app/utils';
 import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
+/**
+ * @description Movable Type, for handling all the move events.
+ */
 export enum MovableType {
+  /**
+   * @description None
+   */
   None,
+  /**
+   * @description Scheduled Track to be moved.
+   */
   ScheduledTrack,
+  /**
+   * @description Window to be moved.
+   */
   Window
 }
 
@@ -94,6 +106,7 @@ export function Editor() {
   const trackTimeDurationMillis = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMillis);
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const windows = useSelector((state: RootState) => state.windowStoreReducer.contents);
+  const dispatch = useDispatch();
 
   // Refs
   const ref = React.createRef<HTMLDivElement>();
@@ -116,26 +129,25 @@ export function Editor() {
   const timeUnitPerLineDistInSeconds = 5;
   const width = ((trackTimeDurationMillis / 1000) / timeUnitPerLineDistInSeconds) * lineDist;
   const totalLines = Math.floor(width / lineDist);
-  const dispatch = useDispatch();
 
   const heightPerTrack = (height / totalTracks) - 2;
   const thickLineData = {
     lw: 2,
     content: Array.from(
       { length: totalLines }, 
-      (_, index: number) => `M ${index * lineDist} 0 L ${index * lineDist} ${heightPerTrack}`
-    ).join(' ')
+      (_, index: number) => `M${index * lineDist} 0L${index * lineDist} ${heightPerTrack}`
+    ).join('')
   }
 
   const lineDist4 = (lineDist / 4);
   const thinLineData = {
     lw: 1,
     content: Array.from({length: totalLines}, (_, index: number) => {
-      let p = `M ${index * lineDist + lineDist4} 0 L ${index * lineDist + lineDist4} ${heightPerTrack}`
-      p += `M ${index * lineDist + lineDist4 * 2} 0 L ${index * lineDist + lineDist4 * 2} ${heightPerTrack}`
-      p += `M ${index * lineDist + lineDist4 * 3} 0 L ${index * lineDist + lineDist4 * 3} ${heightPerTrack}`
+      let p = `M${index * lineDist + lineDist4} 0L${index * lineDist + lineDist4} ${heightPerTrack}`
+      p += `M${index * lineDist + lineDist4 * 2} 0L${index * lineDist + lineDist4 * 2} ${heightPerTrack}`
+      p += `M${index * lineDist + lineDist4 * 3} 0L${index * lineDist + lineDist4 * 3} ${heightPerTrack}`
       return p;
-    }).join(' ')
+    }).join('')
   }
 
   const drawData = [thickLineData, thinLineData];
@@ -278,10 +290,14 @@ export function Editor() {
     const trackNumber = trackId ? parseInt(trackId) : 0;
     const audioIndex = audioId ? parseInt(audioId) : 0;
 
-    if (!trackForEdit || (trackForEdit !== trackDetails[trackNumber][audioIndex])) {
+    if (
+      !trackForEdit || 
+      (trackForEdit.trackDetail.scheduledKey !== trackDetails[trackNumber][audioIndex].trackDetail.scheduledKey)
+    ) {
       selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
       setTimeout(() => selectTrackForEdit(null), 300);
     } else {
+      // console.log('here');
       dispatch(addWindow({
         header: <><b>Track</b>: {trackForEdit.audioName}</>,
         props: {
@@ -706,6 +722,11 @@ export function Editor() {
     
   }
 
+  /**
+   * @description Delete current track that exist in the scheduled track.
+   * @param event Event details regarding the track.
+   * @returns void.
+   */
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     event.preventDefault();
 
@@ -825,6 +846,12 @@ export function Editor() {
     }
   }
 
+  /**
+   * @description Adjust zooming in/out of the workspace, makes it easier for user
+   * for precision work.
+   * @param event Event details
+   * @param newLineDist New Distance measured between two lines.
+   */
   function adjustZooming(event: WheelEvent, newLineDist: number) {
     if (scrollPageRef.current) {
       const target = event.target as HTMLElement;
@@ -1028,7 +1055,7 @@ export function Editor() {
                         key={index}
                         w={width}
                         selectedContent={selectedRegion}
-                        timeUnitPerLineDistance={timeUnitPerLineDistInSeconds}
+                        timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
                         svgLines={drawData}
                         h={(height/totalTracks) - 2}
                       />

@@ -1,4 +1,5 @@
 import { ContextItem } from "@/app/providers/contextmenu"
+import React from "react";
 
 export interface ContextMenuProps {
   items: ContextItem[],
@@ -7,17 +8,45 @@ export interface ContextMenuProps {
 }
 
 /**
- * Custom Context Menu.
- * 
- * - [ ] To do: Make it single and global.
- * @param props 
- * @returns 
+ * @description A Context Menu Component
  */
 export function ContextMenu(props: React.PropsWithoutRef<ContextMenuProps>) {
+  let left = props.x, top = props.y;
+  const menuRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (menuRef.current) {
+      const height = menuRef.current.clientHeight;
+      const top = menuRef.current.offsetTop;
+      let newTop = top;
+
+      if (top + height > document.documentElement.clientHeight) {
+        newTop -= height;
+      }
+      
+      const width = menuRef.current.clientWidth;
+      const left = menuRef.current.offsetLeft;
+      let newLeft = left;
+
+      if (left + width > document.documentElement.clientWidth) {
+        newLeft -= width;
+      }
+
+      Object.assign(
+        menuRef.current.style, 
+        {
+          top: newTop + 'px',
+          left: newLeft + 'px' 
+        }
+      );
+    }
+  }, []);
+
   return (
     <div
       className="fixed context-menu flex flex-col text-md rounded-md bg-zinc-950 max-w-full text-center"
-      style={{left: props.x + 'px', top: props.y + 'px'}}
+      style={{left: left + 'px', top: top + 'px'}}
+      ref={menuRef}
     >
       {
         props.items.map(item => {

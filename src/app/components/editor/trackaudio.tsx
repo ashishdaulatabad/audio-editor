@@ -39,6 +39,7 @@ export enum AudioTrackManipulationMode {
 interface TrackAudioProps {
   height: number
   index: number
+  timeUnitPerLineDistanceSecs: number
   audioDetails: AudioTrackDetails
   trackId: number
   lineDist: number
@@ -60,7 +61,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   // Variables
   // Track should exist
   const duration = track.duration as number;
-  const width = (duration / 5) * props.lineDist;
+  const timeUnit = props.timeUnitPerLineDistanceSecs;
+  const width = (duration / timeUnit) * props.lineDist;
 
   const {
     hideContextMenu,
@@ -88,7 +90,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }, [track.trackDetail, props.lineDist]);
 
   function calculateLeft(track: AudioTrackDetails) {
-    return (track.trackDetail.offsetInMillis / 5000) * props.lineDist;
+    const timeUnitMillis = timeUnit * 1000;
+    return (track.trackDetail.offsetInMillis / timeUnitMillis) * props.lineDist;
   }
 
   function setGrab(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {

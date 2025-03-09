@@ -1,20 +1,35 @@
 import { svgxmlns } from '@/app/utils';
 import React from "react";
 
+/**
+ * @description Region Selection performed by the user.
+ */
 export interface RegionSelection {
-  trackStart: number,
-  trackEnd: number,
-  pointStartSec: number,
-  pointEndSec: number,
+  /**
+   * @description Starting range of the track.
+   */
+  trackStart: number
+  /**
+   * @description Ending range of the track.
+   */
+  trackEnd: number
+  /**
+   * @description Starting point of selection, in seconds.
+   */
+  pointStartSec: number
+  /**
+   * @descrption Ending point of selection, in seconds.
+   */
+  pointEndSec: number
 }
 
 interface RegionSelectProps {
-  w: number,
-  h: number,
-  trackHeight: number,
-  lineDist: number,
-  unitTime: number,
-  onRegionSelect: (event: RegionSelection) => void,
+  w: number
+  h: number
+  trackHeight: number
+  lineDist: number
+  unitTime: number
+  onRegionSelect: (event: RegionSelection) => void
   onRegionSelectDone?: (event: RegionSelection) => void
 }
 

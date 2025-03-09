@@ -18,7 +18,7 @@ interface TrackProps {
   w: number
   h: number
   lineDist: number
-  timeUnitPerLineDistance: number
+  timeUnitPerLineDistanceSecs: number
   svgLines: Array<TrackDrawContent>
   selectedContent: TimeSectionSelection | null
 }
@@ -26,7 +26,7 @@ interface TrackProps {
 export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const trackData = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
   const lineDist = props.lineDist;
-  const timeUnit = props.timeUnitPerLineDistance;
+  const timeUnit = props.timeUnitPerLineDistanceSecs;
   const selectedStart = props.selectedContent ? ((props.selectedContent.startTimeMillis / 1000 / timeUnit)) * lineDist : 0;
   const selectedEnd = props.selectedContent ? ((props.selectedContent.endTimeMillis / 1000 / timeUnit) * lineDist) : 0;
 
@@ -41,6 +41,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
             index={index}
             lineDist={props.lineDist}
             trackId={props.id}
+            timeUnitPerLineDistanceSecs={timeUnit}
             audioDetails={track}
             key={index}
             height={props.h}

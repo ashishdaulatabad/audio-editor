@@ -32,6 +32,22 @@ export type AudioBank = {
   }
 };
 
+/**
+ * @description Schedule Node Information related to the tracks.
+ */
+export type ScheduledNodesInformation = {
+  [k: symbol]: {
+    audioId: symbol,
+    buffer: AudioBufferSourceNode,
+    // May need additional details when waveforms are shrinked.
+    pendingReschedule?: {
+      offsetInMillis: number,
+      newTrack?: AudioTrackDetails,
+      trackNumber: number
+    }
+  }
+};
+
 class AudioTrackManager {
   isInitialized = false;
   paused = true;
@@ -51,18 +67,9 @@ class AudioTrackManager {
 
   /// Store objects
   multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
-  scheduledNodes: {
-    [k: symbol]: {
-      audioId: symbol,
-      buffer: AudioBufferSourceNode,
-      // May need additional details when waveforms are shrinked.
-      pendingReschedule?: {
-        offsetInMillis: number,
-        newTrack?: AudioTrackDetails,
-        trackNumber: number
-      }
-    }
-  } = {};
+  scheduledNodes: ScheduledNodesInformation = {};
+  offlineScheduledNodes: ScheduledNodesInformation = {};
+
   audioCanvas: {
     [k: symbol]: OffscreenCanvas
   } = {};
@@ -71,22 +78,67 @@ class AudioTrackManager {
     public totalTrackSize: number,
   ) {}
 
-  initialize() {
-    const audioContext = audioService.useAudioContext();
+  // Simulate the project with the exact clone of the settings to export and create
+  // a new file.
+  initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
+    const audioContext = context;
+    const masterGainNode = audioContext.createGain();
 
-    this.gainNodes = Array.from({ length: this.totalTrackSize }, () => {
+    const gainNodes = Array.from({ length: this.totalTrackSize }, () => {
       const gainNode = audioContext.createGain();
-      gainNode.connect(this.masterGainNode as GainNode);
+      gainNode.connect(masterGainNode as GainNode);
       return gainNode;
     });
 
-    this.pannerNodes = Array.from({ length: this.totalTrackSize }, (_, index: number) => {
+    const pannerNodes = Array.from({ length: this.totalTrackSize }, (_, index: number) => {
       const pannerNode = audioContext.createStereoPanner()
-      pannerNode.connect(this.gainNodes[index]);
+      pannerNode.connect(gainNodes[index]);
       return pannerNode;
     });
 
-    this.isInitialized = true;
+    return [gainNodes, pannerNodes, masterGainNode];
+  }
+
+  static copySettings(sourceNode: AudioNode, destinationNode: AudioNode) {
+    if (sourceNode instanceof GainNode && destinationNode instanceof GainNode) {
+      sourceNode.gain.value = destinationNode.gain.value;
+    } else if (sourceNode instanceof StereoPannerNode && destinationNode instanceof StereoPannerNode) {
+      sourceNode.pan.value = destinationNode.pan.value;
+    }
+  }
+
+  /**
+   * @description Simulates all the connections into offline.
+   * @param scheduledTracks all the scheduled tracks currently done.
+   * @returns rendered raw audio data.
+   */
+  async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
+    const offlineAudioContext = new OfflineAudioContext(
+      2,
+      Math.ceil(48000 * this.loopEnd),
+      48000
+    );
+
+    const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
+
+    gainNodes.forEach((gainNode, index: number) => {
+      AudioTrackManager.copySettings(gainNode, this.gainNodes[index])
+    });
+
+    pannerNodes.forEach((pannerNode, index: number) => {
+      AudioTrackManager.copySettings(pannerNode, this.pannerNodes[index])
+    });
+
+    masterGainNode.connect(offlineAudioContext.destination);
+
+    this.scheduleOffline(
+      scheduledTracks,
+      pannerNodes,
+      offlineAudioContext
+    );
+
+    const data = await offlineAudioContext.startRendering();
+    return data;
   }
 
   /**
@@ -411,16 +463,16 @@ class AudioTrackManager {
   }
 
   /**
-   * Safety function to initialize audiocontext before
-   * using audiomanager
-   * 
+   * @description Safety function to initialize audiocontext before using audiomanager
    * @returns Self; the Audio Manager.
    */
   useManager() {
     if (!this.isInitialized) {
       const context = audioService.useAudioContext();
-      this.masterGainNode = context.createGain();
-      this.initialize();
+
+      [this.gainNodes, this.pannerNodes, this.masterGainNode] = this.initialize(context);
+      this.isInitialized = true;
+
       this.leftAnalyserNode = context.createAnalyser();
       this.rightAnalyserNode = context.createAnalyser();
 
@@ -464,8 +516,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Schedule all audio tracks
-   * 
+   * @description Schedule all audio tracks
    * @param audioTrackDetails 2D array containing all tracks.
    */
   schedule(audioTrackDetails: AudioTrackDetails[][]) {
@@ -475,6 +526,31 @@ class AudioTrackManager {
     for (const trackContents of audioTrackDetails) {
       for (const track of trackContents) {
         this._scheduleInternal(track, track.trackDetail.offsetInMillis, trackIndex);
+      }
+      ++trackIndex;
+    }
+  }
+
+  /**
+   * @description Schedule all audio tracks Offline
+   * @param audioTrackDetails 2D array containing all tracks.
+   */
+  scheduleOffline(
+    audioTrackDetails: AudioTrackDetails[][],
+    pannerNodes: StereoPannerNode[],
+    context: BaseAudioContext
+  ) {
+    let trackIndex = 0;
+    // const context = audioService.useAudioContext();
+    // const currentTime = context.currentTime;
+    for (const trackContents of audioTrackDetails) {
+      for (const track of trackContents) {
+        this._scheduleOffline(
+          track,
+          track.trackDetail.offsetInMillis,
+          context,
+          pannerNodes[trackIndex]
+        );
       }
       ++trackIndex;
     }
@@ -497,6 +573,10 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Remove scheduled nodes from scheduled items.
+   * @param scheduledKeys list of scheduled keys.
+   */
   removeScheduledTracksFromScheduledKeys(scheduledKeys: symbol[]) {
     for (const key of scheduledKeys) {
       const node = this.scheduledNodes[key]
@@ -545,7 +625,72 @@ class AudioTrackManager {
     this._scheduleInternal(track, trackOffsetMillis, trackNumber);
   }
 
-  private _scheduleInternal(track: AudioTrackDetails, trackOffsetMillis: number, trackNumber: number) {
+  private _scheduleOffline(
+    track: AudioTrackDetails,
+    trackOffsetMillis: number,
+    context: BaseAudioContext,
+    pannerNodes: StereoPannerNode
+  ) {
+    const seekbarOffsetInMillis = 0;
+    const currentTime = context.currentTime;
+
+    const {
+      audioId,
+      trackDetail: {
+        scheduledKey
+      }
+    } = track;
+
+    // Not scaled with playback rate.
+    const startTime = track.trackDetail.startOffsetInMillis;
+    // Not scaled with playback rate.
+    const endTime = track.trackDetail.endOffsetInMillis;
+
+    if (trackOffsetMillis + (endTime - startTime) < seekbarOffsetInMillis) {
+      const key = track.trackDetail.scheduledKey;
+
+      if (Object.hasOwn(this.scheduledNodes, key)) {
+        this.scheduledNodes[key].buffer.stop();
+        delete this.scheduledNodes[key];
+      }
+      return;
+    }
+
+    const startTimeSecs = startTime / 1000;
+    const trackDurationSecs = endTime / 1000;
+    const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
+
+    const bufferSource = context.createBufferSource();
+    bufferSource.buffer = this.getAudioBuffer(audioId);
+    bufferSource.connect(pannerNodes);
+
+    const offsetStart = startTimeSecs + Math.max(distance, 0);
+
+    bufferSource.start(
+      currentTime + Math.max(-distance, 0), 
+      offsetStart,
+      trackDurationSecs - offsetStart
+    );
+
+    this.offlineScheduledNodes[scheduledKey] = {
+      audioId,
+      buffer: bufferSource,
+    };
+
+    bufferSource.onended = () => {
+      if (Object.hasOwn(this.offlineScheduledNodes, scheduledKey)) {
+        const node = this.offlineScheduledNodes[scheduledKey];
+        node.buffer.disconnect();
+        delete this.offlineScheduledNodes[scheduledKey];
+      }
+    }
+  }
+
+  private _scheduleInternal(
+    track: AudioTrackDetails,
+    trackOffsetMillis: number,
+    trackNumber: number
+  ) {
     const seekbarOffsetInMillis = this.runningTimestamp * 1000;
     const context = audioService.useAudioContext();
     const currentTime = context.currentTime;
@@ -622,8 +767,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Reschedule all audio tracks that are scheduled, or to be scheduled.
-   * 
+   * @description Reschedule all audio tracks that are scheduled, or to be scheduled.
    * @param audioTrackDetails All track details
    * @param movedAudioTracks Moved scheduled that contains additional information to override.
    */
@@ -664,6 +808,10 @@ class AudioTrackManager {
     } 
   }
 
+  /**
+   * @description Reschedule an already scheduled track.
+   * @param track track detail
+   */
   rescheduleTrackFromScheduledNodes(
     track: AudioTrackDetails
   ) {
@@ -671,6 +819,7 @@ class AudioTrackManager {
 
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       const node = this.scheduledNodes[symbolKey];
+
       node.pendingReschedule = {
         offsetInMillis: track.trackDetail.offsetInMillis,
         newTrack: track,

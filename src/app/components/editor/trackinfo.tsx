@@ -3,7 +3,7 @@ import { Knob } from '../knob';
 import { audioManager } from '@/app/services/audiotrackmanager';
 
 interface TrackInfoProps {
-  id: number,
+  id: number
   height: number
 }
 
