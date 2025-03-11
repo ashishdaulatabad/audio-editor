@@ -68,7 +68,7 @@ const windowManagerSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Add window to the state
+     * @description Add window to the state
      * - [ ] To do: Directly tie the window manager state to identifier of 
      * the entity (either a plugin in future or the current track.).
      * 

@@ -7,17 +7,16 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { VolumeLevels } from "./volumelevels";
 import { Knob } from "../knob";
+import { addAudio } from "@/app/state/audiostate";
+import { randomColor } from "@/app/services/color";
 
 /**
- * Player at the top bar
- * To do: Too many re-animations: checking.
- *
- * @param props 
- * @returns 
+ * @description Player at the top bar
  */
 export function Player(props: React.PropsWithoutRef<any>) {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const [timer, setTimer] = React.useState('00:00');
+  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
 
   const ref = React.createRef<HTMLDivElement>();
   const [masterVol, setMasterVol] = React.useState(1);
@@ -47,8 +46,35 @@ export function Player(props: React.PropsWithoutRef<any>) {
     setMasterVol(e);
   }
 
+  /**
+   * @description Exporting into audio file.
+   * @todo: This.
+   */
+  async function exportIntoAudioFile() {
+    const data = await audioManager.simulateIntoOfflineAudio(tracks);
+    const details = {
+      audioName: 'new.mp3',
+      colorAnnotation: randomColor(),
+      duration: data.duration as number,
+      effects: []
+    };
+    const newAudioId = audioManager.registerAudioInAudioBank(details, data);
+    dispatch(addAudio({
+      ...details,
+      audioId: newAudioId
+    }));
+  }
+
   return (
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-slate-800 shadow-lg">
+      <nav>
+        <ul className="list-none">
+          <li
+            onClick={exportIntoAudioFile}
+            className="inline-block hover:bg-slate-600 p-3 rounded-sm select-none"
+          >Export</li>
+        </ul>
+      </nav>
       <div className="volume px-6 text-center text-xs" title="Master Volume">
         <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
         <div>{Math.round(masterVol * 100)}</div>

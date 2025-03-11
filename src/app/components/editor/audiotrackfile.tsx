@@ -25,11 +25,15 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const dispatch = useDispatch();
 
-  function selectAudioSlice(index: number) {
+  /**
+   * @description Select currently selected slice.
+   * @param index 
+   */
+  function selectAudioSlice() {
     dispatch(selectAudio({
       ...file,
       trackDetail: {
-        startOffsetInMillis: 0,
+        startOffsetInMillis:   0,
         endOffsetInMillis: (file.duration as number * 1000),
         selected: false,
       }
@@ -46,40 +50,6 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     showDialog,
     hideDialog
   } = React.useContext(DialogContext);
-  /**
-   * Delete track from the tracking.
-   * @param index index in redux.
-   */
-  function deleteTrack(index: number) {
-    /// Maybe make a common method for this.
-    audioManager.removeAllAudioFromScheduledNodes(file.audioId);
-    audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
-    audioManager.removeOffscreenCanvas(file.audioId);
-    audioManager.unregisterAudioFromAudioBank(file.audioId);
-
-    const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
-      [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
-    ), new Array<symbol>());
-
-    // Cleanup opened window with same audio ids.
-    dispatch(batchRemoveWindowWithUniqueIdentifier(allTrackAudioIds));
-    // Cleanup tracks.
-    dispatch(removeAudioFromAllTracks(file.audioId));
-    // Cleanup from audio list.
-    dispatch(removeAudio(index));
-    // Delete annotated color
-    deleteColor(file.colorAnnotation);
-    // Reset to default
-    if (props.selected) {
-      dispatch(resetToDefault());
-    }
-  }
-
-  function confirmDelete() {
-    deleteTrack(index);
-    hideDialog();
-    hideContextMenu();
-  }
 
   function onDeleteSelected() {
     /// Maybe make a common method for this.
@@ -107,8 +77,13 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     hideContextMenu();
   }
 
+  /**
+   * @description Open a custom context.
+   * @param event event details
+   */
   function openContextMenu(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     event.preventDefault();
+
     showContextMenu([{
       name: 'Delete',
       icon: <FaTrash />,
@@ -119,12 +94,12 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   return (
     <div
       className={css(
-        "cursor-pointer text-md mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
+        "cursor-pointer text-sm mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
         props.isSame ? 'shadow-lg shadow-gray-900' : 'shadow-md shadow-gray-700'
       )}
       key={index}
       data-index={index}
-      onClick={() => selectAudioSlice(index)}
+      onClick={selectAudioSlice}
       onContextMenu={openContextMenu}
       style={{background: file.colorAnnotation}}
     >

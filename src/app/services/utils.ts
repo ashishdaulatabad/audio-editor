@@ -1,11 +1,37 @@
-import { AudioDetails } from "../state/audiostate";
-import { audioService } from "./audioservice";
-import { audioManager } from "./audiotrackmanager";
-import { randomColor } from "./color";
-import { Maybe } from "./interfaces";
+import { AudioDetails } from '../state/audiostate';
+import { audioService } from './audioservice';
+import { audioManager } from './audiotrackmanager';
+import { randomColor } from './color';
+import { Maybe } from './interfaces';
 
-export function css(...cssStr: string[]): string {
-  return cssStr.filter(css => css).map(css => css.trim()).join(' ')
+type Attr = string |
+  { [k: string]: boolean | (() => boolean) };
+
+/**
+ * @description CSS builder
+ * @param cssStr css arguments
+ * @returns resultant applicable classNames.
+ */
+export function css(...cssStr: Attr[]): string {
+  return cssStr.map(css => {
+    switch (typeof css) {
+      case 'string': return css.trim();
+      case 'object': {
+        for (const key of Object.keys(css)) {
+          if (
+            (typeof css[key] === 'function' && css[key]()) ||
+            (typeof css[key] === 'boolean' && css[key])
+          ) {
+            return key.trim();
+          }
+          return null;
+        }
+      }
+      default: {
+        return null;
+      }
+    }
+  }).filter(returnedCss => returnedCss).join(' ');
 }
 
 export async function createAudioData(
@@ -77,7 +103,10 @@ export function traverseParentUntilOneCondition(
 export function getTrackAudioElement(element: Element) {
   let traverse: Element | null = element;
 
-  while (traverse !== null && !traverse.classList.contains('track-audio')) {
+  while (
+    traverse !== null &&
+    !traverse.classList.contains('track-audio')
+  ) {
     traverse = traverse.parentElement;
   }
 
@@ -87,7 +116,11 @@ export function getTrackAudioElement(element: Element) {
 export function getTrackAudioOrTrackElement(element: Element) {
   let traverse: Element | null = element;
 
-  while (traverse !== null && !traverse.classList.contains('track-audio') && !traverse.classList.contains('track')) {
+  while (
+    traverse !== null &&
+    !traverse.classList.contains('track-audio') && 
+    !traverse.classList.contains('track')
+  ) {
     traverse = traverse.parentElement;
   }
 
@@ -96,7 +129,11 @@ export function getTrackAudioOrTrackElement(element: Element) {
 
 export function getTrackElement(element: Element) {
   let traverse: Element | null = element;
-  while (traverse !== null && !traverse.classList.contains('track')) {
+
+  while (
+    traverse !== null &&
+    !traverse.classList.contains('track')
+  ) {
     traverse = traverse.parentElement;
   }
 

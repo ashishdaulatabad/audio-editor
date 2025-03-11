@@ -40,16 +40,16 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
 
   const thickLineData = {
     lw: 2,
-    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => {
-      return ["M", index * lineDist, 15, "L", index * lineDist, 30].join(' ');
-    }).join(" "),
+    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => (
+      `M${index * lineDist} 15 L${index * lineDist} 30`
+    )).join(''),
   };
 
   const thinLineData = {
     lw: 1,
-    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => {
-      return ["M", index * lineDist + lineDist / 2, 23, "L", index * lineDist + lineDist / 2, 30].join(' ');
-    }).join(" "),
+    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => (
+      `M${index * lineDist + lineDist / 2} 23L${index * lineDist + lineDist / 2} 30`
+    )).join(''),
   };
 
   function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {

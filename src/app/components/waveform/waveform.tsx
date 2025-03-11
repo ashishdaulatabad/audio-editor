@@ -10,22 +10,36 @@ import { Knob } from '../knob';
 import { RootState } from '@/app/state/store';
 import { WaveformSeekbar } from './waveformseekbar';
 
+/**
+ * @description Settings for Waveform Editor
+ */
 export interface WaveformEditorProps {
+  /**
+   * @description Track Number.
+   */
   trackNumber: number
+  /**
+   * @description Audio ID of the current track.
+   */
   audioId: number
+  /**
+   * @description Width of the full window.
+   */
   w: number
+  /**
+   * @description Height of the full window
+   */
   h: number
 }
 
 /**
- * Creates the waveform editor for current `Audio` (distinction, `AudioTrack` and `Audio`)
- * changing here will affect all the instance of used `AudioTrack` throughout the project.
+ * @description Creates the waveform editor for current `AudioTrack`.
  * 
+ * Note that multiple scheduled track will refer to same instance of the raw `AudioBuffer`, but the
+ * scheduled information will be shown at the bottom with red region.
  * 
  * - [ ] To do: Figure out how the internal width and height will be set up:
  * should be handled by the parent element itself.
- * @param props 
- * @returns 
  */
 export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorProps>) {
   const { trackNumber, audioId } = props;
@@ -67,7 +81,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   });
 
   /**
-   * General transformation of Audio.
+   * @description General transformation of Audio.
    * @param transformation Details.
    */
   function transform(transformation: AudioTransformation) {

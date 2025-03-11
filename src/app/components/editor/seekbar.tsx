@@ -62,16 +62,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   const thickLineData = {
     lw: 2,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => {
-      return ["M", index * lineDist, 15, "L", index * lineDist, 30].join(' ');
-    }).join(" "),
+    content: Array.from({ length: props.totalLines }, (_, index: number) => (
+      `M${index * lineDist} 15 L${index * lineDist} 30`
+    )).join(''),
   };
 
   const thinLineData = {
     lw: 1,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => {
-      return ["M", index * lineDist + lineDist / 2, 23, "L", index * lineDist + lineDist / 2, 30].join(' ');
-    }).join(" "),
+    content: Array.from({ length: props.totalLines }, (_, index: number) => (
+      `M${index * lineDist + lineDist / 2} 23L${index * lineDist + lineDist / 2} 30`
+    )).join(''),
   };
 
   /**
