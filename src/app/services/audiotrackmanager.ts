@@ -1,5 +1,5 @@
 import { AudioDetails } from '../state/audiostate';
-import { AudioTrackDetails } from '../state/trackdetails';
+import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
 import { clamp } from '../utils';
 import { audioService } from './audioservice';
 
@@ -487,8 +487,8 @@ class AudioTrackManager {
     return this;
   }
 
-  setLoopEnd(valueMillis: number) {
-    this.loopEnd = Math.max(5, valueMillis / 1000);
+  setLoopEnd(valueMicros: number) {
+    this.loopEnd = Math.max(5, valueMicros / SEC_TO_MICROSEC);
   }
 
   setGainNodeForMaster(vol: number) {
@@ -525,7 +525,7 @@ class AudioTrackManager {
     // const currentTime = context.currentTime;
     for (const trackContents of audioTrackDetails) {
       for (const track of trackContents) {
-        this._scheduleInternal(track, track.trackDetail.offsetInMillis, trackIndex);
+        this._scheduleInternal(track, track.trackDetail.offsetInMicros, trackIndex);
       }
       ++trackIndex;
     }
@@ -547,7 +547,7 @@ class AudioTrackManager {
       for (const track of trackContents) {
         this._scheduleOffline(
           track,
-          track.trackDetail.offsetInMillis,
+          track.trackDetail.offsetInMicros,
           context,
           pannerNodes[trackIndex]
         );
@@ -627,11 +627,11 @@ class AudioTrackManager {
 
   private _scheduleOffline(
     track: AudioTrackDetails,
-    trackOffsetMillis: number,
+    trackOffsetMicros: number,
     context: BaseAudioContext,
     pannerNodes: StereoPannerNode
   ) {
-    const seekbarOffsetInMillis = 0;
+    const seekbarOffsetInMicros = 0;
     const currentTime = context.currentTime;
 
     const {
@@ -642,11 +642,11 @@ class AudioTrackManager {
     } = track;
 
     // Not scaled with playback rate.
-    const startTime = track.trackDetail.startOffsetInMillis;
+    const startTime = track.trackDetail.startOffsetInMicros;
     // Not scaled with playback rate.
-    const endTime = track.trackDetail.endOffsetInMillis;
+    const endTime = track.trackDetail.endOffsetInMicros;
 
-    if (trackOffsetMillis + (endTime - startTime) < seekbarOffsetInMillis) {
+    if (trackOffsetMicros + (endTime - startTime) < seekbarOffsetInMicros) {
       const key = track.trackDetail.scheduledKey;
 
       if (Object.hasOwn(this.scheduledNodes, key)) {
@@ -656,9 +656,9 @@ class AudioTrackManager {
       return;
     }
 
-    const startTimeSecs = startTime / 1000;
-    const trackDurationSecs = endTime / 1000;
-    const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
+    const startTimeSecs = startTime / SEC_TO_MICROSEC;
+    const trackDurationSecs = endTime / SEC_TO_MICROSEC;
+    const distance = (seekbarOffsetInMicros - trackOffsetMicros) / SEC_TO_MICROSEC;
 
     const bufferSource = context.createBufferSource();
     bufferSource.buffer = this.getAudioBuffer(audioId);
@@ -688,10 +688,10 @@ class AudioTrackManager {
 
   private _scheduleInternal(
     track: AudioTrackDetails,
-    trackOffsetMillis: number,
+    trackOffsetMicros: number,
     trackNumber: number
   ) {
-    const seekbarOffsetInMillis = this.runningTimestamp * 1000;
+    const seekbarOffsetInMicros = this.runningTimestamp * SEC_TO_MICROSEC;
     const context = audioService.useAudioContext();
     const currentTime = context.currentTime;
 
@@ -703,11 +703,11 @@ class AudioTrackManager {
     } = track;
 
     // Not scaled with playback rate.
-    const startTime = track.trackDetail.startOffsetInMillis;
+    const startTime = track.trackDetail.startOffsetInMicros;
     // Not scaled with playback rate.
-    const endTime = track.trackDetail.endOffsetInMillis;
+    const endTime = track.trackDetail.endOffsetInMicros;
 
-    if (trackOffsetMillis + (endTime - startTime) < seekbarOffsetInMillis) {
+    if (trackOffsetMicros + (endTime - startTime) < seekbarOffsetInMicros) {
       const key = track.trackDetail.scheduledKey;
 
       if (Object.hasOwn(this.scheduledNodes, key)) {
@@ -717,18 +717,19 @@ class AudioTrackManager {
       return;
     }
 
-    const startTimeSecs = startTime / 1000;
-    const trackDurationSecs = endTime / 1000;
-    const distance = (seekbarOffsetInMillis - trackOffsetMillis) / 1000;
-
+    const startTimeSecs = startTime / SEC_TO_MICROSEC;
+    const trackDurationSecs = endTime / SEC_TO_MICROSEC;
+    const distance = (seekbarOffsetInMicros - trackOffsetMicros);
+    const startFrom = ((currentTime * SEC_TO_MICROSEC) + Math.max(-distance, 0)) / SEC_TO_MICROSEC;
+    
     const bufferSource = context.createBufferSource();
     bufferSource.buffer = this.getAudioBuffer(audioId);
     bufferSource.connect(this.pannerNodes[trackNumber]);
 
-    const offsetStart = startTimeSecs + Math.max(distance, 0);
+    const offsetStart = startTimeSecs + (Math.max(distance, 0)) / SEC_TO_MICROSEC;
 
     bufferSource.start(
-      currentTime + Math.max(-distance, 0), 
+      startFrom, 
       offsetStart,
       trackDurationSecs - offsetStart
     );
@@ -759,7 +760,7 @@ class AudioTrackManager {
               this._scheduleInternal(track, offsetInMillis, newTrackNumber);
             }
           } else {
-            this._scheduleInternal(track, track.trackDetail.offsetInMillis, trackNumber);
+            this._scheduleInternal(track, track.trackDetail.offsetInMicros, trackNumber);
           }
         }
       }
@@ -788,20 +789,20 @@ class AudioTrackManager {
           if (typeof audioTrackIndex === 'number' && audioTrackIndex > -1) {
             const newTrack = (movedAudioTracks as AudioTrackDetails[])[audioTrackIndex];
             node.pendingReschedule = {
-              offsetInMillis: newTrack.trackDetail.offsetInMillis,
+              offsetInMillis: newTrack.trackDetail.offsetInMicros,
               newTrack,
               trackNumber
             };
           } else {
             node.pendingReschedule = {
-              offsetInMillis: audio.trackDetail.offsetInMillis,
+              offsetInMillis: audio.trackDetail.offsetInMicros,
               trackNumber
             };
           }
           node.buffer.stop(0);
           node.buffer.disconnect();
         } else {
-          this._scheduleInternal(audio, audio.trackDetail.offsetInMillis, trackNumber);
+          this._scheduleInternal(audio, audio.trackDetail.offsetInMicros, trackNumber);
         }
       }
       ++trackNumber;
@@ -821,7 +822,7 @@ class AudioTrackManager {
       const node = this.scheduledNodes[symbolKey];
 
       node.pendingReschedule = {
-        offsetInMillis: track.trackDetail.offsetInMillis,
+        offsetInMillis: track.trackDetail.offsetInMicros,
         newTrack: track,
         trackNumber: track.trackDetail.trackNumber
       };

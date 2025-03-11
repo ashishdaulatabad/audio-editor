@@ -15,11 +15,11 @@ export type TrackInformation = {
   /**
    * Start offset relative to the audio.
    */
-  startOffsetInMillis: number,
+  startOffsetInMicros: number,
   /**
    * End offset relative to the audio.
    */
-  endOffsetInMillis: number,
+  endOffsetInMicros: number,
   /**
    * Boolean if selected or not.
    */
@@ -31,10 +31,12 @@ export enum Status {
   Play
 }
 
-const twoMinuteInMillis: number = 2 * 60 * 1000;
+export const SEC_TO_MICROSEC = 1e6;
+
+const twoMinuteInMicros: number = 2 * 60 * SEC_TO_MICROSEC;
 
 export type ScheduledInformation = {
-  offsetInMillis: number,
+  offsetInMicros: number,
   scheduledKey: symbol,
   trackNumber: number
 };
@@ -50,23 +52,23 @@ export type AudioTrackDetails = AudioDetails & {
 /// Setting extra time buffer to 2 minutes.
 const initialState: {
   status: Status,
-  maxTimeMillis: number,
+  maxTimeMicros: number,
   trackDetails: AudioTrackDetails[][]
 } = {
   status: Status.Pause,
-  maxTimeMillis: twoMinuteInMillis,
-  trackDetails: Array.from({length: audioManager.totalTrackSize}, () => [])
+  maxTimeMicros: twoMinuteInMicros,
+  trackDetails: Array.from({length: 10}, () => [])
 }
 
 function getMaxTime(trackDetails: AudioTrackDetails[][]) {
   return trackDetails.reduce((maxTime: number, currentArray) => {
     const maxTimeInCurrentTrack = currentArray.reduce((maxTime: number, currentTrack) => {
       // Should always exist in seconds
-      const startTimeOfTrack = currentTrack.trackDetail.startOffsetInMillis;
-      const endTimeOfTrack = currentTrack.trackDetail.endOffsetInMillis;
+      const startTimeOfTrack = currentTrack.trackDetail.startOffsetInMicros;
+      const endTimeOfTrack = currentTrack.trackDetail.endOffsetInMicros;
 
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
-      const endTime = currentTrack.trackDetail.offsetInMillis + trackTotalTime;
+      const endTime = currentTrack.trackDetail.offsetInMicros + trackTotalTime;
       return Math.max(maxTime, endTime);
     }, 0)
 
@@ -79,9 +81,9 @@ function isWithinRegionAndNotSelected(
   pointStartSec: number,
   pointEndSec: number
 ) {
-  const startTime = track.trackDetail.offsetInMillis / 1000;
-  const startOffset = track.trackDetail.startOffsetInMillis / 1000;
-  const endOffset = track.trackDetail.endOffsetInMillis / 1000;
+  const startTime = track.trackDetail.offsetInMicros / SEC_TO_MICROSEC;
+  const startOffset = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
+  const endOffset = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
   const endTime = startTime + (endOffset - startOffset);
 
   // Probably need a better boolean checks, but this works for now.
@@ -123,20 +125,20 @@ export const trackDetailsSlice = createSlice({
       const { trackNumber, trackDetails } = action.payload;
       state.trackDetails[trackNumber].push(trackDetails);
       // Calculate the maxTime 
-      const currentTime = state.maxTimeMillis - twoMinuteInMillis;
+      const currentTime = state.maxTimeMicros - twoMinuteInMicros;
       // Should always exist in seconds
-      const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMillis ?? 0;
-      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.duration as number) * 1000);
+      const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMicros ?? 0;
+      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMicros ?? ((trackDetails.duration as number) * SEC_TO_MICROSEC);
 
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
-      const endTime = trackDetails.trackDetail.offsetInMillis + trackTotalTime;
+      const endTime = trackDetails.trackDetail.offsetInMicros + trackTotalTime;
 
       if (currentTime < endTime) {
-        state.maxTimeMillis = endTime + twoMinuteInMillis;
+        state.maxTimeMicros = endTime + twoMinuteInMicros;
         audioManager.setLoopEnd(endTime);
       } else {
         const maxTime = getMaxTime(state.trackDetails);
-        state.maxTimeMillis = maxTime + twoMinuteInMillis;
+        state.maxTimeMicros = maxTime + twoMinuteInMicros;
         audioManager.setLoopEnd(maxTime);
       }
     },
@@ -148,7 +150,7 @@ export const trackDetailsSlice = createSlice({
       /// Now find the next longest track among all the tracks exists with offset
       const maxTime = getMaxTime(state.trackDetails);
 
-      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
     /// Selecting multiple tracks at once.
@@ -168,11 +170,11 @@ export const trackDetailsSlice = createSlice({
     /// Selecting multiple tracks at once.
     selectTracksWithinSelectedSeekbarSection(state, action: PayloadAction<TimeSectionSelection>) {
       const {
-        startTimeMillis,
-        endTimeMillis
+        startTimeMicros,
+        endTimeMicros
       } = action.payload;
-      const pointStartSec = startTimeMillis / 1000;
-      const pointEndSec = endTimeMillis / 1000;
+      const pointStartSec = startTimeMicros / SEC_TO_MICROSEC;
+      const pointEndSec = endTimeMicros / SEC_TO_MICROSEC;
 
       for (let index = 0; index < state.trackDetails.length; ++index) {
         for (const track of state.trackDetails[index]) {
@@ -267,7 +269,7 @@ export const trackDetailsSlice = createSlice({
       }
 
       const maxTime = getMaxTime(state.trackDetails);
-      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
     /**
@@ -311,23 +313,23 @@ export const trackDetailsSlice = createSlice({
 
         for (let audioIndex = 0; audioIndex < audioTracks.length; ++audioIndex) {
           const audio = audioTracks[audioIndex];
-          const offsetInMillis = audio.trackDetail.offsetInMillis;
-          const offsetInSecs = offsetInMillis / 1000;
-          const oldStartOffset = audio.trackDetail.startOffsetInMillis;
-          const oldEndOffset = audio.trackDetail.endOffsetInMillis;
+          const offsetInMicros = audio.trackDetail.offsetInMicros;
+          const offsetInSecs = offsetInMicros / SEC_TO_MICROSEC;
+          const oldStartOffset = audio.trackDetail.startOffsetInMicros;
+          const oldEndOffset = audio.trackDetail.endOffsetInMicros;
           const oldEndDuration = oldEndOffset - oldStartOffset;
-          const endOffsetSecs = (offsetInMillis + oldEndDuration) / 1000;
+          const endOffsetSecs = (offsetInMicros + oldEndDuration) / SEC_TO_MICROSEC;
 
           /// Check if intersects.
           if (endOffsetSecs > pointOfSliceSecs && pointOfSliceSecs > offsetInSecs) {
-            const newEndPoint = (pointOfSliceSecs * 1000);
-            const firstEndDuration = (newEndPoint - offsetInMillis);
+            const newEndPoint = (pointOfSliceSecs * SEC_TO_MICROSEC);
+            const firstEndDuration = (newEndPoint - offsetInMicros);
 
             const firstHalf: AudioTrackDetails = {
               ...audio,
               trackDetail: {
                 ...audio.trackDetail,
-                endOffsetInMillis: oldStartOffset + firstEndDuration
+                endOffsetInMicros: oldStartOffset + firstEndDuration
               }
             }
 
@@ -336,8 +338,8 @@ export const trackDetailsSlice = createSlice({
               trackDetail: {
                 ...audio.trackDetail,
                 scheduledKey: Symbol(),
-                offsetInMillis: newEndPoint,
-                startOffsetInMillis: oldStartOffset + firstEndDuration,
+                offsetInMicros: newEndPoint,
+                startOffsetInMicros: oldStartOffset + firstEndDuration,
               }
             };
 
@@ -373,38 +375,38 @@ export const trackDetailsSlice = createSlice({
       action: PayloadAction<{
         trackNumber: number,
         audioIndex: number,
-        offsetInMillis: number,
-        startOffsetInMillis: number,
-        endOffsetInMillis: number
+        offsetInMicros: number,
+        startOffsetInMicros: number,
+        endOffsetInMicros: number
       }>
     ) {
       const {
         trackNumber,
         audioIndex,
-        offsetInMillis,
-        startOffsetInMillis,
-        endOffsetInMillis
+        offsetInMicros,
+        startOffsetInMicros,
+        endOffsetInMicros
       } = action.payload;
-      state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMillis = offsetInMillis;
-      state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMillis = startOffsetInMillis;
-      state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMillis = endOffsetInMillis;
+      state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMicros = offsetInMicros;
+      state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMicros = startOffsetInMicros;
+      state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
 
       const trackDetails = state.trackDetails[trackNumber][audioIndex];
-      const currentTime = state.maxTimeMillis - twoMinuteInMillis;
+      const currentTime = state.maxTimeMicros - twoMinuteInMicros;
 
       // Should always exist in milliseconds
-      const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMillis ?? 0;
-      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMillis ?? ((trackDetails.duration as number) * 1000);
+      const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMicros ?? 0;
+      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMicros ?? ((trackDetails.duration as number) * SEC_TO_MICROSEC);
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
 
-      const endTime = offsetInMillis + trackTotalTime;
+      const endTime = offsetInMicros + trackTotalTime;
 
       if (currentTime < endTime) {
-        state.maxTimeMillis = endTime + twoMinuteInMillis;
+        state.maxTimeMicros = endTime + twoMinuteInMicros;
         audioManager.setLoopEnd(endTime);
       } else {
         const maxTime = getMaxTime(state.trackDetails);
-        state.maxTimeMillis = maxTime + twoMinuteInMillis;
+        state.maxTimeMicros = maxTime + twoMinuteInMicros;
         audioManager.setLoopEnd(maxTime);
       }
     },
@@ -455,24 +457,24 @@ export const trackDetailsSlice = createSlice({
       action: PayloadAction<{
         allTrackNumbers: number[],
         allAudioIndexes: number[],
-        allOffsetsInMillis: number[],
-        allStartOffsetsInMillis: number[],
-        allEndOffsetsInMillis: number[]
+        allOffsetsInMicros: number[],
+        allStartOffsetsInMicros: number[],
+        allEndOffsetsInMicros: number[]
       }>) 
     {
       const {
         allTrackNumbers,
         allAudioIndexes,
-        allOffsetsInMillis,
-        allStartOffsetsInMillis,
-        allEndOffsetsInMillis
+        allOffsetsInMicros,
+        allStartOffsetsInMicros,
+        allEndOffsetsInMicros
       } = action.payload;
 
       if (
         allAudioIndexes.length !== allTrackNumbers.length ||
-        allAudioIndexes.length !== allOffsetsInMillis.length ||
-        allAudioIndexes.length !== allStartOffsetsInMillis.length ||
-        allAudioIndexes.length !== allEndOffsetsInMillis.length
+        allAudioIndexes.length !== allOffsetsInMicros.length ||
+        allAudioIndexes.length !== allStartOffsetsInMicros.length ||
+        allAudioIndexes.length !== allEndOffsetsInMicros.length
       ) {
         return;
       }
@@ -480,17 +482,17 @@ export const trackDetailsSlice = createSlice({
       for (let index = 0; index < allTrackNumbers.length; ++index) {
         const trackNumber = allTrackNumbers[index];
         const audioIndex = allAudioIndexes[index];
-        const offsetInMillis = allOffsetsInMillis[index];
-        const startOffsetInMillis = allStartOffsetsInMillis[index];
-        const endOffsetInMillis = allEndOffsetsInMillis[index];
+        const offsetInMicros = allOffsetsInMicros[index];
+        const startOffsetInMicros = allStartOffsetsInMicros[index];
+        const endOffsetInMicros = allEndOffsetsInMicros[index];
 
-        state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMillis = offsetInMillis;
-        state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMillis = startOffsetInMillis;
-        state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMillis = endOffsetInMillis;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.offsetInMicros = offsetInMicros;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMicros = startOffsetInMicros;
+        state.trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
       }
 
       const maxTime = getMaxTime(state.trackDetails);
-      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
     /// Remove all the tracks related to this audio ID.
@@ -503,7 +505,7 @@ export const trackDetailsSlice = createSlice({
       }
 
       const maxTime = getMaxTime(state.trackDetails);
-      state.maxTimeMillis = maxTime + twoMinuteInMillis;
+      state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     }
   }

@@ -16,8 +16,8 @@ function getDefaultSelectedTrack() {
     duration: 0,
     colorAnnotation: '',
     trackDetail: {
-      startOffsetInMillis: 0,
-      endOffsetInMillis: 0,
+      startOffsetInMicros: 0,
+      endOffsetInMicros: 0,
       selected: false
     }
   };

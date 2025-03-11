@@ -6,7 +6,7 @@ import { deleteColor } from '@/app/services/color';
 import { removeAudio } from '@/app/state/audiostate';
 import { resetToDefault, selectAudio } from '@/app/state/selectedaudiostate';
 import { RootState } from '@/app/state/store';
-import { AudioTrackDetails, removeAudioFromAllTracks } from '@/app/state/trackdetails';
+import { AudioTrackDetails, removeAudioFromAllTracks, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
 import { useDispatch, useSelector } from 'react-redux';
 import { FaTrash } from 'react-icons/fa';
@@ -33,8 +33,8 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     dispatch(selectAudio({
       ...file,
       trackDetail: {
-        startOffsetInMillis:   0,
-        endOffsetInMillis: (file.duration as number * 1000),
+        startOffsetInMicros: 0,
+        endOffsetInMicros: (file.duration as number * SEC_TO_MICROSEC),
         selected: false,
       }
     }));
@@ -94,7 +94,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   return (
     <div
       className={css(
-        "cursor-pointer text-sm mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
+        "cursor-pointer text-nowrap text-ellipsis max-w-full mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
         props.isSame ? 'shadow-lg shadow-gray-900' : 'shadow-md shadow-gray-700'
       )}
       key={index}
@@ -103,8 +103,10 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       onContextMenu={openContextMenu}
       style={{background: file.colorAnnotation}}
     >
-      <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
-      <div className={css("w-full font-lg", props.isSame ? 'font-bold' : '')}>{file.audioName}</div>
+      <div className="min-w-8 ml-2">
+        <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
+      </div>
+      <div className={css("w-full font-lg ml-2", props.isSame ? 'font-bold' : '')}>{file.audioName}</div>
     </div>
   )
 }

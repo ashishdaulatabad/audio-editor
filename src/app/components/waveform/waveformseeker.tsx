@@ -1,7 +1,7 @@
 import React from "react";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
-import { Status } from "@/app/state/trackdetails";
+import { SEC_TO_MICROSEC, Status } from "@/app/state/trackdetails";
 import { useSelector } from "react-redux";
 
 export function WaveformSeeker(props: React.PropsWithoutRef<{
@@ -15,9 +15,9 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
   const { trackNumber, audioId } = props;
   const track = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[trackNumber][audioId]);
   const status = useSelector((store: RootState) => store.trackDetailsReducer.status);
-  const startOffsetSecs = track.trackDetail.startOffsetInMillis / 1000;
-  const endOffsetSecs = track.trackDetail.endOffsetInMillis / 1000;
-  const trackOffsetSecs = track.trackDetail.offsetInMillis / 1000;
+  const startOffsetSecs = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
+  const endOffsetSecs = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
+  const trackOffsetSecs = track.trackDetail.offsetInMicros / SEC_TO_MICROSEC;
 
   React.useEffect(() => {
     let value = 0;
