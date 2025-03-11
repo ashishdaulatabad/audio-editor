@@ -1,6 +1,6 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { applyChangesToModifiedAudio } from '@/app/state/trackdetails';
+import { applyChangesToModifiedAudio, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 import { Checkbox } from '../checkbox';
 import { transformAudio } from '@/app/services/audiotransform';
 import { useDispatch, useSelector } from 'react-redux';
@@ -55,15 +55,15 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const endTime = track.duration as number;
   const totalLines = endTime / 5;
   const lineDist = props.w / totalLines;
-  const { startOffsetInMillis, endOffsetInMillis } = track.trackDetail;
-  const measuredDuration = (endOffsetInMillis - startOffsetInMillis);
-  const isPartial = Math.abs(measuredDuration - endTime * 1000) > 1e-6;
+  const { startOffsetInMicros, endOffsetInMicros } = track.trackDetail;
+  const measuredDuration = (endOffsetInMicros - startOffsetInMicros);
+  const isPartial = Math.abs((measuredDuration - endTime)) > 1;
 
   React.useEffect(() => {
     /// Draw canvas
     if (ref.current && divRef.current) {
-      const startOffsetSecs = track.trackDetail.startOffsetInMillis / 1000;
-      const endOffsetSecs = track.trackDetail.endOffsetInMillis / 1000;
+      const startOffsetSecs = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
+      const endOffsetSecs = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
       const startLimit = ((lineDist / 5) * startOffsetSecs);
       const endLimit = ((lineDist / 5) * endOffsetSecs);
       const offcanvas = audioManager.getOffscreenCanvasDrawn(track.audioId);
@@ -211,8 +211,8 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         </div>
         <div className="bg-slate-900">
           <WaveformSeekbar
-            startOffsetInMillis={startOffsetInMillis}
-            endOffsetInMillis={endOffsetInMillis}
+            startOffsetInMillis={startOffsetInMicros / 1000}
+            endOffsetInMillis={endOffsetInMicros / 1000}
             trackNumber={trackNumber}
             audioId={audioId}
             h={props.h * 1.5}

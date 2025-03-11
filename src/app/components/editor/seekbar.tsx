@@ -5,10 +5,11 @@ import { audioManager } from '@/app/services/audiotrackmanager';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/state/store';
 import { ModeType } from './toolkit';
+import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 
 export interface TimeSectionSelection {
-  startTimeMillis: number
-  endTimeMillis: number
+  startTimeMicros: number
+  endTimeMicros: number
 }
 
 /**
@@ -60,20 +61,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const timeUnit = props.timeUnitPerLineDistInSeconds;
   const labelMultiplier = Math.ceil(50 / lineDist);
 
-  const thickLineData = {
-    lw: 2,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => (
-      `M${index * lineDist} 15 L${index * lineDist} 30`
-    )).join(''),
-  };
-
-  const thinLineData = {
-    lw: 1,
-    content: Array.from({ length: props.totalLines }, (_, index: number) => (
-      `M${index * lineDist + lineDist / 2} 23L${index * lineDist + lineDist / 2} 30`
-    )).join(''),
-  };
-
   /**
    * @description Seek to certain point.
    * @param event 
@@ -118,8 +105,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       setIsUserSelectingRegion(true);
 
       props.onTimeSelection({
-        startTimeMillis: currentTimeSecs * 1000,
-        endTimeMillis: currentTimeSecs * 1000
+        startTimeMicros: currentTimeSecs * SEC_TO_MICROSEC,
+        endTimeMicros: currentTimeSecs * SEC_TO_MICROSEC
       });
     }
   }
@@ -139,9 +126,9 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       const endPoint = Math.max(startRegionSelection, endTimeSecs);
       
       props.onTimeSelection({
-        startTimeMillis: startPoint * 1000,
-        endTimeMillis: endPoint * 1000
-      });0.1
+        startTimeMicros: startPoint * SEC_TO_MICROSEC,
+        endTimeMicros: endPoint * SEC_TO_MICROSEC
+      });
     }
   }
 
@@ -161,8 +148,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         const endPoint = Math.max(startRegionSelection, endTimeSecs);
 
         props.onTimeSelection({
-          startTimeMillis: startPoint * 1000,
-          endTimeMillis: endPoint * 1000
+          startTimeMicros: startPoint * SEC_TO_MICROSEC,
+          endTimeMicros: endPoint * SEC_TO_MICROSEC
         });
       } else {
         setStartRegionSelection(0);
@@ -200,7 +187,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     },
   );
 
-  const svgLines = [thickLineData, thinLineData];
   const startSecs = Math.min(startRegionSelection, endRegionSelection);
   const endSecs = Math.max(startRegionSelection, endRegionSelection);
   const startRegion = (startSecs / timeUnit) * lineDist;
@@ -208,7 +194,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   return (
     <div
-      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border border-solid border-slate-900 cursor-pointer shadow-bg"
+      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -218,6 +204,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     >
       <Seeker
         onLoopEnd={handleLoopEnd}
+        timePerUnitLine={timeUnit}
         h={props.h}
         lineDist={props.lineDist}
         seekOffset={leftSeek}
@@ -234,6 +221,22 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         {timeData}
       </svg>
       <svg xmlns={svgxmlns} width={props.w} height={30}>
+        <defs>
+          <pattern
+            id="repeatedSeekbarLines"
+            x="0"
+            y="0"
+            width={props.lineDist}
+            height={props.h}
+            patternUnits="userSpaceOnUse"
+            patternContentUnits="userSpaceOnUse"
+          >
+            <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
+            <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
+          </pattern>
+        </defs>
+        <rect x="0" y="0" width={props.w} height={30} fill="url(#repeatedSeekbarLines)" />
+
         <rect
           fill="#C5887666"
           x={startRegion}
@@ -241,14 +244,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
           width={endRegion - startRegion}
           height={30}
         ></rect>
-        {svgLines.map((svgLine, index: number) => (
-          <path
-            d={svgLine.content}
-            key={index}
-            stroke="#777"
-            strokeWidth={svgLine.lw}
-          ></path>
-        ))}
       </svg>
     </div>
   );

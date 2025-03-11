@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
  */
 export function Seeker(props: React.PropsWithoutRef<{
   lineDist: number
+  timePerUnitLine: number
   h: number
   seekOffset?: number
   onLoopEnd: () => void
@@ -18,10 +19,11 @@ export function Seeker(props: React.PropsWithoutRef<{
 }>) {
   const seekbarRef = React.createRef<HTMLDivElement>();
   const status = useSelector((store: RootState) => store.trackDetailsReducer.status);
+  const timePerUnitLine = props.timePerUnitLine;
 
   React.useEffect(() => {
     if (seekbarRef.current) {
-      const currLeft = (props.lineDist / 5) * audioManager.getTimestamp();
+      const currLeft = (props.lineDist / timePerUnitLine) * audioManager.getTimestamp();
       seekbarRef.current.style.transform = `translate(${Math.round(currLeft)}px)`;
     }
 
@@ -40,7 +42,7 @@ export function Seeker(props: React.PropsWithoutRef<{
           props.onLoopEnd();
         }
 
-        const left = (props.lineDist / 5) * audioManager.getTimestamp();
+        const left = (props.lineDist / timePerUnitLine) * audioManager.getTimestamp();
         seekbarRef.current.style.transform = `translate(${Math.round(left)}px)`;
       }
       

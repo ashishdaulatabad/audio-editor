@@ -36,7 +36,7 @@ export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {
 
   return (
     <div className="inline-flex items-center content-start">
-      <span className="block text-sm text-center [writing-mode:vertical-lr] rotate-180 select-none">Track {props.id + 1}</span>
+      <span className="block text-center [writing-mode:vertical-lr] rotate-180 select-none">Track {props.id + 1}</span>
       <div className="vol" title={"Set Volume for Track " + (props.id+1)}>
         <Knob
           r={16}
@@ -44,7 +44,7 @@ export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {
           pd={10}
           onKnobChange={setVolume}
         />
-        <span className="block text-sm text-center select-none">{Math.round(vol * 100)}</span>
+        <span className="block text-center select-none">{Math.round(vol * 100)}</span>
       </div>
       <div className="pan" title={"Set Pan for Track " + (props.id+1)}>
         <Knob
@@ -55,7 +55,7 @@ export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {
           onKnobChange={setPan}
           scrollDelta={0.02}
         />
-        <span className="block text-sm text-center select-none">{Math.round(panner * 100) / 100}</span>
+        <span className="block text-center select-none">{Math.round(panner * 100) / 100}</span>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { AudioTrackDetails } from "../state/trackdetails";
+import { AudioTrackDetails, SEC_TO_MICROSEC } from "../state/trackdetails";
 import { AudioTransformation } from "./interfaces";
 
 /**
@@ -90,8 +90,8 @@ export function createAudioSample(
   buffer: AudioBuffer
 ) {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const offsetStartTimeSecs = audioInput.trackDetail.startOffsetInMillis / 1000;
-    const offsetEndTimeSecs = audioInput.trackDetail.endOffsetInMillis / 1000;
+    const offsetStartTimeSecs = audioInput.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
+    const offsetEndTimeSecs = audioInput.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
     const duration = offsetEndTimeSecs - offsetStartTimeSecs;
     const totalBufferSize = Math.round(buffer.sampleRate * duration);
 

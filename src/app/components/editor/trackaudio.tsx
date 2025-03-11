@@ -1,7 +1,7 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { addAudio, AudioDetails } from '@/app/state/audiostate';
-import { AudioTrackDetails, deleteAudioFromTrack } from '@/app/state/trackdetails';
+import { AudioTrackDetails, deleteAudioFromTrack, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 import { Waveform } from '@/assets/wave';
 import { Canvas } from '../shared/customcanvas';
 import { css } from '@/app/services/utils';
@@ -90,8 +90,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }, [track.trackDetail, props.lineDist]);
 
   function calculateLeft(track: AudioTrackDetails) {
-    const timeUnitMillis = timeUnit * 1000;
-    return (track.trackDetail.offsetInMillis / timeUnitMillis) * props.lineDist;
+    const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
+    return (track.trackDetail.offsetInMicros / timeUnitMicros) * props.lineDist;
   }
 
   function setGrab(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -137,12 +137,13 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     spanElement: HTMLSpanElement,
     track: AudioTrackDetails
   ) {
-    const startOffsetMillis = track.trackDetail.startOffsetInMillis;
-    const endOffsetMillis = track.trackDetail.endOffsetInMillis;
+    const startOffsetMicros = track.trackDetail.startOffsetInMicros;
+    const endOffsetMicros = track.trackDetail.endOffsetInMicros;
+    const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
 
     // Start defines the invisible scroll, end defines the width of the current track.
-    const leftScrollAmount = (startOffsetMillis / 5000) * props.lineDist;
-    const endPointOfWidth = (endOffsetMillis / 5000) * props.lineDist;
+    const leftScrollAmount = (startOffsetMicros / timeUnitMicros) * props.lineDist;
+    const endPointOfWidth = (endOffsetMicros / timeUnitMicros) * props.lineDist;
     const totalWidth = endPointOfWidth - leftScrollAmount;
 
     divElement.style.width = totalWidth + 'px';

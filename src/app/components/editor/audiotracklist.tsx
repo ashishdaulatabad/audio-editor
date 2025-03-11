@@ -24,8 +24,8 @@ export function AudioTrackList() {
    */
   function selectFile() {
     const inputElement = document.createElement("input") as HTMLInputElement;
-    inputElement.type = "file";
-    inputElement.accept = "audio/*";
+    inputElement.type = 'file';
+    inputElement.accept = 'audio/*';
 
     inputElement.oninput = () => {
       const file = inputElement.files as FileList;
@@ -55,13 +55,13 @@ export function AudioTrackList() {
           placeholder="Search"
         /> */}
         <button
-          className="ml-4 select-none rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
+          className="ml-4 text-lg select-none rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
           onClick={selectFile}
         >
           Load Audio
         </button>
       </div>
-      <div className="list w-full flex-grow overflow-y-scroll">
+      <div className="list w-full flex-grow overflow-x-hidden overflow-y-scroll">
         {files.map((file: AudioDetails, index: number) => {
           const isSame = selectedId === file.audioId;
 

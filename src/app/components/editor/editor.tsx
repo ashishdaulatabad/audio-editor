@@ -29,6 +29,7 @@ import {
   deleteMultipleAudioTrack,
   deselectAllTracks,
   ScheduledInformation,
+  SEC_TO_MICROSEC,
   selectAllTracks,
   selectTracksWithinSelectedSeekbarSection
 } from '../../state/trackdetails';
@@ -103,7 +104,7 @@ export function Editor() {
   const store = useSelector((state: RootState) => state.audioReducer.contents);
   const currentTrack = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
   const trackDetails = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
-  const trackTimeDurationMillis = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMillis);
+  const trackTimeDurationMicros = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMicros);
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const windows = useSelector((state: RootState) => state.windowStoreReducer.contents);
   const dispatch = useDispatch();
@@ -127,30 +128,11 @@ export function Editor() {
   // Other variables
   const totalTracks = trackDetails.length;
   const timeUnitPerLineDistInSeconds = 5;
-  const width = ((trackTimeDurationMillis / 1000) / timeUnitPerLineDistInSeconds) * lineDist;
+  const timeUnitPerLineMicros = timeUnitPerLineDistInSeconds * SEC_TO_MICROSEC;
+  const width = (trackTimeDurationMicros / timeUnitPerLineMicros) * lineDist;
   const totalLines = Math.floor(width / lineDist);
 
   const heightPerTrack = (height / totalTracks) - 2;
-  const thickLineData = {
-    lw: 2,
-    content: Array.from(
-      { length: totalLines }, 
-      (_, index: number) => `M${index * lineDist} 0L${index * lineDist} ${heightPerTrack}`
-    ).join('')
-  }
-
-  const lineDist4 = (lineDist / 4);
-  const thinLineData = {
-    lw: 1,
-    content: Array.from({length: totalLines}, (_, index: number) => {
-      let p = `M${index * lineDist + lineDist4} 0L${index * lineDist + lineDist4} ${heightPerTrack}`
-      p += `M${index * lineDist + lineDist4 * 2} 0L${index * lineDist + lineDist4 * 2} ${heightPerTrack}`
-      p += `M${index * lineDist + lineDist4 * 3} 0L${index * lineDist + lineDist4 * 3} ${heightPerTrack}`
-      return p;
-    }).join('')
-  }
-
-  const drawData = [thickLineData, thinLineData];
 
   /**
    * Set offset relative to the offset of current workspace.
@@ -172,31 +154,32 @@ export function Editor() {
       const left = audioElement.style.left ?? '0px';
       const offsetX = parseFloat(left.substring(0, left.length - 2));
 
+      const timeUnit = timeUnitPerLineDistInSeconds;
       /// Starting from offset in millis.
-      const offsetInMillis = Math.round((offsetX / lineDist) * 5000);
-      const startOffsetInMillis = Math.round((audioElement.scrollLeft / lineDist) * 5000);
+      const offsetInMicros = Math.round((offsetX / lineDist) * timeUnitPerLineMicros);
+      const startOffsetInMicros = Math.round((audioElement.scrollLeft / lineDist) * timeUnitPerLineMicros);
       // const
-      const endOffsetInMillis = Math.round(((audioElement.scrollLeft + audioElement.clientWidth) / lineDist) * 5000);
+      const endOffsetInMicros = Math.round(((audioElement.scrollLeft + audioElement.clientWidth) / lineDist) * timeUnitPerLineMicros);
 
       dispatch(setOffsetInMillisToAudioTrack({
         trackNumber: trackIntIndex,
         audioIndex: audioIntIndex,
-        offsetInMillis,
-        startOffsetInMillis,
-        endOffsetInMillis
+        offsetInMicros,
+        startOffsetInMicros,
+        endOffsetInMicros
       }));
 
       return {
-        offsetInMillis,
-        startOffsetInMillis,
-        endOffsetInMillis
+        offsetInMicros,
+        startOffsetInMicros,
+        endOffsetInMicros
       }
     }
 
     return {
-      offsetInMillis: 0,
-      startOffsetInMillis: 0,
-      endOffsetInMillis: 0
+      offsetInMicros: 0,
+      startOffsetInMicros: 0,
+      endOffsetInMicros: 0
     }
   }
 
@@ -216,7 +199,7 @@ export function Editor() {
     const offsetX = event.nativeEvent.offsetX;
     const scrollOffsetX = trackElement?.scrollLeft || 0;
 
-    const timeOffset = Math.round(((scrollOffsetX + offsetX) / lineDist) * 5 * 1000);
+    const timeOffset = Math.round(((scrollOffsetX + offsetX) / lineDist) * timeUnitPerLineMicros);
 
     /// Assert files uploaded are audio, by checking MIME
     const file = event.nativeEvent.dataTransfer?.files[0];
@@ -235,10 +218,10 @@ export function Editor() {
               ...data,
               trackDetail: {
                 trackNumber: intIndex,
-                offsetInMillis: timeOffset,
+                offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
-                startOffsetInMillis: 0,
-                endOffsetInMillis: data.duration as number,
+                startOffsetInMicros: 0,
+                endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
                 selected: false
               }
             }
@@ -604,9 +587,9 @@ export function Editor() {
       const allElements = audioManager.useManager().getNewPositionForMultipleSelectedTracks();
       const allTrackNumbers: number[] = [],
         allAudioIndexes: number[] = [],
-        allStartOffsetsInMillis: number[] = [],
-        allEndOffsetsInMillis: number[] = [],
-        allOffsetsInMillis: number[] = [];
+        allStartOffsetsInMicros: number[] = [],
+        allEndOffsetsInMicros: number[] = [],
+        allOffsetsInMicros: number[] = [];
       
       allElements.forEach((element) => {
         const { domElement, finalPosition, finalScrollLeft, finalWidth } = element;
@@ -616,31 +599,31 @@ export function Editor() {
         const trackIndex = domElement.getAttribute('data-trackid');
         const trackIntIndex = parseInt(trackIndex ?? '0');
 
-        const timeOffset = Math.round((finalPosition / lineDist) * 5000);
-        const startTimeOffset = Math.round((finalScrollLeft / lineDist) * 5000);
-        const endTimeOffset = Math.round(((finalWidth + finalScrollLeft) / lineDist) * 5000);
+        const timeOffset = Math.round((finalPosition / lineDist) * timeUnitPerLineMicros);
+        const startTimeOffset = Math.round((finalScrollLeft / lineDist) * timeUnitPerLineMicros);
+        const endTimeOffset = Math.round(((finalWidth + finalScrollLeft) / lineDist) * timeUnitPerLineMicros);
 
         allTrackNumbers.push(trackIntIndex);
         allAudioIndexes.push(audioIntIndex);
-        allOffsetsInMillis.push(timeOffset);
-        allStartOffsetsInMillis.push(startTimeOffset);
-        allEndOffsetsInMillis.push(endTimeOffset);
+        allOffsetsInMicros.push(timeOffset);
+        allStartOffsetsInMicros.push(startTimeOffset);
+        allEndOffsetsInMicros.push(endTimeOffset);
       });
 
       dispatch(setOffsetInMillisToMultipleAudioTrack({
         allTrackNumbers,
         allAudioIndexes,
-        allOffsetsInMillis,
-        allStartOffsetsInMillis,
-        allEndOffsetsInMillis
+        allOffsetsInMicros,
+        allStartOffsetsInMicros,
+        allEndOffsetsInMicros
       }));
 
       const movedTrackInfo: AudioTrackDetails[] = [];
       allTrackNumbers.forEach((trackNumber, index: number) => {
         const audioIndex = allAudioIndexes[index], 
-          offsetInMillis = allOffsetsInMillis[index],
-          startOffsetInMillis = allStartOffsetsInMillis[index],
-          endOffsetInMillis = allEndOffsetsInMillis[index];
+        offsetInMicros = allOffsetsInMicros[index],
+        startOffsetInMicros = allStartOffsetsInMicros[index],
+        endOffsetInMicros = allEndOffsetsInMicros[index];
 
         const track = trackDetails[trackNumber][audioIndex];
 
@@ -648,9 +631,9 @@ export function Editor() {
           ...track,
           trackDetail: {
             ...track.trackDetail,
-            offsetInMillis,
-            startOffsetInMillis,
-            endOffsetInMillis
+            offsetInMicros,
+            startOffsetInMicros,
+            endOffsetInMicros
           }
         });
       });
@@ -658,9 +641,9 @@ export function Editor() {
       audioManager.rescheduleAllTracks(trackDetails, movedTrackInfo);
     } else {
       const {
-        offsetInMillis,
-        startOffsetInMillis,
-        endOffsetInMillis
+        offsetInMicros,
+        startOffsetInMicros,
+        endOffsetInMicros
       } = setOffset(movableEntity, lineDist);
 
       const audioElement = getTrackAudioElement(movableEntity) as HTMLElement;
@@ -673,10 +656,10 @@ export function Editor() {
 
       const trackInformation: ScheduledInformation & TrackInformation = {
         trackNumber: trackIntIndex,
-        offsetInMillis,
+        offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
-        endOffsetInMillis,
-        startOffsetInMillis,
+        endOffsetInMicros,
+        startOffsetInMicros,
         selected: track.trackDetail.selected
       };
 
@@ -775,13 +758,13 @@ export function Editor() {
     const index = desiredElement.getAttribute('data-id');
     const trackNumber = index ? parseInt(index) : 0;
     const offsetX = event.nativeEvent.offsetX;
-    const offsetInMillis = Math.round((offsetX / lineDist) * 5000);
+    const offsetInMicros = Math.round((offsetX / lineDist) * timeUnitPerLineMicros);
 
     const newTrack = {
       ...currentTrack,
       trackDetail: {
         ...currentTrack.trackDetail,
-        offsetInMillis,
+        offsetInMicros,
         trackNumber,
         scheduledKey: Symbol(),
       }
@@ -795,7 +778,7 @@ export function Editor() {
     audioManager.useManager().scheduleSingleTrack(
       newTrack,
       trackNumber,
-      offsetInMillis
+      offsetInMicros
     );
   }
 
@@ -1056,7 +1039,6 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        svgLines={drawData}
                         h={(height/totalTracks) - 2}
                       />
                     ))
