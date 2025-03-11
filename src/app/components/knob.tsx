@@ -1,12 +1,38 @@
 import React from 'react';
 import { clamp, svgxmlns } from '../utils';
 
+/**
+ * @description Knob Props for setting values.
+ */
 interface KnobSettings {
-  r: number,
-  pd: number,
-  value?: number,
-  scrollDelta?: number,
-  onKnobChange: (value: number) => void,
+  /**
+   * @description Radius of this knob in pixels.
+   */
+  r: number
+  /**
+   * @description Padding in pixels
+   */
+  pd: number
+  /**
+   * @description Value to be set.
+   */
+  value?: number
+  /**
+   * @description Scroll Change to be made when hovered over the Knob.
+   * - [ ] Todo: Delta change for making the values discrete as well
+   */
+  scrollDelta?: number
+  /**
+   * @description Parent Component action to perform when Knob changes it's value
+   * @param value value that it returns as per `functionMapper`; if not defined, 
+   * returns normalized value from `0` to `1`.
+   * @returns void
+   */
+  onKnobChange: (value: number) => void
+  /**
+   * @description User settings as one-to-one mapping from [0, 1] to a different range of values.
+   */
+  functionMapper?: (e: number) => number
 }
 
 function calcVectorX(value: number) {
@@ -23,6 +49,15 @@ const minY = calcVectorY(0);
 const maxX = calcVectorX(-1);
 const maxY = calcVectorY(-1);
 
+/**
+ * @description Normalize angle between `5 * PI / 4` and `-PI / 4`.
+ * 
+ * @param x horizontal position of cursor
+ * @param y vertical position of cursor
+ * @param centerX x center point
+ * @param centerY y center point
+ * @returns Normalized angle.
+ */
 function normalizeAngle(x: number, y: number, centerX: number, centerY: number): number {
   const dx = x - centerX, dy = y - centerY;
   let angle = Math.atan(dx / dy);
@@ -75,7 +110,8 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
       const currValue = (startAngle - angle) / baseCurveLength;
       setValue(currValue);
 
-      props.onKnobChange(currValue);
+      const mapper = props.functionMapper ? props.functionMapper(currValue) : currValue;
+      props.onKnobChange(mapper);
     }
   }
 
@@ -85,7 +121,9 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
     const newValue = clamp(value + (deltaY !== 0 ? (deltaY / Math.abs(deltaY)) : 0) * scrollDelta, 0, 1);
 
     setValue(newValue);
-    props.onKnobChange(newValue);
+
+    const mapper = props.functionMapper ? props.functionMapper(newValue) : newValue;
+    props.onKnobChange(mapper);
   }
 
   React.useEffect(() => {
