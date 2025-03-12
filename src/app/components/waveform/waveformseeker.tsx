@@ -50,7 +50,6 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
     return () => cancelAnimationFrame(value)
   });
 
-  /// Resetting seekbar after exceeding certain threshold
   return (
     <div
       ref={seekbarRef}

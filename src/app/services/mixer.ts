@@ -3,10 +3,19 @@ class Mixer {
   private masterPanNode: StereoPannerNode | null = null;
   private gainNodes: GainNode[] = [];
   private panNodes: StereoPannerNode[] = [];
+  private mixerViewIdentifier: symbol = Symbol();
 
   constructor(
     private totalMixerCount: number
   ) {}
+
+  get totalMixers() {
+    return this.totalMixerCount;
+  }
+
+  get viewId() {
+    return this.mixerViewIdentifier;
+  }
 
   initialize(context: BaseAudioContext) {}
 

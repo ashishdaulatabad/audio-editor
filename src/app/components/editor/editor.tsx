@@ -9,7 +9,7 @@ import { RootState } from '@/app/state/store';
 import { selectAudio } from '@/app/state/selectedaudiostate';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { Player } from '../player/player';
-import { AudioWaveformEditor } from '../waveform/waveform';
+import { AudioWaveformEditor, WaveformEditorProps } from '../waveform/waveform';
 import { WindowManager } from '../shared/windowmanager';
 import { ModeType, Toolkit } from './toolkit';
 import { RegionSelect, RegionSelection } from './regionselect';
@@ -19,9 +19,11 @@ import { ContextMenuContext } from '@/app/providers/contextmenu';
 
 import {
   addWindow,
+  addWindowToAction,
   batchRemoveWindowWithUniqueIdentifier,
   removeWindowWithUniqueIdentifier,
-  setWindowPosition
+  setWindowPosition,
+  WindowView
 } from '@/app/state/windowstore';
 import {
   cloneAudioTrack,
@@ -45,8 +47,8 @@ import {
   AudioTrackDetails,
   deleteAudioFromTrack,
   selectTracksWithinSpecifiedRegion,
-  setOffsetInMillisToAudioTrack,
-  setOffsetInMillisToMultipleAudioTrack,
+  setOffsetDetailsToAudioTrack,
+  setOffsetDetailsToMultipleAudioTrack,
   sliceAudioTracks,
   Status,
   togglePlay,
@@ -161,7 +163,7 @@ export function Editor() {
       // const
       const endOffsetInMicros = Math.round(((audioElement.scrollLeft + audioElement.clientWidth) / lineDist) * timeUnitPerLineMicros);
 
-      dispatch(setOffsetInMillisToAudioTrack({
+      dispatch(setOffsetDetailsToAudioTrack({
         trackNumber: trackIntIndex,
         audioIndex: audioIntIndex,
         offsetInMicros,
@@ -280,22 +282,25 @@ export function Editor() {
       selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
       setTimeout(() => selectTrackForEdit(null), 300);
     } else {
-      // console.log('here');
-      dispatch(addWindow({
-        header: <><b>Track</b>: {trackForEdit.audioName}</>,
-        props: {
-          trackNumber,
-          audioId: audioIndex,
-          w: 780,
-          h: 100,
-        },
-        windowSymbol: Symbol(),
-        view: AudioWaveformEditor,
-        x: scrollPageRef.current?.scrollLeft ?? 0,
-        y: scrollPageRef.current?.scrollTop ?? 0,
-        visible: true,
-        propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey
-      }));
+      addWindowToAction(
+        dispatch, 
+        {
+          header: <><b>Track</b>: {trackForEdit.audioName}</>,
+          props: {
+            trackNumber,
+            audioId: audioIndex,
+            w: 780,
+            timePerUnitLineDistanceSecs: timeUnitPerLineDistInSeconds,
+            h: 100,
+          },
+          windowSymbol: Symbol(),
+          view: AudioWaveformEditor,
+          x: scrollPageRef.current?.scrollLeft ?? 0,
+          y: scrollPageRef.current?.scrollTop ?? 0,
+          visible: true,
+          propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey
+        }
+      );
 
       selectTrackForEdit(null);
     }
@@ -593,11 +598,11 @@ export function Editor() {
       
       allElements.forEach((element) => {
         const { domElement, finalPosition, finalScrollLeft, finalWidth } = element;
-        const audioIndex = domElement.getAttribute('data-audioid');
-        const audioIntIndex = parseInt(audioIndex ?? '0');
+        const audioIndex = domElement.getAttribute('data-audioid') as string;
+        const audioIntIndex = parseInt(audioIndex);
 
-        const trackIndex = domElement.getAttribute('data-trackid');
-        const trackIntIndex = parseInt(trackIndex ?? '0');
+        const trackIndex = domElement.getAttribute('data-trackid') as string;
+        const trackIntIndex = parseInt(trackIndex);
 
         const timeOffset = Math.round((finalPosition / lineDist) * timeUnitPerLineMicros);
         const startTimeOffset = Math.round((finalScrollLeft / lineDist) * timeUnitPerLineMicros);
@@ -610,7 +615,7 @@ export function Editor() {
         allEndOffsetsInMicros.push(endTimeOffset);
       });
 
-      dispatch(setOffsetInMillisToMultipleAudioTrack({
+      dispatch(setOffsetDetailsToMultipleAudioTrack({
         allTrackNumbers,
         allAudioIndexes,
         allOffsetsInMicros,
@@ -844,7 +849,6 @@ export function Editor() {
       const newCursorPosition = (time * newLineDist) / timeUnitPerLineDistInSeconds;
       const offsetFromScreen = cursorPosition - scrollPageRef.current.scrollLeft;
 
-      // Based on these calculations, calculate scrollTo for new position
       setScroll(newCursorPosition - offsetFromScreen);
     }
   }
@@ -920,7 +924,7 @@ export function Editor() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
     
-    if (ref.current && !set) {
+    if (ref.current) {
       setHeight(ref.current.scrollHeight);
       isSet(true);
     }
@@ -933,7 +937,7 @@ export function Editor() {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }
-  }, [lineDist, status, set, height]);
+  }, [lineDist, status]);
 
   function checkContextMenu() {
     if (isContextOpen()) {

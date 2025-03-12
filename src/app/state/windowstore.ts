@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { AppDispatch } from "./store";
 
 export interface Windowable {}
 
@@ -179,5 +180,18 @@ export const {
   removeWindowWithUniqueIdentifier,
   batchRemoveWindowWithUniqueIdentifier
 } = windowManagerSlice.actions;
+
+/**
+ * @description Add window to window management.
+ * Ensures types for props are well defined and raises error while adding.
+ * @param dispatch dispatch
+ * @param details 
+ */
+export function addWindowToAction<TProps>(
+  dispatch: AppDispatch,
+  details: WindowView<TProps>
+) {
+  dispatch(addWindow(details));
+}
 
 export default windowManagerSlice.reducer;

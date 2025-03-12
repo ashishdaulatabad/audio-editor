@@ -23,6 +23,10 @@ export interface WaveformEditorProps {
    */
   audioId: number
   /**
+   * @description Time per unit line distance in seconds
+   */
+  timePerUnitLineDistanceSecs: number
+  /**
    * @description Width of the full window.
    */
   w: number
@@ -43,7 +47,9 @@ export interface WaveformEditorProps {
  */
 export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorProps>) {
   const { trackNumber, audioId } = props;
-  const track = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[trackNumber][audioId]);
+  const track = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails[trackNumber][audioId]
+  ));
   const ref = React.createRef<HTMLCanvasElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
@@ -53,19 +59,20 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const [pitch, setPitch] = React.useState(1);
 
   const endTime = track.duration as number;
-  const totalLines = endTime / 5;
+  const { timePerUnitLineDistanceSecs } = props;
+  const totalLines = endTime / timePerUnitLineDistanceSecs;
   const lineDist = props.w / totalLines;
   const { startOffsetInMicros, endOffsetInMicros } = track.trackDetail;
   const measuredDuration = (endOffsetInMicros - startOffsetInMicros);
-  const isPartial = Math.abs((measuredDuration - endTime)) > 1;
+  const isPartial = Math.abs((measuredDuration - endTime * SEC_TO_MICROSEC)) > 1;
 
   React.useEffect(() => {
     /// Draw canvas
     if (ref.current && divRef.current) {
       const startOffsetSecs = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
       const endOffsetSecs = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
-      const startLimit = ((lineDist / 5) * startOffsetSecs);
-      const endLimit = ((lineDist / 5) * endOffsetSecs);
+      const startLimit = ((lineDist / timePerUnitLineDistanceSecs) * startOffsetSecs);
+      const endLimit = ((lineDist / timePerUnitLineDistanceSecs) * endOffsetSecs);
       const offcanvas = audioManager.getOffscreenCanvasDrawn(track.audioId);
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
 
@@ -93,7 +100,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       transformation
     ).then(data => {
       audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
-      renderAudioWaveform({ ...track }, 200, 5, true);
+      renderAudioWaveform({ ...track }, 200, timePerUnitLineDistanceSecs, true);
 
       dispatch(applyChangesToModifiedAudio({
         audioId: track.audioId,
@@ -217,7 +224,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
             audioId={audioId}
             h={props.h * 1.5}
             w={props.w}
-            timeUnitPerLineDistInSeconds={5}
+            timeUnitPerLineDistInSeconds={timePerUnitLineDistanceSecs}
             lineDist={lineDist}
             totalLines={totalLines}
             isPartial={isPartial}

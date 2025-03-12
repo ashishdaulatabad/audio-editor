@@ -9,6 +9,12 @@ import { VolumeLevels } from "./volumelevels";
 import { Knob } from "../knob";
 import { addAudio } from "@/app/state/audiostate";
 import { randomColor } from "@/app/services/color";
+import { FaMix, FaMixer } from "react-icons/fa";
+import { FaMixcloud, FaSliders } from "react-icons/fa6";
+import { addWindowToAction } from "@/app/state/windowstore";
+import { mixer } from "@/app/services/mixer";
+import { MixerMaster } from '../mixer/mixer';
+import { Mixer } from "@/assets/mixer";
 
 /**
  * @description Player at the top bar
@@ -44,6 +50,26 @@ export function Player(props: React.PropsWithoutRef<any>) {
   function onMainVolChange(e: number) {
     audioManager.setGainNodeForMaster(e);
     setMasterVol(e);
+  }
+
+  function openMixer() {
+    addWindowToAction(
+      dispatch,
+      {
+        header: 'Mixer',
+        props: {
+
+        },
+        propsUniqueIdentifier: mixer.viewId,
+        x: 10,
+        y: 10,
+        view: MixerMaster,
+        visible: true,
+        windowSymbol: Symbol(),
+        w: 900,
+        h: 500
+      }
+    )
   }
 
   /**
@@ -91,6 +117,15 @@ export function Player(props: React.PropsWithoutRef<any>) {
       </span>
       <div className="speaker-decibel ml-4">
         <VolumeLevels />
+      </div>
+      <div className="views flex ml-4">
+        <button
+          title="Open Mixer"
+          className="border border-solid border-slate-600 rounded-sm hover:bg-slate-600 active:bg-slate-800"
+          onClick={openMixer}
+        >
+          <Mixer w={40} h={40} stroke="rgb(100 116 139)" />
+        </button>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { FaWindowMinimize } from "react-icons/fa";
 
 /**
  * @description Creates a resizable window tile that shows the popup.
- * 
  * @param props 
  * @returns 
  */
@@ -83,7 +82,7 @@ export function Window(props: React.PropsWithChildren<{
           </div>
         </div>
       </div>
-      <div className="content bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm">
+      <div className="content overflow-x-scroll bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm">
         {props.children}
       </div>
     </div>

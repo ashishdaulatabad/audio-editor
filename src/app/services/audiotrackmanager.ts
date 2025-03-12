@@ -890,6 +890,10 @@ class AudioTrackManager {
     (this.rightAnalyserNode as AnalyserNode).getByteTimeDomainData(rightArray);
   }
 
+  /**
+   * @description Update timestamp in seconds
+   * @returns true if by updating timestamp, time goes out of bounds.
+   */
   updateTimestamp(): boolean {
     const context = audioService.useAudioContext();
     const time = context.currentTime;
@@ -911,6 +915,10 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Set timestamp in seconds
+   * @returns true if by setting timestamp, time goes out of bounds.
+   */
   setTimestamp(startValue: number) {
     const context = audioService.useAudioContext();
     const time = context.currentTime;
@@ -933,6 +941,10 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description Get timestamp in seconds
+   * @returns number
+   */
   getTimestamp() {
     return this.runningTimestamp;
   }

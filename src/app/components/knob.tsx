@@ -68,20 +68,20 @@ function normalizeAngle(x: number, y: number, centerX: number, centerY: number):
     angle += Math.PI;
   }
 
-  return clamp(angle, -startAngle, startAngle);
+  return clamp(angle, -START_ANGLE, START_ANGLE);
 }
 
-const baseCurveLength = 3 * Math.PI / 2;
-const startAngle = 3 * Math.PI / 4;
+const BASE_CURVE_LENGTH = 3 * Math.PI / 2;
+const START_ANGLE = 3 * Math.PI / 4;
 
 export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   const [value, setValue] = React.useState(props.value ?? 0);
   const [hold, setHold] = React.useState(false);
-  const ref = React.createRef<HTMLDivElement>();
+  const ref = React.useRef<HTMLDivElement | null>(null);
   const scrollDelta: number = props.scrollDelta || 0.05;
 
-  const centerX = (props.r) + props.pd;
-  const centerY = (props.r) + props.pd;
+  const centerX = props.r + props.pd;
+  const centerY = centerX;
 
   const [holdAngle, setHoldAngle] = React.useState<number>(0);
 
@@ -93,7 +93,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
     setHold(event.buttons === 1);
 
     if (event.buttons === 1) {
-      const x = event.nativeEvent.offsetX, y = event.nativeEvent.offsetY;
+      const { offsetX: x, offsetY: y } = event.nativeEvent;
       const angle = normalizeAngle(x, y, centerX, centerY);
       setHoldAngle(angle);
     }
@@ -101,13 +101,13 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
 
   function moveKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     if (hold && event.buttons === 1) {
-      const x = event.nativeEvent.offsetX, y = event.nativeEvent.offsetY;
+      const { offsetX: x, offsetY: y } = event.nativeEvent;
       let angle = normalizeAngle(x, y, centerX, centerY);
       
       const delta = holdAngle - angle;
-      angle = clamp(angle - delta, -startAngle, startAngle);
+      angle = clamp(angle - delta, -START_ANGLE, START_ANGLE);
  
-      const currValue = (startAngle - angle) / baseCurveLength;
+      const currValue = (START_ANGLE - angle) / BASE_CURVE_LENGTH;
       setValue(currValue);
 
       const mapper = props.functionMapper ? props.functionMapper(currValue) : currValue;
@@ -145,7 +145,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
 
   const valueEndX = centerX + (props.r + 6) * factorX;
   const valueEndY = centerY + (props.r + 6) * factorY;
-  const eyeAngle = startAngle - normalizeAngle(eyeX, eyeY, centerX, centerY);
+  const eyeAngle = START_ANGLE - normalizeAngle(eyeX, eyeY, centerX, centerY);
 
   return (
     <div 
@@ -161,7 +161,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
           stroke="#666"
           fill="none"
           strokeWidth={2}
-          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${baseCurveLength} 1 1 ${arcEndX} ${arcEndY}`}
+          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${BASE_CURVE_LENGTH} 1 1 ${arcEndX} ${arcEndY}`}
         ></path>
         <path
           stroke="#58AB6C"

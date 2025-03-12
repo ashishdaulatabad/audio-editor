@@ -11,7 +11,7 @@ import { createAudioSample } from '@/app/services/audiotransform';
 import { randomColor } from '@/app/services/color';
 import { useDispatch } from 'react-redux';
 import { FaRepeat } from 'react-icons/fa6';
-import { addWindow } from '@/app/state/windowstore';
+import { addWindowToAction } from '@/app/state/windowstore';
 import { AudioWaveformEditor } from '../waveform/waveform';
 
 /**
@@ -201,21 +201,25 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
           name: 'Edit',
           icon: <FaCog />,
           onSelect: () => {
-            dispatch(addWindow({
-              header: <><b>Track</b>: {track.audioName}</>,
-              props: {
-                trackNumber: props.trackId,
-                audioId: props.index,
-                w: 780,
-                h: 100,
-              },
-              windowSymbol: Symbol(),
-              view: AudioWaveformEditor,
-              x: 0,
-              y: 0,
-              visible: true,
-              propsUniqueIdentifier: track.trackDetail.scheduledKey
-            }));
+            addWindowToAction(
+              dispatch, 
+              {
+                header: <><b>Track</b>: {track.audioName}</>,
+                props: {
+                  trackNumber: props.trackId,
+                  timePerUnitLineDistanceSecs: props.timeUnitPerLineDistanceSecs,
+                  audioId: props.index,
+                  w: 780,
+                  h: 100,
+                },
+                windowSymbol: Symbol(),
+                view: AudioWaveformEditor,
+                x: 0,
+                y: 0,
+                visible: true,
+                propsUniqueIdentifier: track.trackDetail.scheduledKey
+              }
+            );
             hideContextMenu();
           },
         },
