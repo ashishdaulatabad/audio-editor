@@ -2,11 +2,11 @@ import React from 'react'
 import { DialogBox } from '../components/shared/dialog';
 
 export interface DialogInformation {
-  messageHeader: string | React.JSX.Element,
-  message: string | React.JSX.Element,
-  confirm: () => void,
-  cancel?: () => void,
-  confirmLabel?: string | React.JSX.Element,
+  messageHeader: string | React.JSX.Element
+  message: string | React.JSX.Element
+  confirm: () => void
+  cancel?: () => void
+  confirmLabel?: string | React.JSX.Element
   cancelLabel?: string | React.JSX.Element
 }
 

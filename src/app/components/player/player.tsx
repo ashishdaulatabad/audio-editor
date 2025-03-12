@@ -1,16 +1,14 @@
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status, togglePlay } from "@/app/state/trackdetails";
 import { Pause } from "@/assets/pause";
 import { Play } from "@/assets/play";
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { VolumeLevels } from "./volumelevels";
 import { Knob } from "../knob";
 import { addAudio } from "@/app/state/audiostate";
 import { randomColor } from "@/app/services/color";
-import { FaMix, FaMixer } from "react-icons/fa";
-import { FaMixcloud, FaSliders } from "react-icons/fa6";
 import { addWindowToAction } from "@/app/state/windowstore";
 import { mixer } from "@/app/services/mixer";
 import { MixerMaster } from '../mixer/mixer';
@@ -19,7 +17,7 @@ import { Mixer } from "@/assets/mixer";
 /**
  * @description Player at the top bar
  */
-export function Player(props: React.PropsWithoutRef<any>) {
+export function Player() {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const [timer, setTimer] = React.useState('00:00');
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
@@ -57,12 +55,11 @@ export function Player(props: React.PropsWithoutRef<any>) {
       dispatch,
       {
         header: 'Mixer',
-        props: {
-
-        },
+        props: {},
         propsUniqueIdentifier: mixer.viewId,
         x: 10,
         y: 10,
+        overflow: true,
         view: MixerMaster,
         visible: true,
         windowSymbol: Symbol(),

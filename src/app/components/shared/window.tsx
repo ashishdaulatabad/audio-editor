@@ -13,6 +13,7 @@ export function Window(props: React.PropsWithChildren<{
   h: number
   x: number
   y: number
+  overflow?: boolean
   index: number
   onClose?: () => void
   onMinimize?: () => void
@@ -41,7 +42,7 @@ export function Window(props: React.PropsWithChildren<{
     <div
       className={css(
         "absolute border-2 flex flex-col border-solid border-slate-800 rounded-sm z-[100] transition-shadow ease-in-out shadow-black",
-        hold ? 'shadow-lg' : 'shadow-md'
+        hold ? 'shadow-lg' : 'shadow-md',
       )}
       data-windowid={props.index}
       ref={windowRef}
@@ -82,7 +83,10 @@ export function Window(props: React.PropsWithChildren<{
           </div>
         </div>
       </div>
-      <div className="content overflow-x-scroll bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm">
+      <div className={css(
+        "content bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm",
+        { 'overflow-x-scroll': !!props.overflow }
+      )}>
         {props.children}
       </div>
     </div>

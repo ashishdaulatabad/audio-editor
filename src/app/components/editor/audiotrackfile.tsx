@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { DialogContext } from '@/app/providers/dialog';
 import { audioManager } from '@/app/services/audiotrackmanager';
@@ -8,7 +9,6 @@ import { resetToDefault, selectAudio } from '@/app/state/selectedaudiostate';
 import { RootState } from '@/app/state/store';
 import { AudioTrackDetails, removeAudioFromAllTracks, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
-import { useDispatch, useSelector } from 'react-redux';
 import { FaTrash } from 'react-icons/fa';
 import { css } from '@/app/services/utils';
 import { Waveform } from '@/assets/wave';
@@ -106,7 +106,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       <div className="min-w-8 ml-2">
         <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
       </div>
-      <div className={css("w-full font-lg ml-2", props.isSame ? 'font-bold' : '')}>{file.audioName}</div>
+      <div className={css("w-full font-lg ml-2", { 'font-bold' : props.isSame })}>{file.audioName}</div>
     </div>
   )
 }

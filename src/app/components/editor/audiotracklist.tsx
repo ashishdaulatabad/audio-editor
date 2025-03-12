@@ -44,16 +44,6 @@ export function AudioTrackList() {
   return (
     <div className="bg-slate-700 w-full flex flex-col rounded-sm h-full">
       <div className="import-button self-center flex flex-row justify-center w-full text-center p-8 border-solid border border-transparent border-b-slate-900 shadow-lg">
-        {/* <input
-          type="text"
-          value={search}
-          onClick={(e) => (e.target as HTMLElement).focus()}
-          onInput={(e) => {
-            setSearch((e.target as HTMLInputElement).value)
-          }}
-          className="bg-slate-500 rounded-md p-2 px-4"
-          placeholder="Search"
-        /> */}
         <button
           className="ml-4 text-lg select-none rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"
           onClick={selectFile}

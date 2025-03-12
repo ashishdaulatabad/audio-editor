@@ -48,6 +48,10 @@ export interface WindowView<TProps> {
    */
   visible: boolean
   /**
+   * @description Overflow X
+   */
+  overflow?: boolean
+  /**
    * @description To maintain window that is unique to an opened entity, an 
    * identifier is supplied, so that there are no duplicate window for 
    * same thing the user opens (for e.g., for scheduled track, 
