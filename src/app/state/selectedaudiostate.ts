@@ -14,7 +14,7 @@ function getDefaultSelectedTrack(): AudioNonScheduledDetails {
     audioId: Symbol(),
     effects: [],
     duration: 0,
-    mixerNumber: -1,
+    mixerNumber: 0,
     colorAnnotation: '',
     trackDetail: {
       startOffsetInMicros: 0,

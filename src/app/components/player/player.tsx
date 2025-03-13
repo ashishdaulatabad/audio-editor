@@ -78,7 +78,7 @@ export function Player() {
       audioName: 'new.mp3',
       colorAnnotation: randomColor(),
       duration: data.duration as number,
-      mixerNumber: -1,
+      mixerNumber: 0,
       effects: []
     };
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);

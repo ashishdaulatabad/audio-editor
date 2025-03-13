@@ -48,8 +48,7 @@ export class Mixer {
   }
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {
-    console.log(this.masterGainNode, mixerNumber);
-    if (mixerNumber < 0) {
+    if (mixerNumber === 0) {
       node.connect(this.masterGainNode as GainNode);
     } else {
       node.connect(this.panNodes[mixerNumber]);

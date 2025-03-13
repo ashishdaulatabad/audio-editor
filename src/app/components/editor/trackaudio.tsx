@@ -155,7 +155,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         audioName: track.audioName,
         duration: data.duration,
         colorAnnotation: randomColor(),
-        mixerNumber: -1,
+        mixerNumber: 0,
         effects: []
       };
       const audioId = audioManager.registerAudioInAudioBank(newTrackDetails, data);

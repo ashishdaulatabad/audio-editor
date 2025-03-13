@@ -183,9 +183,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
    * @description Change Mixer value
    * @param e event details
    */
-  function changeInput(e: React.KeyboardEvent<HTMLInputElement>) {
+  function changeMixer(e: React.KeyboardEvent<HTMLInputElement>) {
     const newMixerValue = parseInt((e.target as HTMLInputElement).value);
-    audioManager.setMixerValue(track.audioId, newMixerValue);
+    audioManager.setMixerValue(track.audioId, newMixerValue - 1);
     audioManager.rescheduleTrackFromScheduledNodes(track.trackDetail.scheduledKey);
     setAudioMixer(newMixerValue);
   }
@@ -228,9 +228,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               placeholder="---"
               value={typeof audioMixer === 'number' ? audioMixer : undefined}
               className="block px-1 py-4 text-lg input rounded-md bg-slate-500 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              min={-1}
+              min={0}
               max={audioManager.totalMixers}
-              onInput={changeInput}
+              onInput={changeMixer}
             />
             <label className="select-none">Mixer</label>
           </div>
