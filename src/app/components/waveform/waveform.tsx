@@ -57,7 +57,13 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   // States
   const [transformationInProgress, setTransformationInProgress] = React.useState(false);
   const [pitch, setPitch] = React.useState(1);
+  const [playbackRate, setPlaybackRate] = React.useState(1);
+  const [audioVolume, setAudioVolume] = React.useState(audioManager.getGainForAudio(track.audioId));
+  const [audioPanner, setAudioPanner] = React.useState(audioManager.getPannerForAudio(track.audioId));
+  const [audioMixer, setAudioMixer] = React.useState<number>(0);
+  const [pitchBendingThreshold, setPitchBendingThreshold] = React.useState(2);
 
+  // Declarations.
   const endTime = track.duration as number;
   const { timePerUnitLineDistanceSecs } = props;
   const totalLines = endTime / timePerUnitLineDistanceSecs;
@@ -82,9 +88,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, ref.current.clientWidth, ref.current.height);
     }
 
-    return () => {
-
-    };
+    return () => {};
   });
 
   /**
@@ -141,6 +145,48 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     transform(AudioTransformation.Normalization);
   }
 
+  /**
+   * @description change audio volume
+   * @param e
+   */
+  function changeVolume(e: number) {
+    audioManager.setGainForAudio(track.audioId, e);
+    setAudioVolume(e);
+  }
+
+  /**
+   * @description change audio volume
+   * @param e
+   */
+  function changePanner(e: number) {
+    audioManager.setPannerForAudio(track.audioId, e);
+    setAudioPanner(e);
+  }
+
+  /**
+   * @description Change Playback Rate
+   * @param e emitted event
+   */
+  function changePitch(e: number) {
+    setPitch(e);
+  }
+
+  /**
+   * @description Change Playback Rate
+   * @param e emitted event
+   */
+  function changePlaybackRate(e: number) {
+    setPlaybackRate(e);
+  }
+
+  /**
+   * @description Change Mixer value
+   * @param e event details
+   */
+  function changeInput(e: React.KeyboardEvent<HTMLInputElement>) {
+    setAudioMixer(parseInt((e.target as HTMLInputElement).value));
+  }
+
   const { effects } = track;
   const isPolarityReversed = effects.includes(AudioTransformation.ReversePolarity);
   const isAudioReversed = effects.includes(AudioTransformation.Reverse);
@@ -148,94 +194,132 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const isStereoSwapped = effects.includes(AudioTransformation.SwapStereo);
 
   return (
-    <>
-      <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
-        <div className="">
-          <div className="flex flex-row mt-4">
-            <div className="settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
-              <div className="flex flex-col w-full content-start">
-                <div className="box w-full py-2">
-                  <Checkbox
-                    checked={isPolarityReversed}
-                    disabled={transformationInProgress}
-                    onChange={transformPolarity}
-                    label="Reverse Polarity"
-                  />
-                </div>
-                <div className="box w-full py-2">
-                  <Checkbox
-                    checked={isAudioReversed}
-                    disabled={transformationInProgress}
-                    onChange={transformReverse}
-                    label="Reverse"
-                  />
-                </div>
+    <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
+      <div>
+        <div className="mixer-details flex flex-row self-end">
+          <div className="volume m-2 min-w-20 text-center">
+            <Knob
+              onKnobChange={changeVolume}
+              pd={10}
+              r={15}
+              functionMapper={(e) => e * 1.5}
+              value={audioVolume / 1.5}
+              scrollDelta={0.01}
+            />
+            <label className="select-none">Vol: {Math.round(audioVolume * 100)}%</label>
+          </div>
+          <div className="panner m-2 min-w-20 text-center">
+            <Knob
+              onKnobChange={changePanner}
+              pd={10}
+              r={15}
+              functionMapper={(e) => e * 2 - 1}
+              value={(audioPanner + 1) / 2}
+              scrollDelta={0.025}
+            />
+            <label className="select-none">Pan: {Math.round(audioPanner * 100) / 100}</label>
+          </div>
+          <div className="mixer-assign m-2 min-w-20 text-center flex flex-col content-center">
+            <input
+              type="number"
+              placeholder="---"
+              value={typeof audioMixer === 'number' ? audioMixer : undefined}
+              className="block px-1 py-4 text-lg input rounded-md bg-slate-500 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              min={-1}
+              max={audioManager.totalMixers}
+              onInput={changeInput}
+            />
+            <label className="select-none">Mixer</label>
+          </div>
+        </div>
+        <div className="flex flex-row mt-4">
+          <div className="reversible-settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
+            <div className="flex flex-col w-full content-start">
+              <div className="box w-full py-2">
+                <Checkbox
+                  checked={isPolarityReversed}
+                  disabled={transformationInProgress}
+                  onChange={transformPolarity}
+                  label="Reverse Polarity"
+                />
               </div>
-              <div className="flex flex-col w-full">
-                <div className="box w-full py-2">
-                  <Checkbox
-                    checked={isNormalized}
-                    disabled={transformationInProgress}
-                    onChange={normalize}
-                    label="Normalize"
-                  />
-                </div>
-                <div className="box w-full py-2">
-                  <Checkbox
-                    checked={isStereoSwapped}
-                    disabled={transformationInProgress}
-                    onChange={transformSwapStereo}
-                    label="Swap Stereo"
-                  />
-                </div>
+              <div className="box w-full py-2">
+                <Checkbox
+                  checked={isAudioReversed}
+                  disabled={transformationInProgress}
+                  onChange={transformReverse}
+                  label="Reverse"
+                />
               </div>
             </div>
-            <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
-              <div className="flex w-full content-start">
-                {/* <div className="box w-full inline-grid justify-items-center py-2">
-                  <Knob
-                    r={16}
-                    onKnobChange={(e) => console.log(e)}
-                    scrollDelta={0.1}
-                    value={1}
-                    pd={8}
-                  />
-                  <label>Pitch</label>
-                </div>
-                <div className="box w-full inline-grid justify-items-center py-2">
-                  <Knob
-                    r={16}
-                    onKnobChange={(e) => console.log(e)}
-                    scrollDelta={0.1}
-                    value={1}
-                    pd={8}
-                  />
-                  <label>Playback Rate</label>
-                </div> */}
+            <div className="flex flex-col w-full">
+              <div className="box w-full py-2">
+                <Checkbox
+                  checked={isNormalized}
+                  disabled={transformationInProgress}
+                  onChange={normalize}
+                  label="Normalize"
+                />
+              </div>
+              <div className="box w-full py-2">
+                <Checkbox
+                  checked={isStereoSwapped}
+                  disabled={transformationInProgress}
+                  onChange={transformSwapStereo}
+                  label="Swap Stereo"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
+            <div className="flex w-full content-start">
+              <div className="box w-full inline-grid justify-items-center py-2">
+                <Knob
+                  r={16}
+                  onKnobChange={setPitch}
+                  onKnobRelease={changePitch}
+                  scrollDelta={0.01}
+                  value={(pitch - 0.5) / 1.5}
+                  functionMapper={(e) => e * 1.5 + 0.5}
+                  pd={8}
+                />
+                <label className="select-none">Pitch: { Math.round(pitch * 100) / 100 }</label>
+              </div>
+              <div className="box w-full inline-grid justify-items-center py-2">
+                <Knob
+                  r={16}
+                  onKnobChange={setPlaybackRate}
+                  onKnobRelease={changePlaybackRate}
+                  scrollDelta={0.1}
+                  value={playbackRate / 2}
+                  functionMapper={(e) => e * 2}
+                  pd={8}
+                />
+                <label className="select-none">Playback Rate: { Math.round(playbackRate * 100) / 100 }</label>
               </div>
             </div>
           </div>
         </div>
-        <div className="bg-slate-900">
-          <WaveformSeekbar
-            startOffsetInMillis={startOffsetInMicros / 1000}
-            endOffsetInMillis={endOffsetInMicros / 1000}
-            trackNumber={trackNumber}
-            audioId={audioId}
-            h={props.h * 1.5}
-            w={props.w}
-            timeUnitPerLineDistInSeconds={timePerUnitLineDistanceSecs}
-            lineDist={lineDist}
-            totalLines={totalLines}
-            isPartial={isPartial}
-          />
-          <canvas
-            ref={ref}
-            width={props.w}
-            height={props.h * 1.5}
-          ></canvas>
-        </div>
       </div>
-    </>
+      <div className="bg-slate-900">
+        <WaveformSeekbar
+          startOffsetInMillis={startOffsetInMicros / 1000}
+          endOffsetInMillis={endOffsetInMicros / 1000}
+          trackNumber={trackNumber}
+          audioId={audioId}
+          h={props.h * 1.5}
+          w={props.w}
+          timeUnitPerLineDistInSeconds={timePerUnitLineDistanceSecs}
+          lineDist={lineDist}
+          totalLines={totalLines}
+          isPartial={isPartial}
+        />
+        <canvas
+          ref={ref}
+          width={props.w}
+          height={props.h * 1.5}
+        ></canvas>
+      </div>
+    </div>
   );
 }

@@ -14,6 +14,10 @@ export interface AudioDetails {
    */
   duration: number
   /**
+   * @description Duration of audio
+   */
+  mixerNumber: number
+  /**
    * @description Audio Identifier
    */
   audioId: symbol

@@ -7,7 +7,11 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
   const [panner, setPanner] = React.useState(0);
 
   function setGainValue(e: number) {
-    
+    setGain(e);
+  }
+
+  function setPannerValue(e: number) {
+    setPanner(e);
   }
 
   return (
@@ -16,9 +20,9 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
       <Knob 
         pd={10}
         r={15}
-        onKnobChange={setPanner}
+        onKnobChange={setPannerValue}
         functionMapper={(e) => e * 2 - 1}
-        value={panner}
+        value={(panner + 1) / 2}
         scrollDelta={0.04}
       />
       <Slider 
@@ -28,7 +32,7 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
         value={gain / 1.5}
         functionMapper={(e) => e * 1.5}
         scrollDelta={0.01}
-        onSliderChange={setGain}
+        onSliderChange={setGainValue}
         lineThickness={4}
         activeStroke="#58AB6C"
         pd={20}

@@ -1,6 +1,6 @@
-import { mixer } from '@/app/services/mixer';
 import React from 'react';
 import { MixerInput } from './mixerinput';
+import { audioManager } from '@/app/services/audiotrackmanager';
 
 export interface MixerProps {
 
@@ -12,7 +12,7 @@ export interface MixerProps {
  * @returns mixer component
  */
 export function MixerMaster(props: React.PropsWithoutRef<MixerProps>) {
-  const totalMixers = mixer.totalMixers;
+  const totalMixers = audioManager.totalMixers;
 
   return (
     <div className="mixer-master flex flex-row">

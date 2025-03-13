@@ -2,6 +2,7 @@ import { AudioDetails } from '../state/audiostate';
 import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
 import { clamp } from '../utils';
 import { audioService } from './audioservice';
+import { Mixer } from './mixer';
 
 /**
  * @description Type of Multiselected DOM elements that are selected.
@@ -29,6 +30,8 @@ export type AudioBank = {
   [audioId: symbol]: {
     audioDetails: Omit<AudioDetails, 'audioId'>
     buffer: AudioBuffer
+    panner: StereoPannerNode
+    gain: GainNode
   }
 };
 
@@ -55,11 +58,10 @@ class AudioTrackManager {
   startTimestamp = 0;
   runningTimestamp = 0;
   loopEnd = 5;
+  mixer: Mixer
 
   // Audio-specific nodes
   masterGainNode: GainNode | null = null 
-  gainNodes: GainNode[] = [];
-  pannerNodes: StereoPannerNode[] = [];
   leftAnalyserNode: AnalyserNode | null = null;
   rightAnalyserNode: AnalyserNode | null = null;
   splitChannel: ChannelSplitterNode | null = null;
@@ -76,10 +78,11 @@ class AudioTrackManager {
 
   constructor(
     public totalTrackSize: number,
-  ) {}
+    public readonly totalMixers: number
+  ) {
+    this.mixer = new Mixer(totalMixers);
+  }
 
-  // Simulate the project with the exact clone of the settings to export and create
-  // a new file.
   initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
@@ -107,6 +110,26 @@ class AudioTrackManager {
     }
   }
 
+  setPannerForAudio(audioId: symbol, pan: number) {
+    const { panner } = this.audioBank[audioId];
+    panner.pan.value = pan;
+  }
+
+  getPannerForAudio(audioId: symbol) {
+    const { panner } = this.audioBank[audioId];
+    return panner.pan.value;
+  }
+
+  setGainForAudio(audioId: symbol, value: number) {
+    const { gain } = this.audioBank[audioId];
+    gain.gain.value = value;
+  }
+  
+  getGainForAudio(audioId: symbol) {
+    const { gain } = this.audioBank[audioId];
+    return gain.gain.value;
+  }
+
   /**
    * @description Simulates all the connections into offline.
    * @param scheduledTracks all the scheduled tracks currently done.
@@ -121,13 +144,13 @@ class AudioTrackManager {
 
     const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
 
-    gainNodes.forEach((gainNode, index: number) => {
-      AudioTrackManager.copySettings(gainNode, this.gainNodes[index])
-    });
+    // gainNodes.forEach((gainNode, index: number) => {
+    //   AudioTrackManager.copySettings(gainNode, this.gainNodes[index])
+    // });
 
-    pannerNodes.forEach((pannerNode, index: number) => {
-      AudioTrackManager.copySettings(pannerNode, this.pannerNodes[index])
-    });
+    // pannerNodes.forEach((pannerNode, index: number) => {
+    //   AudioTrackManager.copySettings(pannerNode, this.pannerNodes[index])
+    // });
 
     masterGainNode.connect(offlineAudioContext.destination);
 
@@ -155,7 +178,9 @@ class AudioTrackManager {
 
     this.audioBank[symbol] = {
       audioDetails,
-      buffer: audioBuffer
+      buffer: audioBuffer,
+      gain: audioService.useAudioContext().createGain(),
+      panner: audioService.useAudioContext().createStereoPanner()
     };
 
     return symbol;
@@ -470,15 +495,15 @@ class AudioTrackManager {
     if (!this.isInitialized) {
       const context = audioService.useAudioContext();
 
-      [this.gainNodes, this.pannerNodes, this.masterGainNode] = this.initialize(context);
+      this.mixer.useMixer();
       this.isInitialized = true;
 
       this.leftAnalyserNode = context.createAnalyser();
       this.rightAnalyserNode = context.createAnalyser();
 
       this.splitChannel = context.createChannelSplitter(2);
-      this.masterGainNode.connect(context.destination);
-      this.masterGainNode.connect(this.splitChannel);
+      this.mixer.masterGainNode?.connect(context.destination);
+      this.mixer.masterGainNode?.connect(this.splitChannel);
 
       this.splitChannel.connect(this.leftAnalyserNode, 0);
       this.splitChannel.connect(this.rightAnalyserNode, 1);
@@ -495,12 +520,12 @@ class AudioTrackManager {
     this.masterGainNode?.gain.setValueAtTime(vol, 0);
   }
 
-  setGainNodeForTrack(track: number, vol: number) {
-    this.gainNodes[track].gain.setValueAtTime(vol, 0);
+  setGainNodeForMixer(mixer: number, vol: number) {
+    this.mixer.setGainValue(mixer, vol);
   }
 
-  setPannerNodeForTrack(track: number, pan: number) {
-    this.pannerNodes[track].pan.setValueAtTime(pan, 0);
+  setPannerNodeForMixer(mixer: number, pan: number) {
+    this.mixer.setPanValue(mixer, pan);
   }
 
   storeOffscreenCanvasDrawn(audioSymbolKey: symbol, canvas: OffscreenCanvas) {
@@ -724,7 +749,16 @@ class AudioTrackManager {
     
     const bufferSource = context.createBufferSource();
     bufferSource.buffer = this.getAudioBuffer(audioId);
-    bufferSource.connect(this.pannerNodes[trackNumber]);
+
+    const {
+      gain,
+      panner,
+      audioDetails: {
+        mixerNumber
+      }
+    } = this.audioBank[audioId];
+    const destination = bufferSource.connect(gain).connect(panner);
+    this.mixer.connectNodeToMixer(destination, mixerNumber);
 
     const offsetStart = startTimeSecs + (Math.max(distance, 0)) / SEC_TO_MICROSEC;
 
@@ -950,4 +984,4 @@ class AudioTrackManager {
   }
 }
 
-export const audioManager = new AudioTrackManager(10);
+export const audioManager = new AudioTrackManager(10, 30);

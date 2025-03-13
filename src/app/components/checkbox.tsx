@@ -33,7 +33,7 @@ export function Checkbox(props: React.PropsWithoutRef<RadioProps>) {
         <rect rx="3" ry="3" stroke="#000" width={14} height={14} fill="#555" filter={value ? "url(#f1)" : undefined}></rect>
         {value && <rect x={2} y={2} width={10} height={10} rx="3" ry="3" fill="#52D566"></rect>}
       </svg>
-      <span className={css("ml-2", props.disabled ? 'text-gray-500' : 'text-white')}>{props.label}</span>
+      <span className={css("ml-2 text-lg", props.disabled ? 'text-gray-500' : 'text-white')}>{props.label}</span>
     </div>
   )
 }

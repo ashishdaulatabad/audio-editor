@@ -9,7 +9,7 @@ import { RootState } from '@/app/state/store';
 import { selectAudio } from '@/app/state/selectedaudiostate';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { Player } from '../player/player';
-import { AudioWaveformEditor, WaveformEditorProps } from '../waveform/waveform';
+import { AudioWaveformEditor } from '../waveform/waveform';
 import { WindowManager } from '../shared/windowmanager';
 import { ModeType, Toolkit } from './toolkit';
 import { RegionSelect, RegionSelection } from './regionselect';
@@ -18,12 +18,10 @@ import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 
 import {
-  addWindow,
   addWindowToAction,
   batchRemoveWindowWithUniqueIdentifier,
   removeWindowWithUniqueIdentifier,
   setWindowPosition,
-  WindowView
 } from '@/app/state/windowstore';
 import {
   cloneAudioTrack,
@@ -155,8 +153,6 @@ export function Editor() {
 
       const left = audioElement.style.left ?? '0px';
       const offsetX = parseFloat(left.substring(0, left.length - 2));
-
-      const timeUnit = timeUnitPerLineDistInSeconds;
       /// Starting from offset in millis.
       const offsetInMicros = Math.round((offsetX / lineDist) * timeUnitPerLineMicros);
       const startOffsetInMicros = Math.round((audioElement.scrollLeft / lineDist) * timeUnitPerLineMicros);
@@ -223,6 +219,7 @@ export function Editor() {
                 offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
                 startOffsetInMicros: 0,
+                playbackRate: 1,
                 endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
                 selected: false
               }
@@ -376,7 +373,6 @@ export function Editor() {
    */
   function settingDrag(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (event.buttons === 1) {
-      event.preventDefault();
       const element = event.target as HTMLElement;
       const fnArray = [isAudioTrack, isTrack, isWindowHeader];
 
@@ -388,16 +384,19 @@ export function Editor() {
 
       switch (index) {
         case 0: {
+          event.preventDefault();
           setTrackDraggingMode(event, expectedNode);
           break;
         }
 
         case 1: {
+          event.preventDefault();
           addCurrentTrack(event, expectedNode);
           break;
         }
 
         case 2: {
+          event.preventDefault();
           setupDraggingWindow(event, expectedNode);
           break;
         }
@@ -664,6 +663,7 @@ export function Editor() {
         offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
         endOffsetInMicros,
+        playbackRate: 1,
         startOffsetInMicros,
         selected: track.trackDetail.selected
       };
@@ -918,8 +918,7 @@ export function Editor() {
   }
 
   // Manage key events on last interacted 
-  // If it was workspace, then manage onKeyDown
-  // if not, then don't fire events at all.
+  // wheel: is it good to do here??
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
@@ -1043,7 +1042,7 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={(height/totalTracks) - 2}
+                        h={heightPerTrack}
                       />
                     ))
                   }

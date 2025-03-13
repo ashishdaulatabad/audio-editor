@@ -5,17 +5,17 @@ import { clamp, svgxmlns } from '../utils';
  * @description Slider Settings.
  */
 interface SliderSettings {
-  value?: number
   h: number
   pd: number
   headw: number
   headh: number
+  onSliderChange: (value: number) => void
+  scrollDelta: number
   lineThickness?: number
   activeStroke?: string
   r?: number
-  onSliderChange: (value: number) => void
   functionMapper?: (value: number) => number
-  scrollDelta: number
+  value?: number
 }
 
 export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
@@ -73,18 +73,41 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
         <path
           stroke="#888"
           strokeWidth={props.lineThickness ?? 3}
-          d={`M ${width / 2}
-          ${props.h + (props.pd / 2)} L ${width / 2} 0`}
+          d={`M${width / 2} ${props.h + (props.pd / 2)} L${width / 2} 0`}
         ></path>
         <path
           stroke={props.activeStroke ?? "#2135EF"}
           strokeWidth={props.lineThickness ?? 3}
-          d={`M ${width / 2} ${props.h + (props.pd / 2)} L ${width / 2} ${level}`}
+          d={`M${width / 2} ${props.h + (props.pd / 2)} L${width / 2} ${level}`}
         ></path>
         <g>
-          <rect width={width} rx={3} ry={3} height={sliderHeight} fill="#666" x={0} y={level}></rect>
-          <rect width={width - 4} rx={3} ry={3} height={sliderHeight - 4} fill="#ccc" x={2} y={level + 2}></rect>
-          <rect width={width - 8} rx={3} ry={3} height={sliderHeight - 8} fill="#eee" x={4} y={level + 4}></rect>
+          <rect
+            width={width}
+            rx={3}
+            ry={3}
+            height={sliderHeight}
+            fill="#666"
+            x={0}
+            y={level}
+          ></rect>
+          <rect 
+            width={width - 4}
+            rx={3}
+            ry={3}
+            height={sliderHeight - 4}
+            fill="#ccc"
+            x={2}
+            y={level + 2}
+          ></rect>
+          <rect 
+            width={width - 8}
+            rx={3}
+            ry={3}
+            height={sliderHeight - 8}
+            fill="#eee"
+            x={4}
+            y={level + 4}
+          ></rect>
         </g>
       </svg>
     </div>

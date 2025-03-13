@@ -10,7 +10,6 @@ import { Knob } from "../knob";
 import { addAudio } from "@/app/state/audiostate";
 import { randomColor } from "@/app/services/color";
 import { addWindowToAction } from "@/app/state/windowstore";
-import { mixer } from "@/app/services/mixer";
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from "@/assets/mixer";
 
@@ -56,7 +55,7 @@ export function Player() {
       {
         header: 'Mixer',
         props: {},
-        propsUniqueIdentifier: mixer.viewId,
+        propsUniqueIdentifier: audioManager.mixer.viewId,
         x: 10,
         y: 10,
         overflow: true,
@@ -79,6 +78,7 @@ export function Player() {
       audioName: 'new.mp3',
       colorAnnotation: randomColor(),
       duration: data.duration as number,
+      mixerNumber: -1,
       effects: []
     };
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
@@ -94,7 +94,7 @@ export function Player() {
         <ul className="list-none">
           <li
             onClick={exportIntoAudioFile}
-            className="inline-block hover:bg-slate-600 p-3 rounded-sm select-none"
+            className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
           >Export</li>
         </ul>
       </nav>

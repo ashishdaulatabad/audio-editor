@@ -81,7 +81,7 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
           strokeWidth={1}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={13}
+          fontSize={16}
           dy={25}
           dx={lineDist * labelMultiplier * (index + 1)}
         >

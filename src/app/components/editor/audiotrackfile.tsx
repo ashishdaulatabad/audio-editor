@@ -1,15 +1,25 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { DialogContext } from '@/app/providers/dialog';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { deleteColor } from '@/app/services/color';
-import { removeAudio } from '@/app/state/audiostate';
-import { resetToDefault, selectAudio } from '@/app/state/selectedaudiostate';
 import { RootState } from '@/app/state/store';
-import { AudioTrackDetails, removeAudioFromAllTracks, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
-import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
 import { FaTrash } from 'react-icons/fa';
+
+import { removeAudio } from '@/app/state/audiostate';
+import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
+import {
+  resetToDefault,
+  selectAudio
+} from '@/app/state/selectedaudiostate';
+import {
+  AudioTrackDetails,
+  removeAudioFromAllTracks,
+  SEC_TO_MICROSEC
+} from '@/app/state/trackdetails';
+
 import { css } from '@/app/services/utils';
 import { Waveform } from '@/assets/wave';
 
@@ -34,6 +44,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       ...file,
       trackDetail: {
         startOffsetInMicros: 0,
+        playbackRate: 1,
         endOffsetInMicros: (file.duration as number * SEC_TO_MICROSEC),
         selected: false,
       }
@@ -94,7 +105,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   return (
     <div
       className={css(
-        "cursor-pointer text-nowrap text-ellipsis max-w-full mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
+        "cursor-pointer text-nowrap text-lg text-ellipsis max-w-full mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
         props.isSame ? 'shadow-lg shadow-gray-900' : 'shadow-md shadow-gray-700'
       )}
       key={index}

@@ -1,9 +1,11 @@
-class Mixer {
-  private masterGainNode: GainNode | null = null;
-  private masterPanNode: StereoPannerNode | null = null;
+import { audioService } from "./audioservice";
+
+export class Mixer {
+  masterGainNode: GainNode | null = null;
   private gainNodes: GainNode[] = [];
   private panNodes: StereoPannerNode[] = [];
   private mixerViewIdentifier: symbol = Symbol();
+  private isInitialized = false;
 
   constructor(
     private totalMixerCount: number
@@ -17,10 +19,50 @@ class Mixer {
     return this.mixerViewIdentifier;
   }
 
-  initialize(context: BaseAudioContext) {}
+  initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
+    const audioContext = context;
+    const masterGainNode = audioContext.createGain();
+
+    const gainNodes = Array.from({ length: this.totalMixerCount }, () => {
+      const gainNode = audioContext.createGain();
+      gainNode.connect(masterGainNode as GainNode);
+      return gainNode;
+    });
+
+    const pannerNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
+      const pannerNode = audioContext.createStereoPanner()
+      pannerNode.connect(gainNodes[index]);
+      return pannerNode;
+    });
+
+    return [gainNodes, pannerNodes, masterGainNode];
+  }
+
+  useMixer() {
+    if (!this.isInitialized) {
+      const context = audioService.useAudioContext();
+      [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
+      this.isInitialized = true;
+
+      // this.leftAnalyserNode = context.createAnalyser();
+      // this.rightAnalyserNode = context.createAnalyser();
+
+      // this.splitChannel = context.createChannelSplitter(2);
+      // this.masterGainNode.connect(context.destination);
+      // this.masterGainNode.connect(this.splitChannel);
+
+      // this.splitChannel.connect(this.leftAnalyserNode, 0);
+      // this.splitChannel.connect(this.rightAnalyserNode, 1);
+    }
+  }
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {
-    node.connect(this.panNodes[mixerNumber]);
+    console.log(this.masterGainNode, mixerNumber);
+    if (mixerNumber < 0) {
+      node.connect(this.masterGainNode as GainNode);
+    } else {
+      node.connect(this.panNodes[mixerNumber]);
+    }
   }
 
   connectMixerOutputTo(node: AudioNode, mixerNumber: number) {
@@ -37,5 +79,3 @@ class Mixer {
     this.gainNodes[mixerNumber].gain.value = value;
   }
 };
-
-export const mixer = new Mixer(30);

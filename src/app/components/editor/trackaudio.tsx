@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { FaRepeat } from 'react-icons/fa6';
 import { addWindowToAction } from '@/app/state/windowstore';
 import { AudioWaveformEditor } from '../waveform/waveform';
+import { clamp } from '@/app/utils';
 
 /**
  * @description Mode for detecting current manipulation mode via user mouse.
@@ -63,6 +64,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   const duration = track.duration as number;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const width = (duration / timeUnit) * props.lineDist;
+  const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
 
   const {
     hideContextMenu,
@@ -81,16 +83,12 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }, [track.trackDetail.selected, props.lineDist]);
 
   React.useEffect(() => {
-  }, [track.effects]);
-
-  React.useEffect(() => {
     if (divRef.current && spanRef.current) {
       setWidthAndScrollLeft(divRef.current, spanRef.current, track);
     }
   }, [track.trackDetail, props.lineDist]);
 
   function calculateLeft(track: AudioTrackDetails) {
-    const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
     return (track.trackDetail.offsetInMicros / timeUnitMicros) * props.lineDist;
   }
 
@@ -157,13 +155,14 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         audioName: track.audioName,
         duration: data.duration,
         colorAnnotation: randomColor(),
+        mixerNumber: -1,
         effects: []
       };
       const audioId = audioManager.registerAudioInAudioBank(newTrackDetails, data);
 
       dispatch(addAudio({
         ...newTrackDetails,
-        audioId
+        audioId,
       }));
       hideContextMenu();
     });
@@ -295,7 +294,9 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
   context.moveTo(0, height / 2);
   context.lineWidth = 3;
 
-  const mul = Math.min(128);
+  const proportionalIncrement = Math.ceil((128 * width) / 800);
+
+  const mul = clamp(proportionalIncrement, 1, 128);
   const channelData = buffer.getChannelData(0);
 
   let x = 0;

@@ -15,11 +15,15 @@ export type TrackInformation = {
   /**
    * Start offset relative to the audio.
    */
-  startOffsetInMicros: number,
+  startOffsetInMicros: number
   /**
    * End offset relative to the audio.
    */
-  endOffsetInMicros: number,
+  endOffsetInMicros: number
+  /**
+   * @description Playback Rate set.
+   */
+  playbackRate: number
   /**
    * Boolean if selected or not.
    */

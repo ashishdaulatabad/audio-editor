@@ -52,6 +52,7 @@ export async function createAudioData(
     audioName: name,
     duration: bufferedData.duration,
     colorAnnotation: randomColor(),
+    mixerNumber: -1,
     effects: [],
   };
 

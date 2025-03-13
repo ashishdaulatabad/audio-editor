@@ -1,6 +1,6 @@
-import { audioService } from "@/app/services/audioservice";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import React from "react";
+import React from 'react';
+import { audioService } from '@/app/services/audioservice';
+import { audioManager } from '@/app/services/audiotrackmanager';
 
 function calculateRMS(array: Uint8Array): number {
   let rms = 0, length = array.length;
@@ -10,7 +10,7 @@ function calculateRMS(array: Uint8Array): number {
     rms += p * p;
   }
 
-  return Math.sqrt(Math.round(rms / array.length));
+  return Math.round(Math.sqrt(rms / array.length));
 }
 
 export function VolumeLevels() {

@@ -28,7 +28,13 @@ interface KnobSettings {
    * returns normalized value from `0` to `1`.
    * @returns void
    */
-  onKnobChange: (value: number) => void
+  onKnobChange?: (value: number) => void
+  /**
+   * @description Handle release event when user releases the mouse
+   * @param value current value emitted when released.
+   * @returns void
+   */
+  onKnobRelease?: (value: number) => void
   /**
    * @description User settings as one-to-one mapping from [0, 1] to a different range of values.
    */
@@ -75,43 +81,45 @@ const BASE_CURVE_LENGTH = 3 * Math.PI / 2;
 const START_ANGLE = 3 * Math.PI / 4;
 
 export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
+  // States
+  // To do: Perform a mapped value
   const [value, setValue] = React.useState(props.value ?? 0);
   const [hold, setHold] = React.useState(false);
+  const [holdY, setHoldY] = React.useState<number>(0);
+  // Refs
   const ref = React.useRef<HTMLDivElement | null>(null);
   const scrollDelta: number = props.scrollDelta || 0.05;
 
   const centerX = props.r + props.pd;
   const centerY = centerX;
-
-  const [holdAngle, setHoldAngle] = React.useState<number>(0);
+  const totalWidth = centerX * 2;
 
   function releaseKnob() {
     setHold(false);
+    const mapper = props.functionMapper ? props.functionMapper(value) : value;
+    props.onKnobRelease && props.onKnobRelease(mapper);
   }
 
   function holdKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     setHold(event.buttons === 1);
 
     if (event.buttons === 1) {
-      const { offsetX: x, offsetY: y } = event.nativeEvent;
-      const angle = normalizeAngle(x, y, centerX, centerY);
-      setHoldAngle(angle);
+      const { offsetY: y } = event.nativeEvent;
+      setHoldY(y);
     }
   }
 
   function moveKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     if (hold && event.buttons === 1) {
-      const { offsetX: x, offsetY: y } = event.nativeEvent;
-      let angle = normalizeAngle(x, y, centerX, centerY);
-      
-      const delta = holdAngle - angle;
-      angle = clamp(angle - delta, -START_ANGLE, START_ANGLE);
- 
-      const currValue = (START_ANGLE - angle) / BASE_CURVE_LENGTH;
+      const { offsetY: y } = event.nativeEvent;
+      const delta = (y - holdY) / (totalWidth);
+
+      const currValue = clamp(value + delta, 0, 1);
+      setHoldY(y);
       setValue(currValue);
 
       const mapper = props.functionMapper ? props.functionMapper(currValue) : currValue;
-      props.onKnobChange(mapper);
+      props.onKnobChange && props.onKnobChange(mapper);
     }
   }
 
@@ -123,7 +131,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
     setValue(newValue);
 
     const mapper = props.functionMapper ? props.functionMapper(newValue) : newValue;
-    props.onKnobChange(mapper);
+    props.onKnobChange && props.onKnobChange(mapper);
   }
 
   React.useEffect(() => {
@@ -161,14 +169,18 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
           stroke="#666"
           fill="none"
           strokeWidth={2}
-          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${BASE_CURVE_LENGTH} 1 1 ${arcEndX} ${arcEndY}`}
-        ></path>
+          d={
+          `M${arcStartX} ${arcStartY} 
+           A${props.r + 6} ${props.r + 6} ${BASE_CURVE_LENGTH} 1 1 ${arcEndX} ${arcEndY}`
+        }></path>
         <path
           stroke="#58AB6C"
           fill="none"
           strokeWidth={2}
-          d={`M ${arcStartX} ${arcStartY} A ${props.r + 6} ${props.r + 6} ${eyeAngle} ${Math.PI < eyeAngle ? '1 1' : '0 1'} ${valueEndX} ${valueEndY}`}
-        ></path>
+          d={
+            `M${arcStartX} ${arcStartY} 
+             A${props.r + 6} ${props.r + 6} ${eyeAngle} ${Math.PI < eyeAngle ? '1 1' : '0 1'} ${valueEndX} ${valueEndY}`
+        }></path>
         <circle
           fill="#F2F5FC"
           cx={centerX}
