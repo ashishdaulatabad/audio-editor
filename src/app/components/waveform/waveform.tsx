@@ -60,7 +60,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const [playbackRate, setPlaybackRate] = React.useState(1);
   const [audioVolume, setAudioVolume] = React.useState(audioManager.getGainForAudio(track.audioId));
   const [audioPanner, setAudioPanner] = React.useState(audioManager.getPannerForAudio(track.audioId));
-  const [audioMixer, setAudioMixer] = React.useState<number>(0);
+  const [audioMixer, setAudioMixer] = React.useState<number>(audioManager.getMixerValue(track.audioId));
   const [pitchBendingThreshold, setPitchBendingThreshold] = React.useState(2);
 
   // Declarations.
@@ -111,7 +111,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         transformation
       }))
 
-      audioManager.rescheduleTrackFromScheduledNodes({ ...track });
+      audioManager.rescheduleTrackFromScheduledNodes(track.trackDetail.scheduledKey);
 
       setTransformationInProgress(false);
     });
@@ -184,7 +184,10 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
    * @param e event details
    */
   function changeInput(e: React.KeyboardEvent<HTMLInputElement>) {
-    setAudioMixer(parseInt((e.target as HTMLInputElement).value));
+    const newMixerValue = parseInt((e.target as HTMLInputElement).value);
+    audioManager.setMixerValue(track.audioId, newMixerValue);
+    audioManager.rescheduleTrackFromScheduledNodes(track.trackDetail.scheduledKey);
+    setAudioMixer(newMixerValue);
   }
 
   const { effects } = track;

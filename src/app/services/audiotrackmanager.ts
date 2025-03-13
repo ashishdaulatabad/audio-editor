@@ -35,19 +35,23 @@ export type AudioBank = {
   }
 };
 
+export type ScheduleChangeDetails = {
+  newTrack?: AudioTrackDetails
+  newMixerValue?: number
+}
+
 /**
  * @description Schedule Node Information related to the tracks.
  */
 export type ScheduledNodesInformation = {
   [k: symbol]: {
-    audioId: symbol,
-    buffer: AudioBufferSourceNode,
+    audioId: symbol
+    buffer: AudioBufferSourceNode
     // May need additional details when waveforms are shrinked.
-    pendingReschedule?: {
-      offsetInMillis: number,
-      newTrack?: AudioTrackDetails,
+    pendingReschedule?: boolean | {
+      offsetInMillis: number
       trackNumber: number
-    }
+    } & ScheduleChangeDetails
   }
 };
 
@@ -220,7 +224,29 @@ class AudioTrackManager {
       return this.audioBank[symbol].buffer;
     }
 
-    return null;  
+    return null;
+  }
+
+  /**
+   * @description Get Assigned Mixer.
+   * @param symbol identifier of audio in audio bank
+   * @returns mixer attached to this node
+   */
+  getMixerValue(symbol: symbol): number {
+    return this.audioBank[symbol].audioDetails.mixerNumber;
+  }
+
+  /**
+   * @description Get Assigned Mixer.
+   * @param symbol identifier of audio in audio bank
+   * @returns mixer attached to this node
+   */
+  setMixerValue(symbol: symbol, mixerValue: number) {
+    this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
+    this.audioBank[symbol].panner.disconnect();
+    const newPanner = audioService.useAudioContext().createStereoPanner();
+    this.mixer.connectNodeToMixer(newPanner, mixerValue);
+    this.audioBank[symbol].panner = newPanner;
   }
 
   /**
@@ -608,9 +634,8 @@ class AudioTrackManager {
 
       if (node) {
         node.buffer.stop(0);
-        node.buffer.disconnect();
         delete node.pendingReschedule;
-        delete this.scheduledNodes[key];;
+        delete this.scheduledNodes[key];
       }
     }
   }
@@ -757,6 +782,7 @@ class AudioTrackManager {
         mixerNumber
       }
     } = this.audioBank[audioId];
+
     const destination = bufferSource.connect(gain).connect(panner);
     this.mixer.connectNodeToMixer(destination, mixerNumber);
 
@@ -780,14 +806,17 @@ class AudioTrackManager {
         if (!node.pendingReschedule) {
           delete this.scheduledNodes[scheduledKey];
         } else {
-          if (node.pendingReschedule) {
+          if (node.pendingReschedule && typeof node.pendingReschedule === 'object') {
             const {
               offsetInMillis,
               newTrack,
+              newMixerValue,
               trackNumber: newTrackNumber
             } = node.pendingReschedule;
+
+            const finalTrack = newTrack ?? track;
+
             if (newTrack) {
-              // console.log('reschedule new modified');
               this._scheduleInternal(newTrack, offsetInMillis, newTrackNumber);
             } else {
               // console.log('reschedule current modified');
@@ -834,7 +863,6 @@ class AudioTrackManager {
             };
           }
           node.buffer.stop(0);
-          node.buffer.disconnect();
         } else {
           this._scheduleInternal(audio, audio.trackDetail.offsetInMicros, trackNumber);
         }
@@ -848,21 +876,16 @@ class AudioTrackManager {
    * @param track track detail
    */
   rescheduleTrackFromScheduledNodes(
-    track: AudioTrackDetails
+    trackScheduledKey: symbol
   ) {
-    const symbolKey = track.trackDetail.scheduledKey;
+    const symbolKey = trackScheduledKey;
 
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       const node = this.scheduledNodes[symbolKey];
 
-      node.pendingReschedule = {
-        offsetInMillis: track.trackDetail.offsetInMicros,
-        newTrack: track,
-        trackNumber: track.trackDetail.trackNumber
-      };
+      node.pendingReschedule = true;
 
       node.buffer.stop(0);
-      node.buffer.disconnect();
     }
   }
 
@@ -888,7 +911,6 @@ class AudioTrackManager {
       };
 
       node.buffer.stop(0);
-      node.buffer.disconnect();
     }
   }
 

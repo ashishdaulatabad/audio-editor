@@ -81,7 +81,7 @@ function getMaxTime(trackDetails: AudioTrackDetails[][]) {
 }
 
 function isWithinRegionAndNotSelected(
-  track: AudioTrackDetails,
+  track: Omit<AudioTrackDetails, 'mixerNumber'>,
   pointStartSec: number,
   pointEndSec: number
 ) {

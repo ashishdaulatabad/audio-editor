@@ -14,8 +14,8 @@ function calculateRMS(array: Uint8Array): number {
 }
 
 export function VolumeLevels() {
-  const leftRect = React.createRef<HTMLDivElement>();
-  const rightRect = React.createRef<HTMLDivElement>();
+  const leftRect = React.useRef<HTMLDivElement | null>(null);
+  const rightRect = React.useRef<HTMLDivElement | null>(null);
   
   React.useEffect(() => {
     let volumeAnimationId = 0;

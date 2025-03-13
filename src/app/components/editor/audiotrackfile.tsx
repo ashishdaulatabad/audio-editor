@@ -105,7 +105,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   return (
     <div
       className={css(
-        "cursor-pointer text-nowrap text-lg text-ellipsis max-w-full mb-2 p-2 py-1 rounded-md flex flex-row justify-center items-center select-none",
+        "cursor-pointer text-nowrap text-lg text-ellipsis max-w-full mb-2 p-2 py-1 rounded-sm flex flex-row justify-center items-center select-none",
         props.isSame ? 'shadow-lg shadow-gray-900' : 'shadow-md shadow-gray-700'
       )}
       key={index}
@@ -117,7 +117,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       <div className="min-w-8 ml-2">
         <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
       </div>
-      <div className={css("w-full font-lg ml-2", { 'font-bold' : props.isSame })}>{file.audioName}</div>
+      <div className={css("w-full font-xl ml-2", { 'font-bold' : props.isSame })}>{file.audioName}</div>
     </div>
   )
 }

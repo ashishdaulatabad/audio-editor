@@ -44,15 +44,6 @@ export class Mixer {
       [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
       this.isInitialized = true;
 
-      // this.leftAnalyserNode = context.createAnalyser();
-      // this.rightAnalyserNode = context.createAnalyser();
-
-      // this.splitChannel = context.createChannelSplitter(2);
-      // this.masterGainNode.connect(context.destination);
-      // this.masterGainNode.connect(this.splitChannel);
-
-      // this.splitChannel.connect(this.leftAnalyserNode, 0);
-      // this.splitChannel.connect(this.rightAnalyserNode, 1);
     }
   }
 
@@ -70,12 +61,12 @@ export class Mixer {
   }
 
   setGainValue(mixerNumber: number, value: number) {
-    console.assert(value >= 0 && value <= 1);
+    console.assert(value >= 0 && value <= 2);
     this.gainNodes[mixerNumber].gain.value = value;
   }
 
   setPanValue(mixerNumber: number, value: number) {
     console.assert(value >= -1 && value <= 1);
-    this.gainNodes[mixerNumber].gain.value = value;
+    this.panNodes[mixerNumber].pan.value = value;
   }
 };
