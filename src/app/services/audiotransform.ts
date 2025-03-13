@@ -12,11 +12,10 @@ import { AudioTransformation } from "./interfaces";
  * @returns Promise.
  */
 export function transformAudio(
-  audioInput: AudioTrackDetails,
   buffer: AudioBuffer,
   transformationType: AudioTransformation
 ): Promise<AudioBuffer> {
-  return new Promise<AudioBuffer>((resolve, reject) => {
+  return new Promise<AudioBuffer>((resolve, _) => {
     const audioBuffer = buffer;
     const totalChannels = audioBuffer.numberOfChannels;
     const allBuffers = [];
@@ -55,7 +54,7 @@ export function canvasRedraw(
   canvas: OffscreenCanvas,
   audioBuffer: AudioBuffer
 ) {
-  return new Promise<OffscreenCanvas>((resolve, reject) => {
+  return new Promise<OffscreenCanvas>((resolve, _) => {
     const newCanvas = new OffscreenCanvas(canvas.width, canvas.height);
     const worker = new Worker(new URL('./canvas.ts', import.meta.url));
 
@@ -63,6 +62,8 @@ export function canvasRedraw(
       if (event.data.done) {
         resolve(newCanvas);
       }
+
+      worker.terminate();
     }
 
     const totalChannels = audioBuffer.numberOfChannels;
@@ -124,7 +125,6 @@ export function createAudioSample(
  * @returns 
  */
 export function renderAudio(
-  audioInput: AudioTrackDetails,
   buffer: AudioBuffer,
   options?: Array<any>
 ) {

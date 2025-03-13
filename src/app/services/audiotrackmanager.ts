@@ -245,7 +245,7 @@ class AudioTrackManager {
     this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
     this.audioBank[symbol].panner.disconnect();
     const newPanner = audioService.useAudioContext().createStereoPanner();
-    this.mixer.connectNodeToMixer(newPanner, mixerValue);
+    this.mixer.useMixer().connectNodeToMixer(newPanner, mixerValue);
     this.audioBank[symbol].panner = newPanner;
   }
 
@@ -520,7 +520,6 @@ class AudioTrackManager {
   useManager() {
     if (!this.isInitialized) {
       const context = audioService.useAudioContext();
-
       this.mixer.useMixer();
       this.isInitialized = true;
 
@@ -547,11 +546,11 @@ class AudioTrackManager {
   }
 
   setGainNodeForMixer(mixer: number, vol: number) {
-    this.mixer.setGainValue(mixer, vol);
+    this.mixer.useMixer().setGainValue(mixer, vol);
   }
 
   setPannerNodeForMixer(mixer: number, pan: number) {
-    this.mixer.setPanValue(mixer, pan);
+    this.mixer.useMixer().setPanValue(mixer, pan);
   }
 
   storeOffscreenCanvasDrawn(audioSymbolKey: symbol, canvas: OffscreenCanvas) {
@@ -784,7 +783,7 @@ class AudioTrackManager {
     } = this.audioBank[audioId];
 
     const destination = bufferSource.connect(gain).connect(panner);
-    this.mixer.connectNodeToMixer(destination, mixerNumber);
+    this.mixer.useMixer().connectNodeToMixer(destination, mixerNumber);
 
     const offsetStart = startTimeSecs + (Math.max(distance, 0)) / SEC_TO_MICROSEC;
 

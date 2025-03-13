@@ -5,6 +5,18 @@ export interface Windowable {}
 
 type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
 
+export enum HorizontalAlignment {
+  Center,
+  Left,
+  Right,
+}
+
+export enum VerticalAlignment {
+  Center,
+  Top,
+  Bottom,
+}
+
 /**
  * @description Window view
  */
@@ -58,6 +70,14 @@ export interface WindowView<TProps> {
    * it would be `trackDetail.scheduledKey`).
    */
   propsUniqueIdentifier: symbol
+  /**
+   * @description Content Horizontal Alignment
+   */
+  horizontalAlignment?: HorizontalAlignment
+  /**
+   * @description Content Vertical Alignment
+   */
+  verticalAlignment?: VerticalAlignment
 }
 
 export type InitialType<TProps> = {

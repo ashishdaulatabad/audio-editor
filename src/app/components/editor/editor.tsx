@@ -16,6 +16,9 @@ import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
+import { PromptMenuContext } from '@/app/providers/customprompt';
+import { clamp } from '@/app/utils';
+import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
 import {
   addWindowToAction,
@@ -52,9 +55,6 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
-import { PromptMenuContext } from '@/app/providers/customprompt';
-import { clamp } from '@/app/utils';
-import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -854,7 +854,7 @@ export function Editor() {
   }
 
   /**
-   * Zooming-in or zooming-out
+   * @description Zooming-in or zooming-out
    * @param event Wheel Event
    * @returns void
    */

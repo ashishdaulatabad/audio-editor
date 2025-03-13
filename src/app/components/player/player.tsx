@@ -9,7 +9,7 @@ import { VolumeLevels } from "./volumelevels";
 import { Knob } from "../knob";
 import { addAudio } from "@/app/state/audiostate";
 import { randomColor } from "@/app/services/color";
-import { addWindowToAction } from "@/app/state/windowstore";
+import { addWindowToAction, VerticalAlignment } from "@/app/state/windowstore";
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from "@/assets/mixer";
 
@@ -59,11 +59,12 @@ export function Player() {
         x: 10,
         y: 10,
         overflow: true,
+        verticalAlignment: VerticalAlignment.Bottom,
         view: MixerMaster,
         visible: true,
         windowSymbol: Symbol(),
-        w: 900,
-        h: 500
+        w: 1200,
+        h: 700
       }
     )
   }

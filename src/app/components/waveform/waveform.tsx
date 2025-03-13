@@ -99,7 +99,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     setTransformationInProgress(true);
 
     transformAudio(
-      track,
       audioManager.getAudioBuffer(track.audioId) as AudioBuffer,
       transformation
     ).then(data => {

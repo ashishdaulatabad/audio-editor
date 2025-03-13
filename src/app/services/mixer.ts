@@ -43,8 +43,9 @@ export class Mixer {
       const context = audioService.useAudioContext();
       [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
       this.isInitialized = true;
-
     }
+
+    return this;
   }
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {

@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "@/app/services/utils";
 import { Exit } from "@/assets/exit";
 import { FaWindowMinimize } from "react-icons/fa";
+import { HorizontalAlignment, VerticalAlignment } from '../../state/windowstore';
 
 /**
  * @description Creates a resizable window tile that shows the popup.
@@ -13,6 +14,8 @@ export function Window(props: React.PropsWithChildren<{
   h: number
   x: number
   y: number
+  horizontalAlignment?: HorizontalAlignment
+  verticalAlignment?: VerticalAlignment
   overflow?: boolean
   index: number
   onClose?: () => void
@@ -84,8 +87,13 @@ export function Window(props: React.PropsWithChildren<{
         </div>
       </div>
       <div className={css(
-        "content bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm",
-        { 'overflow-x-scroll': !!props.overflow }
+        "content flex bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm",
+        {
+          'overflow-x-scroll': !!props.overflow,
+          'content-center': props.horizontalAlignment === HorizontalAlignment.Center,
+          'content-end': props.horizontalAlignment === HorizontalAlignment.Right,
+          'items-end': props.verticalAlignment === VerticalAlignment.Bottom
+        },
       )}>
         {props.children}
       </div>
