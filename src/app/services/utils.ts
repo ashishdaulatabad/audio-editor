@@ -13,25 +13,22 @@ type Attr = string |
  * @returns resultant applicable classNames.
  */
 export function css(...cssStr: Attr[]): string {
-  return cssStr.map(css => {
+  const resultStr = cssStr.map(css => {
     switch (typeof css) {
       case 'string': return css.trim();
       case 'object': {
-        for (const key of Object.keys(css)) {
-          if (
-            (typeof css[key] === 'function' && css[key]()) ||
-            (typeof css[key] === 'boolean' && css[key])
-          ) {
-            return key.trim();
-          }
-          return null;
-        }
+        return Object.keys(css).filter(key => (
+          (typeof css[key] === 'function' && css[key]() === true) ||
+          (typeof css[key] === 'boolean' && css[key] === true)
+        )).map(key => key.trim()).join(' ')
       }
       default: {
         return null;
       }
     }
   }).filter(returnedCss => returnedCss).join(' ');
+
+  return resultStr;
 }
 
 export async function createAudioData(
@@ -52,6 +49,7 @@ export async function createAudioData(
     audioName: name,
     duration: bufferedData.duration,
     colorAnnotation: randomColor(),
+    mixerNumber: 0,
     effects: [],
   };
 

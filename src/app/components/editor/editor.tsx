@@ -16,12 +16,15 @@ import { RegionSelect, RegionSelection } from './regionselect';
 import { AudioTrackManipulationMode } from './trackaudio';
 import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
+import { PromptMenuContext } from '@/app/providers/customprompt';
+import { clamp } from '@/app/utils';
+import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
 import {
-  addWindow,
+  addWindowToAction,
   batchRemoveWindowWithUniqueIdentifier,
   removeWindowWithUniqueIdentifier,
-  setWindowPosition
+  setWindowPosition,
 } from '@/app/state/windowstore';
 import {
   cloneAudioTrack,
@@ -45,16 +48,13 @@ import {
   AudioTrackDetails,
   deleteAudioFromTrack,
   selectTracksWithinSpecifiedRegion,
-  setOffsetInMillisToAudioTrack,
-  setOffsetInMillisToMultipleAudioTrack,
+  setOffsetDetailsToAudioTrack,
+  setOffsetDetailsToMultipleAudioTrack,
   sliceAudioTracks,
   Status,
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
-import { PromptMenuContext } from '@/app/providers/customprompt';
-import { clamp } from '@/app/utils';
-import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -153,15 +153,13 @@ export function Editor() {
 
       const left = audioElement.style.left ?? '0px';
       const offsetX = parseFloat(left.substring(0, left.length - 2));
-
-      const timeUnit = timeUnitPerLineDistInSeconds;
       /// Starting from offset in millis.
       const offsetInMicros = Math.round((offsetX / lineDist) * timeUnitPerLineMicros);
       const startOffsetInMicros = Math.round((audioElement.scrollLeft / lineDist) * timeUnitPerLineMicros);
       // const
       const endOffsetInMicros = Math.round(((audioElement.scrollLeft + audioElement.clientWidth) / lineDist) * timeUnitPerLineMicros);
 
-      dispatch(setOffsetInMillisToAudioTrack({
+      dispatch(setOffsetDetailsToAudioTrack({
         trackNumber: trackIntIndex,
         audioIndex: audioIntIndex,
         offsetInMicros,
@@ -221,6 +219,7 @@ export function Editor() {
                 offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
                 startOffsetInMicros: 0,
+                playbackRate: 1,
                 endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
                 selected: false
               }
@@ -280,22 +279,25 @@ export function Editor() {
       selectTrackForEdit(trackDetails[trackNumber][audioIndex]);
       setTimeout(() => selectTrackForEdit(null), 300);
     } else {
-      // console.log('here');
-      dispatch(addWindow({
-        header: <><b>Track</b>: {trackForEdit.audioName}</>,
-        props: {
-          trackNumber,
-          audioId: audioIndex,
-          w: 780,
-          h: 100,
-        },
-        windowSymbol: Symbol(),
-        view: AudioWaveformEditor,
-        x: scrollPageRef.current?.scrollLeft ?? 0,
-        y: scrollPageRef.current?.scrollTop ?? 0,
-        visible: true,
-        propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey
-      }));
+      addWindowToAction(
+        dispatch, 
+        {
+          header: <><b>Track</b>: {trackForEdit.audioName}</>,
+          props: {
+            trackNumber,
+            audioId: audioIndex,
+            w: 780,
+            timePerUnitLineDistanceSecs: timeUnitPerLineDistInSeconds,
+            h: 100,
+          },
+          windowSymbol: Symbol(),
+          view: AudioWaveformEditor,
+          x: scrollPageRef.current?.scrollLeft ?? 0,
+          y: scrollPageRef.current?.scrollTop ?? 0,
+          visible: true,
+          propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey
+        }
+      );
 
       selectTrackForEdit(null);
     }
@@ -371,7 +373,6 @@ export function Editor() {
    */
   function settingDrag(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (event.buttons === 1) {
-      event.preventDefault();
       const element = event.target as HTMLElement;
       const fnArray = [isAudioTrack, isTrack, isWindowHeader];
 
@@ -383,16 +384,19 @@ export function Editor() {
 
       switch (index) {
         case 0: {
+          event.preventDefault();
           setTrackDraggingMode(event, expectedNode);
           break;
         }
 
         case 1: {
+          event.preventDefault();
           addCurrentTrack(event, expectedNode);
           break;
         }
 
         case 2: {
+          event.preventDefault();
           setupDraggingWindow(event, expectedNode);
           break;
         }
@@ -593,11 +597,11 @@ export function Editor() {
       
       allElements.forEach((element) => {
         const { domElement, finalPosition, finalScrollLeft, finalWidth } = element;
-        const audioIndex = domElement.getAttribute('data-audioid');
-        const audioIntIndex = parseInt(audioIndex ?? '0');
+        const audioIndex = domElement.getAttribute('data-audioid') as string;
+        const audioIntIndex = parseInt(audioIndex);
 
-        const trackIndex = domElement.getAttribute('data-trackid');
-        const trackIntIndex = parseInt(trackIndex ?? '0');
+        const trackIndex = domElement.getAttribute('data-trackid') as string;
+        const trackIntIndex = parseInt(trackIndex);
 
         const timeOffset = Math.round((finalPosition / lineDist) * timeUnitPerLineMicros);
         const startTimeOffset = Math.round((finalScrollLeft / lineDist) * timeUnitPerLineMicros);
@@ -610,7 +614,7 @@ export function Editor() {
         allEndOffsetsInMicros.push(endTimeOffset);
       });
 
-      dispatch(setOffsetInMillisToMultipleAudioTrack({
+      dispatch(setOffsetDetailsToMultipleAudioTrack({
         allTrackNumbers,
         allAudioIndexes,
         allOffsetsInMicros,
@@ -659,6 +663,7 @@ export function Editor() {
         offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
         endOffsetInMicros,
+        playbackRate: 1,
         startOffsetInMicros,
         selected: track.trackDetail.selected
       };
@@ -844,13 +849,12 @@ export function Editor() {
       const newCursorPosition = (time * newLineDist) / timeUnitPerLineDistInSeconds;
       const offsetFromScreen = cursorPosition - scrollPageRef.current.scrollLeft;
 
-      // Based on these calculations, calculate scrollTo for new position
       setScroll(newCursorPosition - offsetFromScreen);
     }
   }
 
   /**
-   * Zooming-in or zooming-out
+   * @description Zooming-in or zooming-out
    * @param event Wheel Event
    * @returns void
    */
@@ -914,13 +918,12 @@ export function Editor() {
   }
 
   // Manage key events on last interacted 
-  // If it was workspace, then manage onKeyDown
-  // if not, then don't fire events at all.
+  // wheel: is it good to do here??
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
     
-    if (ref.current && !set) {
+    if (ref.current) {
       setHeight(ref.current.scrollHeight);
       isSet(true);
     }
@@ -933,7 +936,7 @@ export function Editor() {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }
-  }, [lineDist, status, set, height]);
+  }, [lineDist, status]);
 
   function checkContextMenu() {
     if (isContextOpen()) {
@@ -1039,7 +1042,7 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={(height/totalTracks) - 2}
+                        h={heightPerTrack}
                       />
                     ))
                   }

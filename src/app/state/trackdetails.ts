@@ -15,11 +15,15 @@ export type TrackInformation = {
   /**
    * Start offset relative to the audio.
    */
-  startOffsetInMicros: number,
+  startOffsetInMicros: number
   /**
    * End offset relative to the audio.
    */
-  endOffsetInMicros: number,
+  endOffsetInMicros: number
+  /**
+   * @description Playback Rate set.
+   */
+  playbackRate: number
   /**
    * Boolean if selected or not.
    */
@@ -77,7 +81,7 @@ function getMaxTime(trackDetails: AudioTrackDetails[][]) {
 }
 
 function isWithinRegionAndNotSelected(
-  track: AudioTrackDetails,
+  track: Omit<AudioTrackDetails, 'mixerNumber'>,
   pointStartSec: number,
   pointEndSec: number
 ) {
@@ -353,12 +357,11 @@ export const trackDetailsSlice = createSlice({
           audioTracks.push(pendingTrack);
         }
       }
-      // To do: call from source instead of from here.
       audioManager.rescheduleAllTracks(state.trackDetails, slicesToReschedule);
     },
 
     /**
-     * All transformation that should made are calculated here; after releasing trigger from the mouse.
+     * @description All transformation that should made are calculated here; after releasing trigger from the mouse.
      * The offsets calculated from the editor are brought here and are set to the particular scheduled audio track 
      * that the user interacted with.
      * 
@@ -370,7 +373,7 @@ export const trackDetailsSlice = createSlice({
      * - `startOffsetInMillis`: Offset denoting where the track should start, measured from starting point of the **Audio**.
      * - `endOffsetInMillis`: Offset denoting where the track should end, measured from starting point of the **Audio**
      */
-    setOffsetInMillisToAudioTrack(
+    setOffsetDetailsToAudioTrack(
       state,
       action: PayloadAction<{
         trackNumber: number,
@@ -452,7 +455,7 @@ export const trackDetailsSlice = createSlice({
      * - `startOffsetInMillis`: Offset denoting where the track should start, measured from starting point of the **Audio**.
      * - `endOffsetInMillis`: Offset denoting where the track should end, measured from starting point of the **Audio**
      */
-    setOffsetInMillisToMultipleAudioTrack(
+    setOffsetDetailsToMultipleAudioTrack(
       state,
       action: PayloadAction<{
         allTrackNumbers: number[],
@@ -516,7 +519,7 @@ export const {
   deleteAudioFromTrack,
   selectTracksWithinSpecifiedRegion,
   selectTracksWithinSelectedSeekbarSection,
-  setOffsetInMillisToAudioTrack,
+  setOffsetDetailsToAudioTrack,
   sliceAudioTracks,
   applyChangesToModifiedAudio,
   cloneAudioTrack,
@@ -524,7 +527,7 @@ export const {
   deleteMultipleAudioTrack,
   selectAllTracks,
   deselectAllTracks,
-  setOffsetInMillisToMultipleAudioTrack,
+  setOffsetDetailsToMultipleAudioTrack,
   togglePlay,
   removeAudioFromAllTracks
 } = trackDetailsSlice.actions;

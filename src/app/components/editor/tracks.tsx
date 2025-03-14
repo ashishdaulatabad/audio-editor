@@ -6,14 +6,6 @@ import { TrackAudio } from './trackaudio';
 import { TimeSectionSelection } from './seekbar';
 import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 
-/**
- * @description Track bar hint information
- */
-export interface TrackDrawContent {
-  content: string
-  lw: number
-}
-
 interface TrackProps {
   id: number
   w: number
@@ -28,8 +20,8 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const timeUnitLine = SEC_TO_MICROSEC * timeUnit
-  const selectedStart = props.selectedContent ? ((props.selectedContent.startTimeMicros / timeUnitLine)) * lineDist : 0;
-  const selectedEnd = props.selectedContent ? ((props.selectedContent.endTimeMicros / timeUnitLine) * lineDist) : 0;
+  const selectedStart = (((props.selectedContent?.startTimeMicros || 0) / timeUnitLine) * lineDist);
+  const selectedEnd = (((props.selectedContent?.endTimeMicros || 0) / timeUnitLine) * lineDist);
 
   return (
     <div 

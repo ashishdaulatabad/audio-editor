@@ -8,16 +8,18 @@ export interface SelectedAudioTrack {
   value: AudioNonScheduledDetails
 }
 
-function getDefaultSelectedTrack() {
+function getDefaultSelectedTrack(): AudioNonScheduledDetails {
   return {
     audioName: '',
     audioId: Symbol(),
     effects: [],
     duration: 0,
+    mixerNumber: 0,
     colorAnnotation: '',
     trackDetail: {
       startOffsetInMicros: 0,
       endOffsetInMicros: 0,
+      playbackRate: 1,
       selected: false
     }
   };

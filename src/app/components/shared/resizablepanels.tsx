@@ -93,7 +93,6 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 }
 
 export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePanelProps>) {
-  // To do: should have flexibility to move left or right.
   return (
     <>
       <div

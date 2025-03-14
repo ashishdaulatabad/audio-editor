@@ -1,19 +1,22 @@
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status, togglePlay } from "@/app/state/trackdetails";
 import { Pause } from "@/assets/pause";
 import { Play } from "@/assets/play";
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { VolumeLevels } from "./volumelevels";
 import { Knob } from "../knob";
 import { addAudio } from "@/app/state/audiostate";
 import { randomColor } from "@/app/services/color";
+import { addWindowToAction, VerticalAlignment } from "@/app/state/windowstore";
+import { MixerMaster } from '../mixer/mixer';
+import { Mixer } from "@/assets/mixer";
 
 /**
  * @description Player at the top bar
  */
-export function Player(props: React.PropsWithoutRef<any>) {
+export function Player() {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const [timer, setTimer] = React.useState('00:00');
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
@@ -46,6 +49,26 @@ export function Player(props: React.PropsWithoutRef<any>) {
     setMasterVol(e);
   }
 
+  function openMixer() {
+    addWindowToAction(
+      dispatch,
+      {
+        header: 'Mixer',
+        props: {},
+        propsUniqueIdentifier: audioManager.mixer.viewId,
+        x: 10,
+        y: 10,
+        overflow: true,
+        verticalAlignment: VerticalAlignment.Bottom,
+        view: MixerMaster,
+        visible: true,
+        windowSymbol: Symbol(),
+        w: 1200,
+        h: 700
+      }
+    )
+  }
+
   /**
    * @description Exporting into audio file.
    * @todo: This.
@@ -56,6 +79,7 @@ export function Player(props: React.PropsWithoutRef<any>) {
       audioName: 'new.mp3',
       colorAnnotation: randomColor(),
       duration: data.duration as number,
+      mixerNumber: 0,
       effects: []
     };
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
@@ -71,7 +95,7 @@ export function Player(props: React.PropsWithoutRef<any>) {
         <ul className="list-none">
           <li
             onClick={exportIntoAudioFile}
-            className="inline-block hover:bg-slate-600 p-3 rounded-sm select-none"
+            className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
           >Export</li>
         </ul>
       </nav>
@@ -91,6 +115,15 @@ export function Player(props: React.PropsWithoutRef<any>) {
       </span>
       <div className="speaker-decibel ml-4">
         <VolumeLevels />
+      </div>
+      <div className="views flex ml-4">
+        <button
+          title="Open Mixer"
+          className="border border-solid border-slate-600 rounded-sm hover:bg-slate-600 active:bg-slate-800"
+          onClick={openMixer}
+        >
+          <Mixer w={40} h={40} stroke="rgb(100 116 139)" />
+        </button>
       </div>
     </div>
   );

@@ -1,8 +1,21 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { AppDispatch } from "./store";
 
 export interface Windowable {}
 
 type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
+
+export enum HorizontalAlignment {
+  Center,
+  Left,
+  Right,
+}
+
+export enum VerticalAlignment {
+  Center,
+  Top,
+  Bottom,
+}
 
 /**
  * @description Window view
@@ -47,12 +60,24 @@ export interface WindowView<TProps> {
    */
   visible: boolean
   /**
+   * @description Overflow X
+   */
+  overflow?: boolean
+  /**
    * @description To maintain window that is unique to an opened entity, an 
    * identifier is supplied, so that there are no duplicate window for 
    * same thing the user opens (for e.g., for scheduled track, 
    * it would be `trackDetail.scheduledKey`).
    */
   propsUniqueIdentifier: symbol
+  /**
+   * @description Content Horizontal Alignment
+   */
+  horizontalAlignment?: HorizontalAlignment
+  /**
+   * @description Content Vertical Alignment
+   */
+  verticalAlignment?: VerticalAlignment
 }
 
 export type InitialType<TProps> = {
@@ -179,5 +204,18 @@ export const {
   removeWindowWithUniqueIdentifier,
   batchRemoveWindowWithUniqueIdentifier
 } = windowManagerSlice.actions;
+
+/**
+ * @description Add window to window management.
+ * Ensures types for props are well defined and raises error while adding.
+ * @param dispatch dispatch
+ * @param details 
+ */
+export function addWindowToAction<TProps>(
+  dispatch: AppDispatch,
+  details: WindowView<TProps>
+) {
+  dispatch(addWindow(details));
+}
 
 export default windowManagerSlice.reducer;
