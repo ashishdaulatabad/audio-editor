@@ -59,7 +59,6 @@ export class Mixer {
       const context = audioService.useAudioContext();
       [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
       this.isInitialized = true;
-      
 
       this.analyserNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
         const left = context.createAnalyser();
