@@ -84,7 +84,7 @@ class AudioTrackManager {
 
   constructor(
     public totalTrackSize: number,
-    public readonly totalMixers: number
+    public totalMixers: number
   ) {
     this.mixer = new Mixer(totalMixers);
   }
@@ -794,33 +794,7 @@ class AudioTrackManager {
       details: trackDetail
     };
 
-    bufferSource.onended = () => {
-      if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
-        // const node = this.scheduledNodes[scheduledKey];
-        // if (!node.pendingReschedule) {
-        //   delete this.scheduledNodes[scheduledKey];
-        // } else {
-        //   if (node.pendingReschedule && typeof node.pendingReschedule === 'object') {
-        //     const {
-        //       offsetInMillis,
-        //       newTrack,
-        //       newMixerValue,
-        //     } = node.pendingReschedule;
-
-        //     const finalTrack = newTrack ?? track;
-
-        //     if (newTrack) {
-        //       this._scheduleInternal(newTrack, offsetInMillis);
-        //     } else {
-        //       // console.log('reschedule current modified');
-        //       this._scheduleInternal(track, offsetInMillis);
-        //     }
-        //   } else {
-        //     this._scheduleInternal(track, track.trackDetail.offsetInMicros);
-        //   }
-        // }
-      }
-    }
+    bufferSource.onended = () => {}
   }
 
   /**
