@@ -110,7 +110,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
         transformation
       }))
 
-      audioManager.rescheduleTrackFromScheduledNodes(track.trackDetail.scheduledKey);
+      audioManager.rescheduleTrackFromScheduledNodes(track.audioId, track.trackDetail);
 
       setTransformationInProgress(false);
     });
@@ -156,7 +156,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
    */
   function changeMixer(e: React.KeyboardEvent<HTMLInputElement>) {
     const newMixerValue = parseInt((e.target as HTMLInputElement).value);
-    audioManager.setMixerValue(track.audioId, newMixerValue - 1);
+    audioManager.setMixerValue(track.audioId, newMixerValue);
     audioManager.rescheduleAudioFromScheduledNodes(track.audioId);
     setAudioMixer(newMixerValue);
   }
@@ -170,7 +170,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   return (
     <div className="flex flex-col justify-between h-full p-2" ref={divRef}>
       <div>
-        <div className="mixer-details flex flex-row self-end">
+        <div className="mixer-details flex flex-row justify-end">
           <div className="volume m-2 min-w-20 text-center">
             <Knob
               onKnobChange={changeVolume}

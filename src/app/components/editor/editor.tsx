@@ -780,11 +780,7 @@ export function Editor() {
       trackDetails: newTrack
     }));
 
-    audioManager.useManager().scheduleSingleTrack(
-      newTrack,
-      trackNumber,
-      offsetInMicros
-    );
+    audioManager.useManager().scheduleSingleTrack(newTrack.audioId, newTrack.trackDetail);
   }
 
   /**
