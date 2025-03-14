@@ -3,6 +3,11 @@ import { audioService } from "./audioservice";
 export class Mixer {
   masterGainNode: GainNode | null = null;
   private gainNodes: GainNode[] = [];
+  private channelSplitterNodes: ChannelSplitterNode[] = [];
+  analyserNodes: {
+    left: AnalyserNode,
+    right: AnalyserNode
+  }[] = [];
   private panNodes: StereoPannerNode[] = [];
   private mixerViewIdentifier: symbol = Symbol();
   private isInitialized = false;
@@ -43,6 +48,22 @@ export class Mixer {
       const context = audioService.useAudioContext();
       [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
       this.isInitialized = true;
+      
+
+      this.analyserNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
+        const left = context.createAnalyser();
+        const right = context.createAnalyser()
+        return { left, right };
+      });
+
+      this.channelSplitterNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
+        const channelSplitter = context.createChannelSplitter();
+        this.gainNodes[index].connect(channelSplitter);
+        const { left, right } = this.analyserNodes[index];
+        channelSplitter.connect(left, 0);
+        channelSplitter.connect(right, 1);
+        return channelSplitter;
+      });
     }
 
     return this;

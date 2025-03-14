@@ -945,6 +945,15 @@ class AudioTrackManager {
     (this.rightAnalyserNode as AnalyserNode).getByteTimeDomainData(rightArray);
   }
 
+  getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
+    if (mixer >= 0) {
+      const { left, right } = this.mixer.analyserNodes[mixer];
+
+      left.getByteTimeDomainData(leftArray);
+      right.getByteTimeDomainData(rightArray);
+    }
+  }
+
   /**
    * @description Update timestamp in seconds
    * @returns true if by updating timestamp, time goes out of bounds.

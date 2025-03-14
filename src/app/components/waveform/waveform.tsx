@@ -116,64 +116,36 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     });
   }
 
-  /**
-   * @description Change polarity of the current track
-   */
   function transformPolarity() {
     transform(AudioTransformation.ReversePolarity);
   }
 
-  /**
-   * @description Reverse the track.
-   */
   function transformReverse() {
     transform(AudioTransformation.Reverse);
   }
 
-  /**
-   * @description Swap Stereo.
-   */
   function transformSwapStereo() {
     transform(AudioTransformation.SwapStereo)
   }
 
-  /**
-   * @description Normalize voice of the track.
-   */
   function normalize() {
     transform(AudioTransformation.Normalization);
   }
 
-  /**
-   * @description change audio volume
-   * @param e
-   */
   function changeVolume(e: number) {
     audioManager.setGainForAudio(track.audioId, e);
     setAudioVolume(e);
   }
 
-  /**
-   * @description change audio volume
-   * @param e
-   */
   function changePanner(e: number) {
     audioManager.setPannerForAudio(track.audioId, e);
     setAudioPanner(e);
   }
 
-  /**
-   * @description Change Playback Rate
-   * @param e emitted event
-   */
   function changePitch(e: number) {
     setPitch(e);
   }
 
-  /**
-   * @description Change Playback Rate
-   * @param e emitted event
-   */
   function changePlaybackRate(e: number) {
     setPlaybackRate(e);
   }

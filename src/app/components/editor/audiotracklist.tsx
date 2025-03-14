@@ -19,9 +19,6 @@ export function AudioTrackList() {
  
   const dispatch = useDispatch();
 
-  /**
-   * @description Load audio in workspace.
-   */
   function selectFile() {
     const inputElement = document.createElement("input") as HTMLInputElement;
     inputElement.type = 'file';
