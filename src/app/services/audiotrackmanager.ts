@@ -237,7 +237,8 @@ class AudioTrackManager {
   }
 
   /**
-   * @description Get Assigned Mixer.
+   * @description Assign new mixer.
+   * @todo Copy all the settings of this mixer when performing this operation
    * @param symbol identifier of audio in audio bank
    * @returns mixer attached to this node
    */
@@ -874,6 +875,24 @@ class AudioTrackManager {
    * @description Reschedule an already scheduled track.
    * @param track track detail
    */
+  rescheduleAudioFromScheduledNodes(
+    audioKey: symbol
+  ) {
+    for (const key of Object.getOwnPropertySymbols(this.scheduledNodes)) {
+      const node = this.scheduledNodes[key];
+
+      if (node.audioId === audioKey) {
+        node.pendingReschedule = true;
+        node.buffer.stop(0);
+        node.buffer.disconnect();
+      }
+    }
+  }
+
+  /**
+   * @description Reschedule an already scheduled track.
+   * @param track track detail
+   */
   rescheduleTrackFromScheduledNodes(
     trackScheduledKey: symbol
   ) {
@@ -881,10 +900,9 @@ class AudioTrackManager {
 
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       const node = this.scheduledNodes[symbolKey];
-
       node.pendingReschedule = true;
-
       node.buffer.stop(0);
+      node.buffer.disconnect();
     }
   }
 

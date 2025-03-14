@@ -5,8 +5,8 @@ import { audioManager } from '@/app/services/audiotrackmanager';
 import { Orientation, VolumeLevels } from '../player/volumelevels';
 
 export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) {
-  const [gain, setGain] = React.useState(1);
-  const [panner, setPanner] = React.useState(0);
+  const [gain, setGain] = React.useState(audioManager.useManager().mixer.getGainValue(props.mixerNumber + 1));
+  const [panner, setPanner] = React.useState(audioManager.useManager().mixer.getPanValue(props.mixerNumber + 1));
 
   function setGainValue(e: number) {
     audioManager.setGainNodeForMixer(props.mixerNumber, e);

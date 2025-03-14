@@ -24,6 +24,17 @@ export class Mixer {
     return this.mixerViewIdentifier;
   }
 
+  getGainValue(mixerNumber: number) {
+    if (mixerNumber === 0) {
+      return this.masterGainNode?.gain.value as number;
+    }
+    return this.gainNodes[mixerNumber - 1].gain.value;
+  }
+
+  getPanValue(mixerNumber: number) {
+    return this.panNodes[mixerNumber - 1].pan.value;
+  }
+
   initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
@@ -73,7 +84,7 @@ export class Mixer {
     if (mixerNumber === 0) {
       node.connect(this.masterGainNode as GainNode);
     } else {
-      node.connect(this.panNodes[mixerNumber]);
+      node.connect(this.panNodes[mixerNumber - 1]);
     }
   }
 

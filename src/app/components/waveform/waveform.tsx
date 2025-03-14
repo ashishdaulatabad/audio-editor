@@ -157,7 +157,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   function changeMixer(e: React.KeyboardEvent<HTMLInputElement>) {
     const newMixerValue = parseInt((e.target as HTMLInputElement).value);
     audioManager.setMixerValue(track.audioId, newMixerValue - 1);
-    audioManager.rescheduleTrackFromScheduledNodes(track.trackDetail.scheduledKey);
+    audioManager.rescheduleAudioFromScheduledNodes(track.audioId);
     setAudioMixer(newMixerValue);
   }
 
