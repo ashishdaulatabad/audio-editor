@@ -100,7 +100,6 @@ export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePane
   React.useEffect(() => {
     if (item && item.current) {
       item.current.style.width = '100%';
-      console.log('here');
     }
   });
 

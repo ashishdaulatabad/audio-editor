@@ -792,7 +792,7 @@ export function Editor() {
   function onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case ' ': {
-        event.preventDefault();
+        // event.preventDefault();
         const newStatus = status === Status.Play ? Status.Pause : Status.Play;
         dispatch(togglePlay(newStatus));
         break;
@@ -842,12 +842,12 @@ export function Editor() {
     if (scrollPageRef.current) {
       const target = event.target as HTMLElement;
       const trackAudio = getTrackAudioElement(target) as HTMLElement | null;
-      const cursorPosition = (trackAudio !== null ? trackAudio.offsetLeft + event.offsetX : event.offsetX);
+      const cursorPosition = (trackAudio ? trackAudio.offsetLeft : 0) + event.offsetX;
       const time = (cursorPosition / lineDist) * timeUnitPerLineDistInSeconds;
       const newCursorPosition = (time * newLineDist) / timeUnitPerLineDistInSeconds;
       const offsetFromScreen = cursorPosition - scrollPageRef.current.scrollLeft;
 
-      setScroll(newCursorPosition - offsetFromScreen);
+      scrollPageRef.current.scrollLeft = Math.floor(newCursorPosition - offsetFromScreen);
     }
   }
 
@@ -926,10 +926,6 @@ export function Editor() {
       isSet(true);
     }
 
-    if (scrollPageRef.current) {
-      scrollPageRef.current.scrollLeft = scroll;
-    }
-
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
@@ -1006,7 +1002,7 @@ export function Editor() {
             </div>
             <div 
               className="track-info rounded-r-md text-center min-w-full max-w-full"
-              style={{minHeight: height + 18 + 60 + 'px'}}
+              style={{minHeight: height + 60 + 'px'}}
             >
               <div className="workspace relative bg-slate-600 overflow-hidden h-full max-w-[72dvw] max-h-[92dvh]">
                 <Seekbar
@@ -1020,7 +1016,7 @@ export function Editor() {
                   onTimeSelection={onSelectingTime}
                 />
                 <div
-                  className="tracks relative overflow-y-scroll max-h-[87dvh]"
+                  className="tracks relative overflow-y-scroll max-h-[86dvh] custom-scroll"
                   style={{marginTop: '62px'}}
                   ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
