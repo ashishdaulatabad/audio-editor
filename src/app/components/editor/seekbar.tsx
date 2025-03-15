@@ -40,7 +40,10 @@ interface SeekbarProps {
    * @description Cursor Mode
    */
   mode: ModeType
-  scrollLeft: number
+  /**
+   * @description Scroll Ref
+   */
+  scrollRef: React.RefObject<HTMLDivElement | null>
   /**
    * @description Emits an event when a region is selected.
    */
@@ -55,8 +58,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const [isUserSelectingRegion, setIsUserSelectingRegion] = React.useState(false);
   const [startRegionSelection, setStartRegionSelection] = React.useState(0);
   const [endRegionSelection, setEndRegionSelection] = React.useState(0);
-  // Refs
-  const divRef = React.useRef<HTMLDivElement | null>(null);
   // Declared variables
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistInSeconds;
@@ -163,6 +164,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     setIsUserSelectingRegion(false);
   }
 
+
   const timeData = Array.from(
     { length: Math.floor(props.totalLines / labelMultiplier) },
     (_, index: number) => {
@@ -188,12 +190,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     },
   );
 
-  React.useEffect(() => {
-    if (divRef.current) {
-      divRef.current.scrollLeft = props.scrollLeft;
-    }
-  }, [props.scrollLeft]);
-
   const startSecs = Math.min(startRegionSelection, endRegionSelection);
   const endSecs = Math.max(startRegionSelection, endRegionSelection);
   const startRegion = (startSecs / timeUnit) * lineDist;
@@ -201,13 +197,13 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   return (
     <div
-      className="absolute max-w-full overflow-y-hidden overflow-x-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+      className="sticky max-w-full overflow-y-hidden overflow-x-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseRelease}
       onMouseUp={handleMouseRelease}
-      ref={divRef}
+      ref={props.scrollRef}
       >
         <Seeker
           onLoopEnd={handleLoopEnd}

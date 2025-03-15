@@ -93,7 +93,7 @@ export function Editor() {
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
   const [movableType, setMovableType] = React.useState(MovableType.None);
 
-  const [height, setHeight] = React.useState(98 * audioManager.totalTrackSize);
+  const [height, setHeight] = React.useState(90 * audioManager.totalTrackSize);
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
@@ -113,6 +113,7 @@ export function Editor() {
 
   // Refs
   const ref = React.createRef<HTMLDivElement>();
+  const seekbarRef = React.useRef<HTMLDivElement | null>(null);
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
 
@@ -943,8 +944,8 @@ export function Editor() {
   }
 
   function onScroll(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (scrollPageRef.current) {
-      setScrollLeft(scrollPageRef.current.scrollLeft);
+    if (scrollPageRef.current && seekbarRef.current) {
+      seekbarRef.current.scrollLeft = scrollPageRef.current.scrollLeft;
 
       if (ref.current) {
         ref.current.scrollTop = scrollPageRef.current.scrollTop;
@@ -1000,24 +1001,20 @@ export function Editor() {
                 }
               </div>
             </div>
-            <div 
-              className="track-info rounded-r-md text-center min-w-full max-w-full"
-              style={{minHeight: height + 60 + 'px'}}
-            >
-              <div className="workspace relative bg-slate-600 overflow-hidden h-full max-w-[72dvw] max-h-[92dvh]">
+            <div className="track-info rounded-r-md text-center min-w-full max-w-full">
+              <div className="workspace relative bg-slate-600 overflow-hidden h-full">
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
-                  scrollLeft={scrollLeft}
+                  scrollRef={seekbarRef}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
                   onTimeSelection={onSelectingTime}
                 />
                 <div
-                  className="tracks relative overflow-y-scroll max-h-[86dvh] custom-scroll"
-                  style={{marginTop: '62px'}}
+                  className="tracks relative overflow-scroll max-h-[93%] custom-scroll"
                   ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
                   onScroll={onScroll}

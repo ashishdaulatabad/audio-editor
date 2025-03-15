@@ -13,10 +13,14 @@ body {
   height: 100%;
 }
 
+.custom-scroll {
+  scrollbar-gutter: stable both-edges;
+  margin-left: -5px;
+}
+
 .custom-scroll::-webkit-scrollbar {
   width: 6px;
-  scrollbar-gutter: stable both-edges;
-  height: 0;
+  height: 6px;
   border-radius: 2px;
 }
 
