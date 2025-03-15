@@ -15,7 +15,7 @@ body {
 
 .custom-scroll {
   scrollbar-gutter: stable both-edges;
-  margin-left: -5px;
+  margin-left: -6px;
 }
 
 .custom-scroll::-webkit-scrollbar {

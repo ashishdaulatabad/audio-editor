@@ -61,7 +61,7 @@ const initialState: {
 } = {
   status: Status.Pause,
   maxTimeMicros: twoMinuteInMicros,
-  trackDetails: Array.from({length: 10}, () => [])
+  trackDetails: Array.from({length: 30}, () => [])
 }
 
 function getMaxTime(trackDetails: AudioTrackDetails[][]) {

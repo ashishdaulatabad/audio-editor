@@ -990,4 +990,4 @@ class AudioTrackManager {
   }
 }
 
-export const audioManager = new AudioTrackManager(10, 30);
+export const audioManager = new AudioTrackManager(30, 30);

@@ -96,24 +96,6 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 }
 
 export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePanelProps>) {
-  const item = props.ref;
-  React.useEffect(() => {
-    if (item && item.current && !props.initialWidth) {
-      const parent = item.current.parentElement as HTMLElement;
-      const allPanels = [...parent.children].filter((c) => c.classList.contains('resizing-panel') && c !== item.current);
-      let totalWidth = 0;
-
-      for (const allPanel of allPanels) {
-        totalWidth += (allPanel as HTMLElement).getBoundingClientRect().width;
-      }
-
-      const parentWidth = parent.getBoundingClientRect().width;
-
-      // console.log(parentWidth, totalWidth, item.current);
-      // item.current.style.width = parentWidth - totalWidth + 'px';
-    }
-  });
-
   return (
     <>
       <div
