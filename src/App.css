@@ -14,8 +14,8 @@ body {
 }
 
 .custom-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 5px;
+  width: 0;
+  height: 0;
   border-radius: 2px;
 }
 
@@ -23,33 +23,39 @@ body {
   background: #aaa;
   width: 0;
   height: 0;
-  border-radius: 2px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {
   background: transparent;
+  width: 1px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
+  position: absolute;
+  width: 10px;
+  background-clip: content-box;
 }
 
 .list::-webkit-scrollbar {
-  width: 6px;
+  width: 2px;
   border-radius: 2px;
 }
 
 .list::-webkit-scrollbar-button {
   background: #aaa;
-  border-radius: 2px;
+  width: 0;
+  height: 0; 
 }
 
 .list::-webkit-scrollbar-track {
   background: transparent;
+  width: 10px;
 }
 
 .list::-webkit-scrollbar-thumb {
   background: #888;
+  width: 6px;
   border-radius: 4px;
 }

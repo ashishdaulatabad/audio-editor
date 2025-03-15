@@ -86,6 +86,8 @@ export function Editor() {
   const [mode, setMode] = React.useState<AudioTrackManipulationMode>(AudioTrackManipulationMode.None);
   const [initialTrackWidth, setInitialTrackWidth] = React.useState(0);
   const [initialScrollLeft, setInitialScrollLeft] = React.useState(0);
+  const [scrollLeft, setScrollLeft] = React.useState(0);
+  const [scrollTop, setScrollTop] = React.useState(0);
   const [position, setPosition] = React.useState(0);
   // The entity that is movable is either a track or a window.
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
@@ -944,6 +946,16 @@ export function Editor() {
     }
   }
 
+  function onScroll(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (scrollPageRef.current) {
+      setScrollLeft(scrollPageRef.current.scrollLeft);
+
+      if (ref.current) {
+        ref.current.scrollTop = scrollPageRef.current.scrollTop;
+      }
+    }
+  }
+
   return (
     <>
       <div
@@ -961,23 +973,27 @@ export function Editor() {
           <WindowManager />
         </div>
         <ResizingGroup>
-          <ResizingWindowPanel className="track-files">
+          <ResizingWindowPanel
+            initialWidth={300}
+            className="track-files"
+          >
             <AudioTrackList />
           </ResizingWindowPanel>
           <ResizingHandle />
           <ResizingWindowPanel
-            className="workspace flex flex-row max-w-full overflow-y-auto max-h-[92dvh] min-w-screen"
+            className="workspace flex flex-row w-full overflow-hidden max-h-[92dvh] min-w-screen"
             ref={verticalScrollPageRef}
             data-cursor={mode}
           >
             <div className="track-element flex flex-col min-h-28">
               <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />
-              <div ref={ref} className="track-list relative">
+              <div ref={ref} className="track-list relative overflow-hidden h-full max-h-full">
                 {
                   Array.from({length: totalTracks}, (_, index: number) => (
                     <div 
                       key={index}
-                      className="track-info min-h-28 bg-slate-800 border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                      className="track-info bg-slate-800 box-border border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                      style={{minHeight: ((height / totalTracks)) + 'px'}}
                     >
                       <TrackInfo 
                         id={index}
@@ -989,23 +1005,26 @@ export function Editor() {
               </div>
             </div>
             <div 
-              className="track-info rounded-r-md text-center overflow-y-hidden overflow-x-scroll"
+              className="track-info rounded-r-md text-center min-w-full max-w-full"
               style={{minHeight: height + 18 + 60 + 'px'}}
-              ref={scrollPageRef}
             >
-              <div className="workspace relative bg-slate-600 min-h-full min-w-screen" style={{ width: width + 'px' }}>
+              <div className="workspace relative bg-slate-600 overflow-hidden h-full max-w-[72dvw] max-h-[92dvh]">
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
+                  scrollLeft={scrollLeft}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
                   onTimeSelection={onSelectingTime}
                 />
                 <div
-                  className="tracks relative"
+                  className="tracks relative overflow-y-scroll max-h-[87dvh]"
+                  style={{marginTop: '62px'}}
+                  ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
+                  onScroll={onScroll}
                 >
                   {
                     currentMode === ModeType.RegionSelect && 
@@ -1038,7 +1057,7 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={heightPerTrack}
+                        h={heightPerTrack + 2}
                       />
                     ))
                   }

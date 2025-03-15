@@ -9,6 +9,7 @@ export interface ResizableGroupProps {}
 export interface ResizablePanelProps {
   className?: string
   ref?: React.RefObject<HTMLDivElement | null>
+  initialWidth?: number
 }
 
 export interface ResizableHandleProps {}
@@ -26,6 +27,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   const [anchor, setAnchor] = React.useState(0);
   const [initialWidth, setInitialWidth] = React.useState(0);
   const [resizer, setResizer] = React.useState<HTMLElement | null>(null);
+  const ref = React.useRef<HTMLDivElement | null>(null);
 
   /**
    * @description Handle mouse event on moving the cursor
@@ -81,6 +83,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 
   return (
     <div
+      ref={ref}
       className="flex flex-row"
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
@@ -93,11 +96,20 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 }
 
 export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePanelProps>) {
+  const item = props.ref;
+  React.useEffect(() => {
+    if (item && item.current) {
+      item.current.style.width = '100%';
+      console.log('here');
+    }
+  });
+
   return (
     <>
       <div
-        className={css("resizing-panel h-full", props.className ?? '')}
+        className={css("resizing-panel", props.className ?? '')}
         ref={props.ref}
+        style={props.initialWidth ? {minWidth: props.initialWidth, maxWidth: props.initialWidth} : {}}
       >
         {props.children}
       </div>

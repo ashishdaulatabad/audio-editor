@@ -40,6 +40,7 @@ interface SeekbarProps {
    * @description Cursor Mode
    */
   mode: ModeType
+  scrollLeft: number
   /**
    * @description Emits an event when a region is selected.
    */
@@ -187,6 +188,12 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     },
   );
 
+  React.useEffect(() => {
+    if (divRef.current) {
+      divRef.current.scrollLeft = props.scrollLeft;
+    }
+  }, [props.scrollLeft]);
+
   const startSecs = Math.min(startRegionSelection, endRegionSelection);
   const endSecs = Math.max(startRegionSelection, endRegionSelection);
   const startRegion = (startSecs / timeUnit) * lineDist;
@@ -194,22 +201,22 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   return (
     <div
-      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+      className="absolute max-w-full overflow-y-hidden overflow-x-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseRelease}
       onMouseUp={handleMouseRelease}
       ref={divRef}
-    >
-      <Seeker
-        onLoopEnd={handleLoopEnd}
-        timePerUnitLine={timeUnit}
-        h={props.h}
-        lineDist={props.lineDist}
-        seekOffset={leftSeek}
-        setLeft={setLeftSeek}
-      />
+      >
+        <Seeker
+          onLoopEnd={handleLoopEnd}
+          timePerUnitLine={timeUnit}
+          h={props.h}
+          lineDist={props.lineDist}
+          seekOffset={leftSeek}
+          setLeft={setLeftSeek}
+        />
       <svg xmlns={svgxmlns} width={props.w} height={30}>
         <rect
           fill="#C5887666"
