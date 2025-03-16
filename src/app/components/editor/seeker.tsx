@@ -59,7 +59,7 @@ export function Seeker(props: {
   return (
     <div
       ref={props.ref}
-      className="seekbar-seek absolute z-10 bg-green-500 w-[2px]"
+      className="seekbar-seek absolute z-[20] bg-green-500 w-[2px]"
       style={{height: 'calc(100% - 6px)'}}
     ></div>
   )
