@@ -315,8 +315,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Set element as Multi-selected.
-   * 
+   * @description Set element as Multi-selected.
    * @param track Track to add into selected elements
    * @param domElement DOM element associated with the selection
    * @returns void
@@ -370,6 +369,7 @@ class AudioTrackManager {
     for (const selectedTrack of this.multiSelectedDOMElements) {
       const trackWidth = selectedTrack.initialWidth;
       const trackScrollLeft = selectedTrack.initialScrollLeft;
+      const trackPosition = selectedTrack.initialPosition;
 
       if (!minShrinkSet) {
         minShrinkValue = trackWidth;
@@ -379,10 +379,10 @@ class AudioTrackManager {
       }
 
       if (!minExpandSet) {
-        minExpandValue = trackScrollLeft;
+        minExpandValue = Math.min(trackPosition, trackScrollLeft);
         minExpandSet = true;
       } else if (minExpandValue > trackScrollLeft) {
-        minExpandValue = trackScrollLeft;
+        minExpandValue = Math.min(trackScrollLeft, trackPosition);
       }
     }
 
@@ -613,7 +613,7 @@ class AudioTrackManager {
     const symbolKey = track.trackDetail.scheduledKey;
 
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
-      this.scheduledNodes[symbolKey].buffer.stop();
+      this.scheduledNodes[symbolKey].buffer.stop(0);
       this.scheduledNodes[symbolKey].buffer.disconnect();
       this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter((element) => (
         element.trackDetail.scheduledKey !== symbolKey
@@ -794,7 +794,7 @@ class AudioTrackManager {
       details: trackDetail
     };
 
-    bufferSource.onended = () => {}
+    bufferSource.onended = () => {};
   }
 
   /**
@@ -990,4 +990,4 @@ class AudioTrackManager {
   }
 }
 
-export const audioManager = new AudioTrackManager(10, 30);
+export const audioManager = new AudioTrackManager(30, 30);

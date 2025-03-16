@@ -47,7 +47,8 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
       const y = event.nativeEvent.offsetY;
       const normalizedValue = clamp((props.h + (props.headh / 2) - y) / props.h, 0, 1);
       setValue(normalizedValue);
-      props.onSliderChange(normalizedValue)
+      const mapper = props.functionMapper ? props.functionMapper(normalizedValue) : normalizedValue;
+      props.onSliderChange(mapper)
     }
   }
   const width = props.headw;

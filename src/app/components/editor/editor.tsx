@@ -38,6 +38,7 @@ import {
 } from '../../state/trackdetails';
 import {
   createAudioData,
+  css,
   getTrackAudioElement,
   getTrackAudioOrTrackElement,
   getTrackElement,
@@ -55,6 +56,7 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
+import { Seeker } from './seeker';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -80,7 +82,6 @@ export enum MovableType {
  */
 export function Editor() {
   // All states
-  const [set, isSet] = React.useState(false);
   const [anchorX, setAnchorX] = React.useState(0);
   const [anchorY, setAnchorY] = React.useState(0);
   const [mode, setMode] = React.useState<AudioTrackManipulationMode>(AudioTrackManipulationMode.None);
@@ -91,14 +92,13 @@ export function Editor() {
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
   const [movableType, setMovableType] = React.useState(MovableType.None);
 
-  const [height, setHeight] = React.useState(98 * audioManager.totalTrackSize);
+  const [height, setHeight] = React.useState(90 * audioManager.totalTrackSize);
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
   const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
   const [selectedRegion, setSelectedRegion] = React.useState<TimeSectionSelection | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
-  const [scroll, setScroll] = React.useState(0);
 
   // Redux states
   const store = useSelector((state: RootState) => state.audioReducer.contents);
@@ -111,6 +111,8 @@ export function Editor() {
 
   // Refs
   const ref = React.createRef<HTMLDivElement>();
+  const seekbarRef = React.useRef<HTMLDivElement | null>(null);
+  const seekerRef = React.useRef<HTMLDivElement | null>(null);
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
 
@@ -132,7 +134,9 @@ export function Editor() {
   const width = (trackTimeDurationMicros / timeUnitPerLineMicros) * lineDist;
   const totalLines = Math.floor(width / lineDist);
 
-  const heightPerTrack = (height / totalTracks) - 2;
+  const heightPerTrack = (height / totalTracks);
+
+  const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
 
   /**
    * Set offset relative to the offset of current workspace.
@@ -477,7 +481,8 @@ export function Editor() {
     if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movableEntity) {
       event.preventDefault();
       const selectedAttr = movableEntity.getAttribute('data-selected');
-      const diffAnchorX = Math.max((scrollPageRef.current?.offsetLeft ?? 0), event.nativeEvent.clientX) - anchorX;
+      const first = scrollPageRef.current ? scrollPageRef.current.offsetLeft + (isChrome ? 6 : 0) : 0;
+      const diffAnchorX = Math.max(first, event.nativeEvent.clientX) - anchorX;
 
       if (selectedAttr === 'true') {
         switch (mode) {
@@ -516,17 +521,17 @@ export function Editor() {
                 width: clamp(
                   initialTrackWidth - diffAnchorX,
                   0,
-                  initialScrollLeft + initialTrackWidth,
+                  Math.min(position, initialScrollLeft) + initialTrackWidth,
                 ) + 'px',
-                left: Math.max(
+                left: clamp(
+                  position + diffAnchorX,
                   0,
-                  position - initialScrollLeft,
-                  position + diffAnchorX
+                  position + initialTrackWidth,
                 ) + 'px'
               }
             );
 
-            movableEntity.scrollLeft = initialScrollLeft + diffAnchorX;
+            movableEntity.scrollLeft = Math.max(initialScrollLeft + diffAnchorX, initialScrollLeft - position);
             setDragged(diffAnchorX !== 0);
             break;
           }
@@ -840,12 +845,12 @@ export function Editor() {
     if (scrollPageRef.current) {
       const target = event.target as HTMLElement;
       const trackAudio = getTrackAudioElement(target) as HTMLElement | null;
-      const cursorPosition = (trackAudio !== null ? trackAudio.offsetLeft + event.offsetX : event.offsetX);
+      const cursorPosition = (trackAudio ? trackAudio.offsetLeft : 0) + event.offsetX;
       const time = (cursorPosition / lineDist) * timeUnitPerLineDistInSeconds;
       const newCursorPosition = (time * newLineDist) / timeUnitPerLineDistInSeconds;
       const offsetFromScreen = cursorPosition - scrollPageRef.current.scrollLeft;
 
-      setScroll(newCursorPosition - offsetFromScreen);
+      scrollPageRef.current.scrollLeft = Math.floor(newCursorPosition - offsetFromScreen);
     }
   }
 
@@ -918,15 +923,6 @@ export function Editor() {
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
-    
-    if (ref.current) {
-      setHeight(ref.current.scrollHeight);
-      isSet(true);
-    }
-
-    if (scrollPageRef.current) {
-      scrollPageRef.current.scrollLeft = scroll;
-    }
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
@@ -941,6 +937,21 @@ export function Editor() {
 
     if (isPromptOpen()) {
       hidePrompt();
+    }
+  }
+
+  function onScroll(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (scrollPageRef.current && seekbarRef.current) {
+      const left = scrollPageRef.current.scrollLeft;
+      seekbarRef.current.scrollLeft = left;
+
+      if (seekerRef.current) {
+        seekerRef.current.style.left = -left + 'px';
+      }
+
+      if (ref.current) {
+        ref.current.scrollTop = scrollPageRef.current.scrollTop;
+      }
     }
   }
 
@@ -960,52 +971,57 @@ export function Editor() {
           <Player />
           <WindowManager />
         </div>
-        <ResizingGroup>
-          <ResizingWindowPanel className="track-files">
+        <ResizingGroup className="max-h-[92dvh] max-w-full">
+          <ResizingWindowPanel
+            initialWidth={300}
+            className="track-files"
+          >
             <AudioTrackList />
           </ResizingWindowPanel>
           <ResizingHandle />
           <ResizingWindowPanel
-            className="workspace flex flex-row max-w-full overflow-y-auto max-h-[92dvh] min-w-screen"
+            className="workspace flex flex-row max-w-full overflow-hidden min-w-screen"
             ref={verticalScrollPageRef}
             data-cursor={mode}
           >
             <div className="track-element flex flex-col min-h-28">
               <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />
-              <div ref={ref} className="track-list relative">
+              <div ref={ref} className="bg-slate-800 track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
                 {
                   Array.from({length: totalTracks}, (_, index: number) => (
                     <div 
                       key={index}
-                      className="track-info min-h-28 bg-slate-800 border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                      className="track-info bg-slate-800 box-border border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                      style={{minHeight: heightPerTrack + 'px', maxHeight: heightPerTrack + 'px' }}
                     >
-                      <TrackInfo 
-                        id={index}
-                        height={(height / totalTracks)}
-                      />
+                      <TrackInfo id={index} />
                     </div>
                   ))
                 }
               </div>
             </div>
-            <div 
-              className="track-info rounded-r-md text-center overflow-y-hidden overflow-x-scroll"
-              style={{minHeight: height + 18 + 60 + 'px'}}
-              ref={scrollPageRef}
-            >
-              <div className="workspace relative bg-slate-600 min-h-full min-w-screen" style={{ width: width + 'px' }}>
+            <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
+              <div className="workspace relative bg-slate-600 overflow-hidden h-full">
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
+                  scrollRef={seekbarRef}
+                  seekerRef={seekerRef}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
                   onTimeSelection={onSelectingTime}
                 />
                 <div
-                  className="tracks relative"
+                  className={css(
+                    "tracks relative overflow-scroll max-h-full",
+                    { 'custom-scroll': isChrome }
+                  )}
+                  style={{maxHeight: 'calc(100% - 62px)'}}
+                  ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
+                  onScroll={onScroll}
                 >
                   {
                     currentMode === ModeType.RegionSelect && 
@@ -1022,7 +1038,7 @@ export function Editor() {
                     currentMode === ModeType.Slicer && 
                       <Slicer
                         w={width}
-                        trackHeight={(height/totalTracks)}
+                        trackHeight={heightPerTrack}
                         h={height}
                         lineDist={lineDist}
                         unitTime={timeUnitPerLineDistInSeconds}

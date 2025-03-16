@@ -16,7 +16,7 @@ export function Canvas(props: React.PropsWithoutRef<{
       context.clearRect(0, 0, props.w, props.h);
       context.drawImage(props.image, 0, 0, props.w, props.h);
     }
-  }, [props.w, props.image]);
+  }, [props.w]);
 
   return (
     <canvas

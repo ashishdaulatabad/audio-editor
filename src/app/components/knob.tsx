@@ -80,6 +80,12 @@ function normalizeAngle(x: number, y: number, centerX: number, centerY: number):
 const BASE_CURVE_LENGTH = 3 * Math.PI / 2;
 const START_ANGLE = 3 * Math.PI / 4;
 
+/**
+ * @description Knob component
+ * @todo Can just rotate with transform instead of manually calculating angle??
+ * @param props 
+ * @returns 
+ */
 export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   // States
   // To do: Perform a mapped value

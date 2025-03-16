@@ -41,6 +41,14 @@ interface SeekbarProps {
    */
   mode: ModeType
   /**
+   * @description Scroll Ref
+   */
+  scrollRef: React.RefObject<HTMLDivElement | null>
+  /**
+   * @description Scroll Ref
+   */
+  seekerRef: React.RefObject<HTMLDivElement | null>
+  /**
    * @description Emits an event when a region is selected.
    */
   onTimeSelection: (timeSection: TimeSectionSelection | null) => void
@@ -50,15 +58,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   // Redux States
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   // Component states
-  const [leftSeek, setLeftSeek] = React.useState(0);
   const [isUserSelectingRegion, setIsUserSelectingRegion] = React.useState(false);
   const [startRegionSelection, setStartRegionSelection] = React.useState(0);
   const [endRegionSelection, setEndRegionSelection] = React.useState(0);
-  // Refs
-  const divRef = React.useRef<HTMLDivElement | null>(null);
+  const [left, setLeft] = React.useState(0);
   // Declared variables
-  const lineDist = props.lineDist;
-  const timeUnit = props.timeUnitPerLineDistInSeconds;
+  const {
+    lineDist,
+    timeUnitPerLineDistInSeconds: timeUnit,
+    seekerRef
+  } = props;
   const labelMultiplier = Math.ceil(50 / lineDist);
 
   /**
@@ -70,18 +79,16 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       const { offsetX } = event.nativeEvent;
       const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
 
-      // First time, force use manager to initialize all the audiocontext
-      // variables; since they cannot be used without user interaction.
       audioManager.useManager().setTimestamp(currentTimeInSeconds);
       audioManager.rescheduleAllTracks(tracks);
-      setLeftSeek(offsetX);
+      setLeft(offsetX);
     }
   }
 
   /**
-   * @description Handle on loop end, emitted by the seeker component.
+   * @description Perform certain tasks when the loop is ended
    */
-  function handleLoopEnd() {
+  function onLoopEnd() {
     audioManager.useManager().rescheduleAllTracks(tracks);
   }
 
@@ -162,6 +169,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     setIsUserSelectingRegion(false);
   }
 
+
   const timeData = Array.from(
     { length: Math.floor(props.totalLines / labelMultiplier) },
     (_, index: number) => {
@@ -193,58 +201,61 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const endRegion = (endSecs / timeUnit) * lineDist;
 
   return (
-    <div
-      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
-      onClick={seekToPoint}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseRelease}
-      onMouseUp={handleMouseRelease}
-      ref={divRef}
-    >
+    <>
       <Seeker
-        onLoopEnd={handleLoopEnd}
+        ref={seekerRef}
         timePerUnitLine={timeUnit}
-        h={props.h}
-        lineDist={props.lineDist}
-        seekOffset={leftSeek}
-        setLeft={setLeftSeek}
+        lineDist={lineDist}
+        seekOffset={0}
+        left={left}
+        onLoopEnd={onLoopEnd}
       />
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
-        <rect
-          fill="#C5887666"
-          x={startRegion}
-          y={0}
-          width={endRegion - startRegion}
-          height={30}
-        ></rect>
-        {timeData}
-      </svg>
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
-        <defs>
-          <pattern
-            id="repeatedSeekbarLines"
-            x="0"
-            y="0"
-            width={props.lineDist}
-            height={props.h}
-            patternUnits="userSpaceOnUse"
-            patternContentUnits="userSpaceOnUse"
-          >
-            <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
-            <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
-          </pattern>
-        </defs>
-        <rect x="0" y="0" width={props.w} height={30} fill="url(#repeatedSeekbarLines)" />
+      <div
+        className="relative overflow-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+        onClick={seekToPoint}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseRelease}
+        onMouseUp={handleMouseRelease}
+        ref={props.scrollRef}
+      >
+        <svg xmlns={svgxmlns} width={props.w} height={30}>
+          <rect
+            fill="#C5887666"
+            x={startRegion}
+            y={0}
+            width={endRegion - startRegion}
+            height={30}
+          ></rect>
+          {timeData}
+        </svg>
+        <svg xmlns={svgxmlns} width={props.w} height={30}>
+          <defs>
+            <pattern
+              id="repeatedSeekbarLines"
+              x="0"
+              y="0"
+              width={props.lineDist}
+              height={props.h}
+              patternUnits="userSpaceOnUse"
+              patternContentUnits="userSpaceOnUse"
+            >
+              <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
+              <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width={props.w} height={30} fill="url(#repeatedSeekbarLines)" />
 
-        <rect
-          fill="#C5887666"
-          x={startRegion}
-          y={0}
-          width={endRegion - startRegion}
-          height={30}
-        ></rect>
-      </svg>
-    </div>
+          <rect
+            fill="#C5887666"
+            x={startRegion}
+            y={0}
+            width={endRegion - startRegion}
+            height={30}
+          ></rect>
+        </svg>
+      </div>
+
+    </>
   );
 }

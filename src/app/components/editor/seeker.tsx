@@ -9,22 +9,25 @@ import { useSelector } from "react-redux";
  * @param props Props.
  * @returns void
  */
-export function Seeker(props: React.PropsWithoutRef<{
+export function Seeker(props: {
   lineDist: number
   timePerUnitLine: number
-  h: number
+  ref: React.RefObject<HTMLDivElement | null>
   seekOffset?: number
+  left: number
   onLoopEnd: () => void
-  setLeft: (e: number) => void
-}>) {
-  const seekbarRef = React.createRef<HTMLDivElement>();
-  const status = useSelector((store: RootState) => store.trackDetailsReducer.status);
-  const timePerUnitLine = props.timePerUnitLine;
-
+}) {
+  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+  const {
+    lineDist,
+    ref,
+    timePerUnitLine
+  } = props;
+  /// Resetting seekbar after exceeding certain threshold
   React.useEffect(() => {
-    if (seekbarRef.current) {
-      const currLeft = (props.lineDist / timePerUnitLine) * audioManager.getTimestamp();
-      seekbarRef.current.style.transform = `translate(${Math.round(currLeft)}px)`;
+    if (ref.current) {
+      const currLeft = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
+      ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
     }
 
     let value = 0;
@@ -36,14 +39,15 @@ export function Seeker(props: React.PropsWithoutRef<{
      * @description Animate seekbar to move as per timestamp
      */
     function animateSeekbar() {
-      if (seekbarRef.current) {
+      if (ref.current) {
         const isLoopEnd = audioManager.updateTimestamp();
+
         if (isLoopEnd) {
           props.onLoopEnd();
         }
 
-        const left = (props.lineDist / timePerUnitLine) * audioManager.getTimestamp();
-        seekbarRef.current.style.transform = `translate(${Math.round(left)}px)`;
+        const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
+        ref.current.style.transform = `translate(${Math.round(left)}px)`;
       }
       
       value = requestAnimationFrame(animateSeekbar);
@@ -52,12 +56,11 @@ export function Seeker(props: React.PropsWithoutRef<{
     return () => cancelAnimationFrame(value)
   });
 
-  /// Resetting seekbar after exceeding certain threshold
   return (
     <div
-      ref={seekbarRef}
-      className="seekbar-seek z-10 absolute bg-green-500 w-[2px]"
-      style={{height: props.h + 60 + 'px'}}
+      ref={props.ref}
+      className="seekbar-seek absolute z-[20] bg-green-500 w-[2px]"
+      style={{height: 'calc(100% - 6px)'}}
     ></div>
   )
 }

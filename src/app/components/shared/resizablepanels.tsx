@@ -1,7 +1,9 @@
 import React from 'react';
 import { css } from '@/app/services/utils';
 
-export interface ResizableGroupProps {}
+export interface ResizableGroupProps {
+  className?: string
+}
 
 /**
  * @description Resizable Panel Options
@@ -9,6 +11,7 @@ export interface ResizableGroupProps {}
 export interface ResizablePanelProps {
   className?: string
   ref?: React.RefObject<HTMLDivElement | null>
+  initialWidth?: number
 }
 
 export interface ResizableHandleProps {}
@@ -26,6 +29,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   const [anchor, setAnchor] = React.useState(0);
   const [initialWidth, setInitialWidth] = React.useState(0);
   const [resizer, setResizer] = React.useState<HTMLElement | null>(null);
+  const ref = React.useRef<HTMLDivElement | null>(null);
 
   /**
    * @description Handle mouse event on moving the cursor
@@ -81,7 +85,8 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 
   return (
     <div
-      className="flex flex-row"
+      ref={ref}
+      className={css("flex flex-row", props.className ?? '')}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseRelease}
@@ -96,8 +101,9 @@ export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePane
   return (
     <>
       <div
-        className={css("resizing-panel h-full", props.className ?? '')}
+        className={css("resizing-panel", props.className ?? '')}
         ref={props.ref}
+        style={props.initialWidth ? {minWidth: props.initialWidth, maxWidth: props.initialWidth} : {}}
       >
         {props.children}
       </div>

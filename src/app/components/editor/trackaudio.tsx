@@ -227,6 +227,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       hideContextMenu();
     }
   }
+
   return (
     <div
       title={`Track: ${track.audioName}`}
@@ -252,7 +253,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       >
         <span
           ref={spanRef}
-          className="text-sm relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
+          className="text-md relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
           style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
         >
           <span onClick={contextMenu} className="wave-icon cursor-pointer">
