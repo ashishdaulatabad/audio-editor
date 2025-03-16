@@ -81,14 +81,11 @@ export enum MovableType {
  */
 export function Editor() {
   // All states
-  const [set, isSet] = React.useState(false);
   const [anchorX, setAnchorX] = React.useState(0);
   const [anchorY, setAnchorY] = React.useState(0);
   const [mode, setMode] = React.useState<AudioTrackManipulationMode>(AudioTrackManipulationMode.None);
   const [initialTrackWidth, setInitialTrackWidth] = React.useState(0);
   const [initialScrollLeft, setInitialScrollLeft] = React.useState(0);
-  const [scrollLeft, setScrollLeft] = React.useState(0);
-  const [scrollTop, setScrollTop] = React.useState(0);
   const [position, setPosition] = React.useState(0);
   // The entity that is movable is either a track or a window.
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
@@ -101,7 +98,6 @@ export function Editor() {
   const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
   const [selectedRegion, setSelectedRegion] = React.useState<TimeSectionSelection | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
-  const [scroll, setScroll] = React.useState(0);
 
   // Redux states
   const store = useSelector((state: RootState) => state.audioReducer.contents);
@@ -137,6 +133,8 @@ export function Editor() {
   const totalLines = Math.floor(width / lineDist);
 
   const heightPerTrack = (height / totalTracks);
+
+  const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
 
   /**
    * Set offset relative to the offset of current workspace.
@@ -481,7 +479,8 @@ export function Editor() {
     if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movableEntity) {
       event.preventDefault();
       const selectedAttr = movableEntity.getAttribute('data-selected');
-      const diffAnchorX = Math.max((scrollPageRef.current?.offsetLeft ?? 0), event.nativeEvent.clientX) - anchorX;
+      const first = scrollPageRef.current ? scrollPageRef.current.offsetLeft + (isChrome ? 6 : 0) : 0;
+      const diffAnchorX = Math.max(first, event.nativeEvent.clientX) - anchorX;
 
       if (selectedAttr === 'true') {
         switch (mode) {
@@ -520,17 +519,17 @@ export function Editor() {
                 width: clamp(
                   initialTrackWidth - diffAnchorX,
                   0,
-                  initialScrollLeft + initialTrackWidth,
+                  Math.min(position, initialScrollLeft) + initialTrackWidth,
                 ) + 'px',
-                left: Math.max(
+                left: clamp(
+                  position + diffAnchorX,
                   0,
-                  position - initialScrollLeft,
-                  position + diffAnchorX
+                  position + initialTrackWidth,
                 ) + 'px'
               }
             );
 
-            movableEntity.scrollLeft = initialScrollLeft + diffAnchorX;
+            movableEntity.scrollLeft = Math.max(initialScrollLeft + diffAnchorX, initialScrollLeft - position);
             setDragged(diffAnchorX !== 0);
             break;
           }
@@ -949,8 +948,6 @@ export function Editor() {
     }
   }
 
-  const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
-
   return (
     <>
       <div
@@ -1010,7 +1007,7 @@ export function Editor() {
                 />
                 <div
                   className={css(
-                    "tracks relative overflow-scroll min-h-[0%] max-h-full",
+                    "tracks relative overflow-scroll max-h-full",
                     { 'custom-scroll': isChrome }
                   )}
                   style={{maxHeight: 'calc(100% - 62px)', marginTop: '62px'}}

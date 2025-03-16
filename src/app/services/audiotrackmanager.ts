@@ -370,6 +370,7 @@ class AudioTrackManager {
     for (const selectedTrack of this.multiSelectedDOMElements) {
       const trackWidth = selectedTrack.initialWidth;
       const trackScrollLeft = selectedTrack.initialScrollLeft;
+      const trackPosition = selectedTrack.initialPosition;
 
       if (!minShrinkSet) {
         minShrinkValue = trackWidth;
@@ -379,10 +380,10 @@ class AudioTrackManager {
       }
 
       if (!minExpandSet) {
-        minExpandValue = trackScrollLeft;
+        minExpandValue = Math.min(trackPosition, trackScrollLeft);
         minExpandSet = true;
       } else if (minExpandValue > trackScrollLeft) {
-        minExpandValue = trackScrollLeft;
+        minExpandValue = Math.min(trackScrollLeft, trackPosition);
       }
     }
 

@@ -197,7 +197,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   return (
     <div
-      className="fixed max-w-full overflow-y-hidden overflow-x-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+      className="absolute max-w-full overflow-y-hidden overflow-x-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

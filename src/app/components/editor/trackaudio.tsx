@@ -227,6 +227,9 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       hideContextMenu();
     }
   }
+
+  console.log('here');
+
   return (
     <div
       title={`Track: ${track.audioName}`}
@@ -275,7 +278,6 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
     let offcanvas = audioManager.getOffscreenCanvasDrawn(data.audioId);
 
     if (offcanvas) {
-      console.log(offcanvas);
       return offcanvas;
     }
   }
