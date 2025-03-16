@@ -228,8 +228,6 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     }
   }
 
-  console.log('here');
-
   return (
     <div
       title={`Track: ${track.audioName}`}

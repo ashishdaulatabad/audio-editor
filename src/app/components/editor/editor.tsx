@@ -56,6 +56,7 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
+import { Seeker } from './seeker';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -111,6 +112,7 @@ export function Editor() {
   // Refs
   const ref = React.createRef<HTMLDivElement>();
   const seekbarRef = React.useRef<HTMLDivElement | null>(null);
+  const seekerRef = React.useRef<HTMLDivElement | null>(null);
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
 
@@ -922,7 +924,35 @@ export function Editor() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
 
+    if (seekerRef.current) {
+      const currLeft = (lineDist / timeUnitPerLineDistInSeconds) * audioManager.getTimestamp();
+      seekerRef.current.style.transform = `translate(${Math.round(currLeft)}px)`;
+    }
+
+    let value = 0;
+    if (status === Status.Play) {
+      value = requestAnimationFrame(animateSeekbar);
+    }
+
+    /**
+     * @description Animate seekbar to move as per timestamp
+     */
+    function animateSeekbar() {
+      if (seekerRef.current) {
+        const isLoopEnd = audioManager.updateTimestamp();
+        if (isLoopEnd) {
+          audioManager.useManager().rescheduleAllTracks(trackDetails);
+        }
+
+        const left = (lineDist / timeUnitPerLineDistInSeconds) * audioManager.getTimestamp();
+        seekerRef.current.style.transform = `translate(${Math.round(left)}px)`;
+      }
+      
+      value = requestAnimationFrame(animateSeekbar);
+    }
+
     return () => {
+      cancelAnimationFrame(value)
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }
@@ -940,7 +970,12 @@ export function Editor() {
 
   function onScroll(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (scrollPageRef.current && seekbarRef.current) {
-      seekbarRef.current.scrollLeft = scrollPageRef.current.scrollLeft;
+      const left = scrollPageRef.current.scrollLeft;
+      seekbarRef.current.scrollLeft = left;
+
+      if (seekerRef.current) {
+        seekerRef.current.style.left = -left + 'px';
+      }
 
       if (ref.current) {
         ref.current.scrollTop = scrollPageRef.current.scrollTop;
@@ -995,6 +1030,12 @@ export function Editor() {
             </div>
             <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
               <div className="workspace relative bg-slate-600 overflow-hidden h-full">
+                <Seeker
+                  ref={seekerRef}
+                  timePerUnitLine={timeUnitPerLineDistInSeconds}
+                  lineDist={lineDist}
+                  seekOffset={0}
+                />
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}
@@ -1010,7 +1051,7 @@ export function Editor() {
                     "tracks relative overflow-scroll max-h-full",
                     { 'custom-scroll': isChrome }
                   )}
-                  style={{maxHeight: 'calc(100% - 62px)', marginTop: '62px'}}
+                  style={{maxHeight: 'calc(100% - 62px)'}}
                   ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
                   onScroll={onScroll}

@@ -315,8 +315,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Set element as Multi-selected.
-   * 
+   * @description Set element as Multi-selected.
    * @param track Track to add into selected elements
    * @param domElement DOM element associated with the selection
    * @returns void
