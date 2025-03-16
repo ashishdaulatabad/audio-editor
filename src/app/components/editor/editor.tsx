@@ -38,6 +38,7 @@ import {
 } from '../../state/trackdetails';
 import {
   createAudioData,
+  css,
   getTrackAudioElement,
   getTrackAudioOrTrackElement,
   getTrackElement,
@@ -135,7 +136,7 @@ export function Editor() {
   const width = (trackTimeDurationMicros / timeUnitPerLineMicros) * lineDist;
   const totalLines = Math.floor(width / lineDist);
 
-  const heightPerTrack = (height / totalTracks) - 2;
+  const heightPerTrack = (height / totalTracks);
 
   /**
    * Set offset relative to the offset of current workspace.
@@ -921,11 +922,6 @@ export function Editor() {
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
-    
-    if (ref.current) {
-      setHeight(ref.current.scrollHeight);
-      isSet(true);
-    }
 
     return () => {
       document.removeEventListener('keydown', onKeyDown);
@@ -953,6 +949,8 @@ export function Editor() {
     }
   }
 
+  const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
+
   return (
     <>
       <div
@@ -969,7 +967,7 @@ export function Editor() {
           <Player />
           <WindowManager />
         </div>
-        <ResizingGroup>
+        <ResizingGroup className="max-h-[92dvh] max-w-full">
           <ResizingWindowPanel
             initialWidth={300}
             className="track-files"
@@ -978,30 +976,27 @@ export function Editor() {
           </ResizingWindowPanel>
           <ResizingHandle />
           <ResizingWindowPanel
-            className="workspace flex flex-row w-full overflow-hidden max-h-[92dvh] min-w-screen"
+            className="workspace flex flex-row max-w-full overflow-hidden min-w-screen"
             ref={verticalScrollPageRef}
             data-cursor={mode}
           >
             <div className="track-element flex flex-col min-h-28">
               <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />
-              <div ref={ref} className="track-list relative overflow-hidden h-full max-h-full">
+              <div ref={ref} className="bg-slate-800 track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
                 {
                   Array.from({length: totalTracks}, (_, index: number) => (
                     <div 
                       key={index}
                       className="track-info bg-slate-800 box-border border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
-                      style={{minHeight: ((height / totalTracks)) + 'px'}}
+                      style={{minHeight: heightPerTrack + 'px', maxHeight: heightPerTrack + 'px' }}
                     >
-                      <TrackInfo 
-                        id={index}
-                        height={(height / totalTracks)}
-                      />
+                      <TrackInfo id={index} />
                     </div>
                   ))
                 }
               </div>
             </div>
-            <div className="track-info rounded-r-md text-center min-w-full max-w-full">
+            <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
               <div className="workspace relative bg-slate-600 overflow-hidden h-full">
                 <Seekbar
                   mode={currentMode}
@@ -1014,7 +1009,11 @@ export function Editor() {
                   onTimeSelection={onSelectingTime}
                 />
                 <div
-                  className="tracks relative overflow-scroll max-h-[93%] custom-scroll"
+                  className={css(
+                    "tracks relative overflow-scroll min-h-[0%] max-h-full",
+                    { 'custom-scroll': isChrome }
+                  )}
+                  style={{maxHeight: 'calc(100% - 62px)', marginTop: '62px'}}
                   ref={scrollPageRef}
                   onDragOver={(e) => e.preventDefault()}
                   onScroll={onScroll}
@@ -1034,7 +1033,7 @@ export function Editor() {
                     currentMode === ModeType.Slicer && 
                       <Slicer
                         w={width}
-                        trackHeight={(height/totalTracks)}
+                        trackHeight={heightPerTrack}
                         h={height}
                         lineDist={lineDist}
                         unitTime={timeUnitPerLineDistInSeconds}
@@ -1050,7 +1049,7 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={heightPerTrack + 2}
+                        h={heightPerTrack}
                       />
                     ))
                   }

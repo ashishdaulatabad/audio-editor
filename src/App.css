@@ -21,6 +21,7 @@ body {
 .custom-scroll::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+  /* padding: 3px; */
   border-radius: 2px;
 }
 
@@ -31,8 +32,8 @@ body {
 }
 
 .custom-scroll::-webkit-scrollbar-track {
-  background: transparent;
-  width: 1px;
+  background: #444;
+  width: 3px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {

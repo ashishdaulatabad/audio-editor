@@ -252,7 +252,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       >
         <span
           ref={spanRef}
-          className="text-sm relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
+          className="text-md relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
           style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
         >
           <span onClick={contextMenu} className="wave-icon cursor-pointer">
@@ -275,6 +275,7 @@ export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTi
     let offcanvas = audioManager.getOffscreenCanvasDrawn(data.audioId);
 
     if (offcanvas) {
+      console.log(offcanvas);
       return offcanvas;
     }
   }

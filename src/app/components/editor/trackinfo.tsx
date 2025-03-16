@@ -12,10 +12,6 @@ interface TrackInfoProps {
    * @description Id of this track.
    */
   id: number
-  /**
-   * @description Height set for this track.
-   */
-  height: number
 }
 
 export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {

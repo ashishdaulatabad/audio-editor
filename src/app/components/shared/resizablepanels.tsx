@@ -1,7 +1,9 @@
 import React from 'react';
 import { css } from '@/app/services/utils';
 
-export interface ResizableGroupProps {}
+export interface ResizableGroupProps {
+  className?: string
+}
 
 /**
  * @description Resizable Panel Options
@@ -84,7 +86,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   return (
     <div
       ref={ref}
-      className="flex flex-row"
+      className={css("flex flex-row", props.className ?? '')}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseRelease}
