@@ -45,6 +45,10 @@ interface SeekbarProps {
    */
   scrollRef: React.RefObject<HTMLDivElement | null>
   /**
+   * @description Scroll Ref
+   */
+  seekerRef: React.RefObject<HTMLDivElement | null>
+  /**
    * @description Emits an event when a region is selected.
    */
   onTimeSelection: (timeSection: TimeSectionSelection | null) => void
@@ -57,9 +61,13 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const [isUserSelectingRegion, setIsUserSelectingRegion] = React.useState(false);
   const [startRegionSelection, setStartRegionSelection] = React.useState(0);
   const [endRegionSelection, setEndRegionSelection] = React.useState(0);
+  const [left, setLeft] = React.useState(0);
   // Declared variables
-  const lineDist = props.lineDist;
-  const timeUnit = props.timeUnitPerLineDistInSeconds;
+  const {
+    lineDist,
+    timeUnitPerLineDistInSeconds: timeUnit,
+    seekerRef
+  } = props;
   const labelMultiplier = Math.ceil(50 / lineDist);
 
   /**
@@ -75,6 +83,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       // variables; since they cannot be used without user interaction.
       audioManager.useManager().setTimestamp(currentTimeInSeconds);
       audioManager.rescheduleAllTracks(tracks);
+      setLeft(offsetX);
     }
   }
 
@@ -187,50 +196,60 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   const endRegion = (endSecs / timeUnit) * lineDist;
 
   return (
-    <div
-      className="relative overflow-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
-      onClick={seekToPoint}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseRelease}
-      onMouseUp={handleMouseRelease}
-      ref={props.scrollRef}
-    >
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
-        <rect
-          fill="#C5887666"
-          x={startRegion}
-          y={0}
-          width={endRegion - startRegion}
-          height={30}
-        ></rect>
-        {timeData}
-      </svg>
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
-        <defs>
-          <pattern
-            id="repeatedSeekbarLines"
-            x="0"
-            y="0"
-            width={props.lineDist}
-            height={props.h}
-            patternUnits="userSpaceOnUse"
-            patternContentUnits="userSpaceOnUse"
-          >
-            <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
-            <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
-          </pattern>
-        </defs>
-        <rect x="0" y="0" width={props.w} height={30} fill="url(#repeatedSeekbarLines)" />
+    <>
+      <Seeker
+        ref={seekerRef}
+        timePerUnitLine={timeUnit}
+        lineDist={lineDist}
+        seekOffset={0}
+        left={left}
+      />
+      <div
+        className="relative overflow-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+        onClick={seekToPoint}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseRelease}
+        onMouseUp={handleMouseRelease}
+        ref={props.scrollRef}
+      >
+        <svg xmlns={svgxmlns} width={props.w} height={30}>
+          <rect
+            fill="#C5887666"
+            x={startRegion}
+            y={0}
+            width={endRegion - startRegion}
+            height={30}
+          ></rect>
+          {timeData}
+        </svg>
+        <svg xmlns={svgxmlns} width={props.w} height={30}>
+          <defs>
+            <pattern
+              id="repeatedSeekbarLines"
+              x="0"
+              y="0"
+              width={props.lineDist}
+              height={props.h}
+              patternUnits="userSpaceOnUse"
+              patternContentUnits="userSpaceOnUse"
+            >
+              <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
+              <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width={props.w} height={30} fill="url(#repeatedSeekbarLines)" />
 
-        <rect
-          fill="#C5887666"
-          x={startRegion}
-          y={0}
-          width={endRegion - startRegion}
-          height={30}
-        ></rect>
-      </svg>
-    </div>
+          <rect
+            fill="#C5887666"
+            x={startRegion}
+            y={0}
+            width={endRegion - startRegion}
+            height={30}
+          ></rect>
+        </svg>
+      </div>
+
+    </>
   );
 }

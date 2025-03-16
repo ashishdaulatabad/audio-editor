@@ -14,15 +14,22 @@ export function Seeker(props: {
   timePerUnitLine: number
   ref: React.RefObject<HTMLDivElement | null>
   seekOffset?: number
+  left: number
 }) {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+  const {
+    lineDist,
+    ref,
+    timePerUnitLine
+  } = props;
   /// Resetting seekbar after exceeding certain threshold
   React.useEffect(() => {
-    const { lineDist, ref, timePerUnitLine } = props;
     if (ref.current) {
       const currLeft = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
       ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
+    } else {
+
     }
 
     let value = 0;
@@ -36,6 +43,7 @@ export function Seeker(props: {
     function animateSeekbar() {
       if (ref.current) {
         const isLoopEnd = audioManager.updateTimestamp();
+
         if (isLoopEnd) {
           audioManager.useManager().rescheduleAllTracks(tracks);
         }

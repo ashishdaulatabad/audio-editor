@@ -795,7 +795,7 @@ export function Editor() {
   function onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
       case ' ': {
-        // event.preventDefault();
+        event.preventDefault();
         const newStatus = status === Status.Play ? Status.Pause : Status.Play;
         dispatch(togglePlay(newStatus));
         break;
@@ -1002,18 +1002,13 @@ export function Editor() {
             </div>
             <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
               <div className="workspace relative bg-slate-600 overflow-hidden h-full">
-                <Seeker
-                  ref={seekerRef}
-                  timePerUnitLine={timeUnitPerLineDistInSeconds}
-                  lineDist={lineDist}
-                  seekOffset={0}
-                />
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}
                   h={height}
                   w={width}
                   scrollRef={seekbarRef}
+                  seekerRef={seekerRef}
                   lineDist={lineDist}
                   timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
                   onTimeSelection={onSelectingTime}
