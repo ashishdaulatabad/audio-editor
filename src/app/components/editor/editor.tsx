@@ -924,35 +924,7 @@ export function Editor() {
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('wheel', maybeZoom, {passive: false});
 
-    if (seekerRef.current) {
-      const currLeft = (lineDist / timeUnitPerLineDistInSeconds) * audioManager.getTimestamp();
-      seekerRef.current.style.transform = `translate(${Math.round(currLeft)}px)`;
-    }
-
-    let value = 0;
-    if (status === Status.Play) {
-      value = requestAnimationFrame(animateSeekbar);
-    }
-
-    /**
-     * @description Animate seekbar to move as per timestamp
-     */
-    function animateSeekbar() {
-      if (seekerRef.current) {
-        const isLoopEnd = audioManager.updateTimestamp();
-        if (isLoopEnd) {
-          audioManager.useManager().rescheduleAllTracks(trackDetails);
-        }
-
-        const left = (lineDist / timeUnitPerLineDistInSeconds) * audioManager.getTimestamp();
-        seekerRef.current.style.transform = `translate(${Math.round(left)}px)`;
-      }
-      
-      value = requestAnimationFrame(animateSeekbar);
-    }
-
     return () => {
-      cancelAnimationFrame(value)
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }

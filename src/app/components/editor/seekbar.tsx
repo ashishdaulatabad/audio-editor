@@ -54,7 +54,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   // Redux States
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   // Component states
-  const [leftSeek, setLeftSeek] = React.useState(0);
   const [isUserSelectingRegion, setIsUserSelectingRegion] = React.useState(false);
   const [startRegionSelection, setStartRegionSelection] = React.useState(0);
   const [endRegionSelection, setEndRegionSelection] = React.useState(0);
@@ -76,15 +75,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       // variables; since they cannot be used without user interaction.
       audioManager.useManager().setTimestamp(currentTimeInSeconds);
       audioManager.rescheduleAllTracks(tracks);
-      setLeftSeek(offsetX);
     }
-  }
-
-  /**
-   * @description Handle on loop end, emitted by the seeker component.
-   */
-  function handleLoopEnd() {
-    audioManager.useManager().rescheduleAllTracks(tracks);
   }
 
   /**

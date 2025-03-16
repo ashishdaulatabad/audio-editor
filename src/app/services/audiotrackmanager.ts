@@ -613,7 +613,7 @@ class AudioTrackManager {
     const symbolKey = track.trackDetail.scheduledKey;
 
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
-      this.scheduledNodes[symbolKey].buffer.stop();
+      this.scheduledNodes[symbolKey].buffer.stop(0);
       this.scheduledNodes[symbolKey].buffer.disconnect();
       this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter((element) => (
         element.trackDetail.scheduledKey !== symbolKey
@@ -794,7 +794,7 @@ class AudioTrackManager {
       details: trackDetail
     };
 
-    bufferSource.onended = () => {}
+    bufferSource.onended = () => {};
   }
 
   /**
