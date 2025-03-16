@@ -15,9 +15,9 @@ export function Seeker(props: {
   ref: React.RefObject<HTMLDivElement | null>
   seekOffset?: number
   left: number
+  onLoopEnd: () => void
 }) {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
-  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const {
     lineDist,
     ref,
@@ -28,8 +28,6 @@ export function Seeker(props: {
     if (ref.current) {
       const currLeft = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
       ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
-    } else {
-
     }
 
     let value = 0;
@@ -45,7 +43,7 @@ export function Seeker(props: {
         const isLoopEnd = audioManager.updateTimestamp();
 
         if (isLoopEnd) {
-          audioManager.useManager().rescheduleAllTracks(tracks);
+          props.onLoopEnd();
         }
 
         const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();

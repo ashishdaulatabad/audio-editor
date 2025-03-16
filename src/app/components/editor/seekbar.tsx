@@ -79,12 +79,17 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       const { offsetX } = event.nativeEvent;
       const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
 
-      // First time, force use manager to initialize all the audiocontext
-      // variables; since they cannot be used without user interaction.
       audioManager.useManager().setTimestamp(currentTimeInSeconds);
       audioManager.rescheduleAllTracks(tracks);
       setLeft(offsetX);
     }
+  }
+
+  /**
+   * @description Perform certain tasks when the loop is ended
+   */
+  function onLoopEnd() {
+    audioManager.useManager().rescheduleAllTracks(tracks);
   }
 
   /**
@@ -203,6 +208,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         lineDist={lineDist}
         seekOffset={0}
         left={left}
+        onLoopEnd={onLoopEnd}
       />
       <div
         className="relative overflow-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
