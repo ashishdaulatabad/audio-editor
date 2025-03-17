@@ -12,6 +12,7 @@ import { randomColor } from "@/app/services/color";
 import { addWindowToAction, VerticalAlignment } from "@/app/state/windowstore";
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from "@/assets/mixer";
+import { animationBatcher } from "@/app/services/animationbatch";
 
 /**
  * @description Player at the top bar
@@ -26,18 +27,19 @@ export function Player() {
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    let intervalId = 0;
-    intervalId = requestAnimationFrame(animateTimer);
+    let intervalId: symbol | null = null;
+    intervalId = animationBatcher.addAnimationHandler(animateTimer);
 
     function animateTimer() {
       const currentTime = audioManager.getTimestamp();
       const minutes = Math.floor(currentTime / 60);
       const seconds = Math.floor(currentTime - minutes * 60);
       setTimer(`${(minutes < 10 ? '0' : '') + minutes}:${(seconds < 10 ? '0' : '') + seconds}`);
-      intervalId = requestAnimationFrame(animateTimer);
     }
 
-    return () => cancelAnimationFrame(intervalId);
+    return () => {
+      animationBatcher.removeAnimationHandler(intervalId);
+    }
   }, []);
 
   function pause() {

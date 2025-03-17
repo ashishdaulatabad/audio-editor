@@ -1,6 +1,7 @@
 import React from 'react';
 import { audioService } from '@/app/services/audioservice';
 import { audioManager } from '@/app/services/audiotrackmanager';
+import { animationBatcher } from '@/app/services/animationbatch';
 
 export enum Orientation {
   Horizontal,
@@ -15,27 +16,31 @@ function calculateRMS(array: Uint8Array): number {
     rms += p * p;
   }
 
-  return Math.round(Math.sqrt(rms / array.length));
+  return rms > 0 ? Math.round(Math.sqrt(rms / array.length)) : 0;
 }
 
+/**
+ * @description Volume Level Component
+ * @param props 
+ * @returns 
+ */
 export function VolumeLevels(props: React.PropsWithoutRef<{
   orientation?: Orientation
   mixerNumber?: number
 }>) {
   const leftRect = React.useRef<HTMLDivElement | null>(null);
   const rightRect = React.useRef<HTMLDivElement | null>(null);
+  let handler: symbol | null = null;
   
   React.useEffect(() => {
-    let volumeAnimationId = 0;
-    volumeAnimationId = requestAnimationFrame(animateVolumeLevels);
     const leftBuffer = new Uint8Array(2048);
     const rightBuffer = new Uint8Array(2048);
 
     function animateVolumeLevels() {
       if (!audioService.audioContext || !audioManager.leftAnalyserNode) {
-        volumeAnimationId = requestAnimationFrame(animateVolumeLevels);
         return;
       }
+
       if (props.mixerNumber === undefined) { 
         audioManager.getTimeData(leftBuffer, rightBuffer);
       } else {
@@ -54,6 +59,7 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
             }
             break;
           }
+
           case Orientation.Horizontal:
           default: {
             if (!audioManager.paused) {
@@ -66,12 +72,14 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
           }
         }
       }
-
-      volumeAnimationId = requestAnimationFrame(animateVolumeLevels);
     }
 
+    // Returns a handler that manages the animation.
+    handler = animationBatcher.addAnimationHandler(animateVolumeLevels);
+    animationBatcher.setAnimationFrame(handler, 60);
+
     return () => {
-      cancelAnimationFrame(volumeAnimationId);
+      handler && animationBatcher.removeAnimationHandler(handler);
     }
   });
 

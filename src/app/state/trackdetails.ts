@@ -6,6 +6,7 @@ import { RegionSelection } from '../components/editor/regionselect';
 import { SlicerSelection } from '../components/editor/slicer';
 import { AudioTransformation } from '../services/interfaces';
 import { TimeSectionSelection } from '../components/editor/seekbar';
+import { animationBatcher } from '../services/animationbatch';
 
 /**
  * Information of the track, like start offset, end offset and selection.
@@ -117,10 +118,12 @@ export const trackDetailsSlice = createSlice({
       if (state.status === Status.Pause) {
         audioService.useAudioContext().suspend().then(function() {
           audioManager.useManager().suspend();
+          animationBatcher.stopAnimation();
         });
       } else {
         audioService.useAudioContext().resume().then(function() {
           audioManager.useManager().resume();
+          animationBatcher.runAnimations();
         });
       }
     },

@@ -92,7 +92,7 @@ export function Editor() {
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
   const [movableType, setMovableType] = React.useState(MovableType.None);
 
-  const [height, setHeight] = React.useState(90 * audioManager.totalTrackSize);
+  const [height, setHeight] = React.useState(90);
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
@@ -133,8 +133,6 @@ export function Editor() {
   const timeUnitPerLineMicros = timeUnitPerLineDistInSeconds * SEC_TO_MICROSEC;
   const width = (trackTimeDurationMicros / timeUnitPerLineMicros) * lineDist;
   const totalLines = Math.floor(width / lineDist);
-
-  const heightPerTrack = (height / totalTracks);
 
   const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
 
@@ -861,7 +859,7 @@ export function Editor() {
    */
   function maybeZoom(event: WheelEvent) {
     /// Use custom zoom-in/zoom-out logic
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.altKey) {
       // check if the cursor was within the workspace
       let element = event.target as HTMLElement;
 
@@ -874,14 +872,24 @@ export function Editor() {
       event.preventDefault();
 
       /// Check left, and right ratio and scroll based on cursor position
-      if (event.deltaY > 0) {
-        const newLineDist = Math.max(lineDist - lineDist * 0.08, 40);
-        adjustZooming(event, newLineDist);
-        setLineDist(newLineDist);
-      } else if (event.deltaY < 0) {
-        const newLineDist = Math.min(lineDist + lineDist * 0.08, 500);
-        adjustZooming(event, newLineDist);
-        setLineDist(newLineDist);
+      if (event.ctrlKey) {
+        if (event.deltaY > 0) {
+          const newLineDist = Math.max(Math.round(lineDist - lineDist * 0.08), 40);
+          adjustZooming(event, newLineDist);
+          setLineDist(newLineDist);
+        } else if (event.deltaY < 0) {
+          const newLineDist = Math.min(Math.round(lineDist + lineDist * 0.08), 500);
+          adjustZooming(event, newLineDist);
+          setLineDist(newLineDist);
+        }
+      } else if (event.altKey) {
+        if (event.deltaY > 0) {
+          const newHeight = Math.min(Math.round(height + height * 0.08), 120);
+          setHeight(newHeight);
+        } else {
+          const newHeight = Math.max(Math.round(height - height * 0.08), 50);
+          setHeight(newHeight);
+        }
       }
     }
   }
@@ -928,7 +936,7 @@ export function Editor() {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('wheel', maybeZoom);
     }
-  }, [lineDist, status]);
+  }, [lineDist, status, height]);
 
   function checkContextMenu() {
     if (isContextOpen()) {
@@ -954,6 +962,8 @@ export function Editor() {
       }
     }
   }
+
+  const totalHeight = height * audioManager.totalTrackSize;
 
   return (
     <>
@@ -992,7 +1002,7 @@ export function Editor() {
                     <div 
                       key={index}
                       className="track-info bg-slate-800 box-border border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
-                      style={{minHeight: heightPerTrack + 'px', maxHeight: heightPerTrack + 'px' }}
+                      style={{height: height + 'px'}}
                     >
                       <TrackInfo id={index} />
                     </div>
@@ -1027,8 +1037,8 @@ export function Editor() {
                     currentMode === ModeType.RegionSelect && 
                       <RegionSelect
                         w={width}
-                        trackHeight={(height/totalTracks)}
-                        h={height}
+                        trackHeight={height}
+                        h={totalHeight}
                         lineDist={lineDist}
                         unitTime={timeUnitPerLineDistInSeconds}
                         onRegionSelect={selectTracksEnveloped}
@@ -1038,8 +1048,8 @@ export function Editor() {
                     currentMode === ModeType.Slicer && 
                       <Slicer
                         w={width}
-                        trackHeight={heightPerTrack}
-                        h={height}
+                        trackHeight={height}
+                        h={totalHeight}
                         lineDist={lineDist}
                         unitTime={timeUnitPerLineDistInSeconds}
                         onSliceSelect={sliceIntersectingTracks}
@@ -1054,7 +1064,7 @@ export function Editor() {
                         w={width}
                         selectedContent={selectedRegion}
                         timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={heightPerTrack}
+                        h={height}
                       />
                     ))
                   }
