@@ -7,8 +7,17 @@ import { RootState } from '@/app/state/store';
 import { ModeType } from './toolkit';
 import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 
+/**
+ * @description Timeframe selected by the user.
+ */
 export interface TimeSectionSelection {
+  /**
+   * @description Start timeframe in microseconds.
+   */
   startTimeMicros: number
+  /**
+   * @description End timeframe in microseconds.
+   */
   endTimeMicros: number
 }
 
@@ -255,7 +264,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
           ></rect>
         </svg>
       </div>
-
     </>
   );
 }

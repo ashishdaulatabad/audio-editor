@@ -42,7 +42,7 @@ class AnimationBatcher {
 
         if (animationHandle.allowedFrameTime) {
           // const timeDiff = (currentTimestamp + animationHandle.previousTimestamp) - animationHandle.allowedFrameTime;
-          animationHandle.previousTimestamp = currentTimestamp;
+          animationHandle.previousTimestamp += animationHandle.allowedFrameTime;
         } else {
           animationHandle.previousTimestamp = currentTimestamp;
         }

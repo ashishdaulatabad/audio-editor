@@ -168,6 +168,9 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     });
   }
 
+  /**
+   * @todo: this.
+   */
   function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
     hideContextMenu();
   }

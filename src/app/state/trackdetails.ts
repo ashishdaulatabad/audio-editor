@@ -123,7 +123,7 @@ export const trackDetailsSlice = createSlice({
       } else {
         audioService.useAudioContext().resume().then(function() {
           audioManager.useManager().resume();
-          animationBatcher.runAnimations();
+          animationBatcher.runAnimations(); 
         });
       }
     },

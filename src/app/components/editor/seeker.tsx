@@ -3,6 +3,7 @@ import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status } from "@/app/state/trackdetails";
 import { useSelector } from "react-redux";
+import { animationBatcher } from "@/app/services/animationbatch";
 
 /**
  * @description Seeker component
@@ -18,11 +19,13 @@ export function Seeker(props: {
   onLoopEnd: () => void
 }) {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+
   const {
     lineDist,
     ref,
     timePerUnitLine
   } = props;
+
   /// Resetting seekbar after exceeding certain threshold
   React.useEffect(() => {
     if (ref.current) {
@@ -30,14 +33,15 @@ export function Seeker(props: {
       ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
     }
 
-    let value = 0;
+    let value = Symbol();
+    value = animationBatcher.addAnimationHandler(animateSeekbar);
+
     if (status === Status.Play) {
-      value = requestAnimationFrame(animateSeekbar);
+      animationBatcher.resumeAnimation(value);
+    } else {
+      animationBatcher.suspendAnimation(value);
     }
 
-    /**
-     * @description Animate seekbar to move as per timestamp
-     */
     function animateSeekbar() {
       if (ref.current) {
         const isLoopEnd = audioManager.updateTimestamp();
@@ -49,11 +53,9 @@ export function Seeker(props: {
         const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
         ref.current.style.transform = `translate(${Math.round(left)}px)`;
       }
-      
-      value = requestAnimationFrame(animateSeekbar);
     }
 
-    return () => cancelAnimationFrame(value)
+    return () => animationBatcher.removeAnimationHandler(value);
   });
 
   return (

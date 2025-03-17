@@ -1,25 +1,26 @@
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { RootState } from "@/app/state/store";
-import { Status, togglePlay } from "@/app/state/trackdetails";
-import { Pause } from "@/assets/pause";
-import { Play } from "@/assets/play";
-import { VolumeLevels } from "./volumelevels";
-import { Knob } from "../knob";
-import { addAudio } from "@/app/state/audiostate";
-import { randomColor } from "@/app/services/color";
-import { addWindowToAction, VerticalAlignment } from "@/app/state/windowstore";
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { RootState } from '@/app/state/store';
+import { Status, togglePlay } from '@/app/state/trackdetails';
+import { Pause } from '@/assets/pause';
+import { Play } from '@/assets/play';
+import { VolumeLevels } from './volumelevels';
+import { Knob } from '../knob';
+import { addAudio } from '@/app/state/audiostate';
+import { randomColor } from '@/app/services/color';
+import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
-import { Mixer } from "@/assets/mixer";
-import { animationBatcher } from "@/app/services/animationbatch";
+import { Mixer } from '@/assets/mixer';
+import { animationBatcher } from '@/app/services/animationbatch';
 
 /**
  * @description Player at the top bar
  */
 export function Player() {
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const [timer, setTimer] = React.useState('00:00');
+
+  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
 
   const ref = React.createRef<HTMLDivElement>();
@@ -36,6 +37,8 @@ export function Player() {
       const seconds = Math.floor(currentTime - minutes * 60);
       setTimer(`${(minutes < 10 ? '0' : '') + minutes}:${(seconds < 10 ? '0' : '') + seconds}`);
     }
+
+    animationBatcher.setAnimationFrame(intervalId, 60);
 
     return () => {
       animationBatcher.removeAnimationHandler(intervalId);
@@ -105,10 +108,16 @@ export function Player() {
         <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
         <div>{Math.round(masterVol * 100)}</div>
       </div>
-      <div ref={ref} className="timer bg-slate-700 text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none">
+      <div
+        className="timer bg-slate-700 text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
+        ref={ref}
+      >
         {timer}
       </div>
-      <span className="ml-2 pause play bg-slate-700 p-2 rounded-md cursor-pointer" onClick={pause}>
+      <span
+        onClick={pause}
+        className="ml-2 pause play bg-slate-700 p-2 rounded-md cursor-pointer"
+      >
         {
         status === Status.Pause ? 
           <Play c="#61E361" f="#51DE56" w={25} h={25} /> :

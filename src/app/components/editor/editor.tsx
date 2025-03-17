@@ -923,6 +923,8 @@ export function Editor() {
       dispatch(deselectAllTracks());
     }
 
+    audioManager.selectTimeframe(event);
+
     setSelectedRegion(event);
   }
 

@@ -1,7 +1,9 @@
+import { TimeSectionSelection } from '../components/editor/seekbar';
 import { AudioDetails } from '../state/audiostate';
 import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
 import { clamp } from '../utils';
 import { audioService } from './audioservice';
+import { Maybe } from './interfaces';
 import { Mixer } from './mixer';
 
 /**
@@ -64,6 +66,7 @@ class AudioTrackManager {
   startTimestamp = 0;
   runningTimestamp = 0;
   loopEnd = 5;
+  timeframeSelectionDetails: Maybe<TimeSectionSelection> = null;
   mixer: Mixer
 
   // Audio-specific nodes
@@ -116,21 +119,41 @@ class AudioTrackManager {
     }
   }
 
+  /**
+   * @description set panner for audio file
+   * @param audioId audio id
+   * @param pan panner value
+   */
   setPannerForAudio(audioId: symbol, pan: number) {
     const { panner } = this.audioBank[audioId];
     panner.pan.value = pan;
   }
 
+  /**
+   * @description get panner value for audio file
+   * @param audioId audio id
+   * @returns pan value in range [-1,1]
+   */
   getPannerForAudio(audioId: symbol) {
     const { panner } = this.audioBank[audioId];
     return panner.pan.value;
   }
 
+  /**
+   * @description Set gain value for certain audio file.
+   * @param audioId audio id to set
+   * @param value value to set.
+   */
   setGainForAudio(audioId: symbol, value: number) {
     const { gain } = this.audioBank[audioId];
     gain.gain.value = value;
   }
   
+  /**
+   * @description Get gain value for certain audio file.
+   * @param audioId audio id to get
+   * @returns gain number
+   */
   getGainForAudio(audioId: symbol) {
     const { gain } = this.audioBank[audioId];
     return gain.gain.value;
@@ -267,8 +290,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Set element as Multi-selected.
-   * 
+   * @description Set element as Multi-selected.
    * @param track Track to add into selected elements
    * @param domElement DOM element associated with the selection
    * @returns void
@@ -296,8 +318,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Set element as Multi-selected.
-   * 
+   * @description Set element as Multi-selected.
    * @param track Track to add into selected elements
    * @param domElement DOM element associated with the selection
    * @returns void
@@ -352,8 +373,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Apply move transformation to these selected DOM elements
-   * 
+   * @description Apply move transformation to these selected DOM elements
    * @param diffX Move track by `diffX` from `initialPosition`
    * @returns void
    */
@@ -416,8 +436,7 @@ class AudioTrackManager {
   }
 
   /**
-   * Apply move transformation to these selected DOM elements
-   * 
+   * @description Apply move transformation to these selected DOM elements
    * @param diffX Move track by `diffX` from `initialPosition`
    * @returns void
    */
@@ -515,6 +534,15 @@ class AudioTrackManager {
 
     return newElements;
   }
+
+  selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
+    if (timeSelection) {
+      if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 500000) return;
+    }
+    this.timeframeSelectionDetails = timeSelection;
+  }
+
+  // unselectTimeframe(time)
 
   /**
    * @description Safety function to initialize audiocontext before using audiomanager
@@ -930,6 +958,29 @@ class AudioTrackManager {
     }
   }
 
+  private _updateTimestampOnSelectedTimeframe() {
+    const {
+      startTimeMicros,
+      endTimeMicros
+    } = this.timeframeSelectionDetails as TimeSectionSelection;
+
+    const startTimeSecs = startTimeMicros / SEC_TO_MICROSEC;
+    const endTimeSecs = endTimeMicros / SEC_TO_MICROSEC;
+
+    const context = audioService.useAudioContext();
+    const time = context.currentTime;
+
+    if (time - this.startTimestamp >= endTimeSecs) {
+      const diffCorrection = time - this.startTimestamp - endTimeSecs;
+      this.startTimestamp = time - startTimeSecs;
+      this.runningTimestamp = time - this.startTimestamp + diffCorrection;
+      return true;
+    } else {
+      this.runningTimestamp = time - this.startTimestamp;
+      return false;
+    }
+  }
+
   /**
    * @description Update timestamp in seconds
    * @returns true if by updating timestamp, time goes out of bounds.
@@ -937,6 +988,10 @@ class AudioTrackManager {
   updateTimestamp(): boolean {
     const context = audioService.useAudioContext();
     const time = context.currentTime;
+
+    if (this.timeframeSelectionDetails) {
+      return this._updateTimestampOnSelectedTimeframe()
+    }
 
     if (time - this.startTimestamp > this.loopEnd) {
       let diff = time - this.startTimestamp - this.loopEnd;
@@ -955,6 +1010,29 @@ class AudioTrackManager {
     }
   }
 
+  private _setTimestampOnSelectedTimeframe(valueSecs: number) {
+    const {
+      startTimeMicros,
+      endTimeMicros
+    } = this.timeframeSelectionDetails as TimeSectionSelection;
+
+    const startTimeSecs = startTimeMicros / SEC_TO_MICROSEC;
+    const endTimeSecs = endTimeMicros / SEC_TO_MICROSEC;
+
+    const context = audioService.useAudioContext();
+    const time = context.currentTime;
+
+    if (valueSecs > endTimeSecs) {
+      this.startTimestamp = time - startTimeSecs;
+      this.runningTimestamp = time - this.startTimestamp;
+      return true;
+    } else {
+      this.startTimestamp = time - valueSecs;
+      this.runningTimestamp = time - this.startTimestamp;
+      return false;
+    }
+  }
+
   /**
    * @description Set timestamp in seconds
    * @returns true if by setting timestamp, time goes out of bounds.
@@ -962,6 +1040,10 @@ class AudioTrackManager {
   setTimestamp(startValue: number) {
     const context = audioService.useAudioContext();
     const time = context.currentTime;
+
+    if (this.timeframeSelectionDetails) {
+      return this._setTimestampOnSelectedTimeframe(startValue);
+    }
 
     if (startValue > this.loopEnd) {
       let diff = this.loopEnd - startValue;
