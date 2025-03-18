@@ -220,7 +220,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         onLoopEnd={onLoopEnd}
       />
       <div
-        className="relative overflow-hidden bg-slate-800 rounded-sm z-[12] border-t border-b border-solid border-slate-900 cursor-pointer shadow-bg"
+        className="relative overflow-hidden bg-darker rounded-sm z-[12] border-t border-b border-solid border-darker-2 cursor-pointer shadow-bg"
         onClick={seekToPoint}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

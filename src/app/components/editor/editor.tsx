@@ -998,12 +998,12 @@ export function Editor() {
           >
             <div className="track-element flex flex-col min-h-28">
               <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />
-              <div ref={ref} className="bg-slate-800 track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
+              <div ref={ref} className="track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
                 {
                   Array.from({length: totalTracks}, (_, index: number) => (
                     <div 
                       key={index}
-                      className="track-info bg-slate-800 box-border border border-solid border-slate-900 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                      className="track-info bg-darker box-border border border-solid border-darker-2 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
                       style={{height: height + 'px'}}
                     >
                       <TrackInfo id={index} />
@@ -1013,7 +1013,7 @@ export function Editor() {
               </div>
             </div>
             <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
-              <div className="workspace relative bg-slate-600 overflow-hidden h-full">
+              <div className="workspace relative bg-primary overflow-hidden h-full">
                 <Seekbar
                   mode={currentMode}
                   totalLines={totalLines}

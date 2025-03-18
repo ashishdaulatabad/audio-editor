@@ -19,7 +19,7 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
   }
 
   return (
-    <div className="p-2 bg-slate-700 m-1 shadow-md content-center items-center text-center mb-4">
+    <div className="p-2 bg-secondary m-1 shadow-md content-center items-center text-center mb-4">
       <VolumeLevels
         orientation={Orientation.Vertical}
         mixerNumber={props.mixerNumber}

@@ -95,7 +95,7 @@ export function Player() {
   }
 
   return (
-    <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-slate-800 shadow-lg">
+    <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
         <ul className="list-none">
           <li
@@ -109,14 +109,14 @@ export function Player() {
         <div>{Math.round(masterVol * 100)}</div>
       </div>
       <div
-        className="timer bg-slate-700 text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
+        className="timer bg-secondary text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
         ref={ref}
       >
         {timer}
       </div>
       <span
         onClick={pause}
-        className="ml-2 pause play bg-slate-700 p-2 rounded-md cursor-pointer"
+        className="ml-2 pause play bg-secondary p-2 rounded-md cursor-pointer"
       >
         {
         status === Status.Pause ? 
