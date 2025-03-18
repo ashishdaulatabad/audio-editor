@@ -13,6 +13,7 @@ import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from '@/assets/mixer';
 import { animationBatcher } from '@/app/services/animationbatch';
+import { SimpleDropdown } from '../shared/dropdown';
 
 /**
  * @description Player at the top bar
@@ -74,6 +75,36 @@ export function Player() {
     )
   }
 
+  const themeOptions: {
+    label: string,
+    value: string
+  }[] = [
+    {
+      label: 'Default',
+      value: 'default'
+    },
+    {
+      label: 'Blue',
+      value: 'blueacc'
+    },
+    {
+      label: 'Red',
+      value: 'redacc'
+    },
+    {
+      label: 'Magenta',
+      value: 'magentaacc'
+    },
+    {
+      label: 'Green',
+      value: 'greenacc'
+    },
+  ];
+
+  function onThemeSelect(e: any) {
+    document.body.setAttribute('data-theme', e.value);
+  }
+
   /**
    * @description Exporting into audio file.
    * @todo: This.
@@ -97,7 +128,15 @@ export function Player() {
   return (
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
-        <ul className="list-none">
+        <ul className="list-none flex flex-row">
+          <li className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none cursor-pointer">
+            <SimpleDropdown
+              placeholder="Select Theme"
+              label={(item) => <>{item.label}</>}
+              list={themeOptions}
+              onSelect={onThemeSelect}
+            ></SimpleDropdown>
+          </li>
           <li
             onClick={exportIntoAudioFile}
             className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
