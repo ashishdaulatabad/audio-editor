@@ -39,7 +39,7 @@ export function AudioTrackList() {
   const selectedId = selected.audioId;
 
   return (
-    <div className="bg-slate-700 w-full flex flex-col rounded-sm h-full">
+    <div className="bg-secondary w-full flex flex-col rounded-sm h-full">
       <div className="import-button self-center flex flex-row justify-center w-full text-center p-8 border-solid border border-transparent border-b-slate-900 shadow-lg">
         <button
           className="ml-4 text-lg custom-scroll select-none rounded-md py-3 px-8 max-w-fit bg-lime-700 w-full shadow-md hover:shadow-lg hover:bg-lime-600 transition-all ease-in-out"

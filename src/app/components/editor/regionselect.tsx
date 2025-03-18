@@ -106,7 +106,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
 
   return (
     <div
-      className="absolute w-full h-full z-[13] cursor-crosshair"
+      className="absolute w-full h-full z-[100] cursor-crosshair"
       onMouseDown={setDrag}
       onMouseLeave={leaveRegionSelect}
       onMouseUp={leaveRegionSelect}

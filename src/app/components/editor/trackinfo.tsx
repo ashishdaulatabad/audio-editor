@@ -2,10 +2,8 @@ import React from 'react';
 
 /**
  * @description Props for displaying track information
- * @todo multiple things:
- * - Set recognizable audio level hint besides the knob
- * - Set probably the audio output.
- * - Think about effects on next stage.
+ * @todo update:
+ * - Allow addition/updation of name of this track.
  */
 interface TrackInfoProps {
   /**

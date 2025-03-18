@@ -198,7 +198,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               type="number"
               placeholder="---"
               value={typeof audioMixer === 'number' ? audioMixer : undefined}
-              className="block px-1 py-4 text-lg input rounded-md bg-slate-500 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="block px-0 py-2 text-4xl input rounded-md bg-primary-2 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               min={0}
               max={audioManager.totalMixers}
               onInput={changeMixer}
@@ -207,7 +207,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
           </div>
         </div>
         <div className="flex flex-row mt-4">
-          <div className="reversible-settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-gray-700 w-full">
+          <div className="reversible-settings flex flex-row justify-between content-start p-1 m-1 border border-solid border-secondary w-full">
             <div className="flex flex-col w-full content-start">
               <div className="box w-full py-2">
                 <Checkbox
@@ -245,7 +245,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               </div>
             </div>
           </div>
-          <div className="settings p-1 m-1 border border-solid border-gray-700 w-full">
+          <div className="settings p-1 m-1 border border-solid border-secondary w-full">
             <div className="flex w-full content-start">
               <div className="box w-full inline-grid justify-items-center py-2">
                 <Knob
@@ -275,7 +275,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
           </div>
         </div>
       </div>
-      <div className="bg-slate-900">
+      <div className="bg-darker-2">
         <WaveformSeekbar
           startOffsetInMillis={startOffsetInMicros / 1000}
           endOffsetInMillis={endOffsetInMicros / 1000}

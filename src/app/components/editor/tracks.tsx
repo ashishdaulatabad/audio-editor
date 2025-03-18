@@ -42,7 +42,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
         ))
       }
       <svg xmlns={svgxmlns} width={props.w} height={props.h}>
-        <svg width={props.w} className="relative" style={{zIndex: 10000}} height={props.h} xmlns={svgxmlns}>
+        <svg width={props.w} className="track-patterns relative" style={{zIndex: 10000}} height={props.h} xmlns={svgxmlns}>
           <defs>
             <pattern
               id="repeatingLines"

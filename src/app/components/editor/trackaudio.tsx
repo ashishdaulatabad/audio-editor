@@ -168,6 +168,9 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     });
   }
 
+  /**
+   * @todo: this.
+   */
   function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
     hideContextMenu();
   }
@@ -271,7 +274,12 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   );
 }
 
-export function renderAudioWaveform(data: AudioDetails, lineDist: number, unitTime: number, force: boolean = false) {
+export function renderAudioWaveform(
+  data: AudioDetails,
+  lineDist: number,
+  unitTime: number,
+  force: boolean = false
+) {
   if (!force) {
     let offcanvas = audioManager.getOffscreenCanvasDrawn(data.audioId);
 

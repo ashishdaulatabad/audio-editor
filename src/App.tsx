@@ -5,7 +5,6 @@ import { store } from './app/state/store'
 
 function App() {
   return (
-    
     <Provider store={store}>
       <div className="max-h-screen font-[family-name:var(--font-geist-sans)]">
         <Editor />

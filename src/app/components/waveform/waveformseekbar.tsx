@@ -102,7 +102,7 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
 
   return (
     <div
-      className="seekbar bg-slate-800 overflow-visible rounded-sm z-[12] border border-solid border-slate-900 cursor-pointer shadow-bg"
+      className="seekbar bg-darker overflow-visible rounded-sm z-[12] border border-solid border-darker-2 cursor-pointer shadow-bg"
       onClick={seekToPoint}
       ref={divRef}
     >

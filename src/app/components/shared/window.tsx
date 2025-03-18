@@ -59,10 +59,10 @@ export function Window(props: React.PropsWithChildren<{
       }}
     >
       <div
-        className="topbar bg-slate-700 flex flex-row justify-between"
+        className="topbar bg-secondary flex flex-row justify-between"
       >
         <div
-          className={css("header-content select-none px-3 py-2 rounded-ss-sm w-full text-left", !hold ? 'cursor-grab' : 'cursor-grabbing')}
+          className={css("header-content select-none px-3 py-2 text-lg rounded-ss-sm w-full text-left", !hold ? 'cursor-grab' : 'cursor-grabbing')}
           onMouseDown={() => setHold(true)}
           onMouseUp={() => setHold(false)}
           onMouseLeave={() => setHold(false)}
@@ -87,7 +87,7 @@ export function Window(props: React.PropsWithChildren<{
         </div>
       </div>
       <div className={css(
-        "content flex bg-slate-600 w-full h-full rounded-es-sm rounded-ee-sm",
+        "content flex bg-primary w-full h-full rounded-es-sm rounded-ee-sm",
         {
           'overflow-x-scroll': !!props.overflow,
           'content-center': props.horizontalAlignment === HorizontalAlignment.Center,

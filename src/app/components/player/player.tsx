@@ -1,24 +1,27 @@
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { RootState } from "@/app/state/store";
-import { Status, togglePlay } from "@/app/state/trackdetails";
-import { Pause } from "@/assets/pause";
-import { Play } from "@/assets/play";
-import { VolumeLevels } from "./volumelevels";
-import { Knob } from "../knob";
-import { addAudio } from "@/app/state/audiostate";
-import { randomColor } from "@/app/services/color";
-import { addWindowToAction, VerticalAlignment } from "@/app/state/windowstore";
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { RootState } from '@/app/state/store';
+import { Status, togglePlay } from '@/app/state/trackdetails';
+import { Pause } from '@/assets/pause';
+import { Play } from '@/assets/play';
+import { VolumeLevels } from './volumelevels';
+import { Knob } from '../knob';
+import { addAudio } from '@/app/state/audiostate';
+import { randomColor } from '@/app/services/color';
+import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
-import { Mixer } from "@/assets/mixer";
+import { Mixer } from '@/assets/mixer';
+import { animationBatcher } from '@/app/services/animationbatch';
+import { SimpleDropdown } from '../shared/dropdown';
 
 /**
  * @description Player at the top bar
  */
 export function Player() {
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const [timer, setTimer] = React.useState('00:00');
+
+  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
 
   const ref = React.createRef<HTMLDivElement>();
@@ -26,18 +29,21 @@ export function Player() {
   const dispatch = useDispatch();
 
   React.useEffect(() => {
-    let intervalId = 0;
-    intervalId = requestAnimationFrame(animateTimer);
+    let intervalId: symbol | null = null;
+    intervalId = animationBatcher.addAnimationHandler(animateTimer);
 
     function animateTimer() {
       const currentTime = audioManager.getTimestamp();
       const minutes = Math.floor(currentTime / 60);
       const seconds = Math.floor(currentTime - minutes * 60);
       setTimer(`${(minutes < 10 ? '0' : '') + minutes}:${(seconds < 10 ? '0' : '') + seconds}`);
-      intervalId = requestAnimationFrame(animateTimer);
     }
 
-    return () => cancelAnimationFrame(intervalId);
+    animationBatcher.setAnimationFrame(intervalId, 60);
+
+    return () => {
+      animationBatcher.removeAnimationHandler(intervalId);
+    }
   }, []);
 
   function pause() {
@@ -69,6 +75,36 @@ export function Player() {
     )
   }
 
+  const themeOptions: {
+    label: string,
+    value: string
+  }[] = [
+    {
+      label: 'Default',
+      value: 'default'
+    },
+    {
+      label: 'Blue',
+      value: 'blueacc'
+    },
+    {
+      label: 'Red',
+      value: 'redacc'
+    },
+    {
+      label: 'Magenta',
+      value: 'magentaacc'
+    },
+    {
+      label: 'Green',
+      value: 'greenacc'
+    },
+  ];
+
+  function onThemeSelect(e: any) {
+    document.body.setAttribute('data-theme', e.value);
+  }
+
   /**
    * @description Exporting into audio file.
    * @todo: This.
@@ -90,9 +126,17 @@ export function Player() {
   }
 
   return (
-    <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-slate-800 shadow-lg">
+    <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
-        <ul className="list-none">
+        <ul className="list-none flex flex-row">
+          <li className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none cursor-pointer">
+            <SimpleDropdown
+              placeholder="Select Theme"
+              label={(item) => <>{item.label}</>}
+              list={themeOptions}
+              onSelect={onThemeSelect}
+            ></SimpleDropdown>
+          </li>
           <li
             onClick={exportIntoAudioFile}
             className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
@@ -103,10 +147,16 @@ export function Player() {
         <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
         <div>{Math.round(masterVol * 100)}</div>
       </div>
-      <div ref={ref} className="timer bg-slate-700 text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none">
+      <div
+        className="timer bg-secondary text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
+        ref={ref}
+      >
         {timer}
       </div>
-      <span className="ml-2 pause play bg-slate-700 p-2 rounded-md cursor-pointer" onClick={pause}>
+      <span
+        onClick={pause}
+        className="ml-2 pause play bg-secondary p-2 rounded-md cursor-pointer"
+      >
         {
         status === Status.Pause ? 
           <Play c="#61E361" f="#51DE56" w={25} h={25} /> :
