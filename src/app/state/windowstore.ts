@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch } from "./store";
+import { Maybe } from "../services/interfaces";
+import { removeRandomWindowId } from "../services/random";
 
 export interface Windowable {}
 
@@ -78,14 +80,22 @@ export interface WindowView<TProps> {
    * @description Content Vertical Alignment
    */
   verticalAlignment?: VerticalAlignment
+  /**
+   * @description Unique Window ID
+   */
+  windowId: number
 }
 
 export type InitialType<TProps> = {
-  contents: Array<WindowView<TProps>>
+  contents: {
+    [k: symbol]: WindowView<TProps> 
+  },
+  ordering: Array<symbol>
 };
 
 const initialState: InitialType<any> = {
-  contents: []
+  contents: {},
+  ordering: []
 }
 
 const windowManagerSlice = createSlice({
@@ -110,13 +120,21 @@ const windowManagerSlice = createSlice({
     ) {
       const { propsUniqueIdentifier } = action.payload;
 
-      const index = state.contents.findIndex(window => window.propsUniqueIdentifier === propsUniqueIdentifier);
-      
-      if (index === -1) {
-        state.contents.push(action.payload);
-      } else {
-        // Focus on the window referenced by `index`
+      for (const key of Object.getOwnPropertySymbols(state.contents)) {
+        const window = state.contents[key];
+
+        // Instead, focus, since user requested for this window.
+        if (window.propsUniqueIdentifier === propsUniqueIdentifier) {
+          const index = state.ordering.indexOf(window.windowSymbol);
+          const value = state.ordering.splice(index, 1)[0];
+          state.ordering.push(value);
+
+          return;
+        }
       }
+      
+      state.contents[action.payload.windowSymbol] = action.payload;
+      state.ordering.push(action.payload.windowSymbol);
     },
     /**
      * Remove the window from the system.
@@ -125,10 +143,16 @@ const windowManagerSlice = createSlice({
      * @param action action containing the windowSymbol
      */
     removeWindow(state, action: PayloadAction<symbol>) {
-      const index = state.contents.findIndex(window => window.windowSymbol === action.payload);
+      if (Object.hasOwn(state.contents, action.payload)) {
+        const { windowId } = state.contents[action.payload];
+        delete state.contents[action.payload];
+        removeRandomWindowId(windowId);
 
-      if (index > -1) {
-        state.contents.splice(index, 1);
+        const index = state.ordering.findIndex(w => w === action.payload);
+
+        if (index > -1) {
+          state.ordering.splice(index, 1);
+        }
       }
     },
     /**
@@ -138,10 +162,21 @@ const windowManagerSlice = createSlice({
      * @param action action containing the windowSymbol
      */
     removeWindowWithUniqueIdentifier(state, action: PayloadAction<symbol>) {
-      const index = state.contents.findIndex(window => window.propsUniqueIdentifier === action.payload);
+      for (const key of Object.getOwnPropertySymbols(state.contents)) {
+        const window = state.contents[key];
 
-      if (index > -1) {
-        state.contents.splice(index, 1);
+        if (window.propsUniqueIdentifier === action.payload) {
+          const { windowId } = state.contents[action.payload];
+          delete state.contents[action.payload];
+          removeRandomWindowId(windowId);
+
+          const index = state.ordering.indexOf(action.payload);
+
+          if (index > -1) {
+            state.ordering.splice(index, -1);
+          }
+          return;
+        }
       }
     },
     /**
@@ -151,9 +186,13 @@ const windowManagerSlice = createSlice({
      * @param action action containing the windowSymbol
      */
     batchRemoveWindowWithUniqueIdentifier(state, action: PayloadAction<symbol[]>) {
-      state.contents = state.contents.filter(window => (
-        action.payload.indexOf(window.propsUniqueIdentifier) === -1
-      ));
+      for (const sym of action.payload) {
+        const windowId = state.contents[sym].windowId;
+        delete state.contents[sym];
+        removeRandomWindowId(windowId);
+      }
+
+      state.ordering = state.ordering.filter(sym => action.payload.includes(sym));
     },
     /**
      * Focuses the window that user interacted with
@@ -161,15 +200,15 @@ const windowManagerSlice = createSlice({
      *   - Search the window
      *   - Focus while maintaining the order.
      *   - Keep the stacking order in separate array (Maybe splice and put it like in a queue??)
-     * @param state 
-     * @param action 
+     * @param state current state
+     * @param action window symbol
      */
     focusWindow(state, action: PayloadAction<symbol>) {
-      const index = state.contents.findIndex(window => window.windowSymbol === action.payload);
+      const index = state.ordering.indexOf(action.payload);
 
       if (index > -1) {
-        const value = state.contents.splice(index, 1)[0];
-        state.contents.push(value);
+        const value = state.ordering.splice(index, 1)[0];
+        state.ordering.push(value);
       }
     },
     /**
@@ -185,13 +224,19 @@ const windowManagerSlice = createSlice({
       action: PayloadAction<{
         x: number
         y: number
-        index: number
+        windowSymbol: symbol
       }>
     ) {
-      const { x, y, index } = action.payload;
+      const {
+        x,
+        y,
+        windowSymbol
+      } = action.payload;
 
-      state.contents[index].x = x
-      state.contents[index].y = y;
+      if (Object.hasOwn(state.contents, windowSymbol)) {
+        state.contents[windowSymbol].x = x
+        state.contents[windowSymbol].y = y;
+      }
     }
   }
 })

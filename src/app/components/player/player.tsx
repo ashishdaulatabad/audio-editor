@@ -8,7 +8,7 @@ import { Play } from '@/assets/play';
 import { VolumeLevels } from './volumelevels';
 import { Knob } from '../knob';
 import { addAudio } from '@/app/state/audiostate';
-import { randomColor } from '@/app/services/color';
+import { getRandomWindowId, randomColor } from '@/app/services/random';
 import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from '@/assets/mixer';
@@ -70,7 +70,8 @@ export function Player() {
         visible: true,
         windowSymbol: Symbol(),
         w: 1200,
-        h: 700
+        h: 700,
+        windowId: getRandomWindowId()
       }
     )
   }

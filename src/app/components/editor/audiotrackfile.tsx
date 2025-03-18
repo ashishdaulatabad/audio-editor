@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { DialogContext } from '@/app/providers/dialog';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { deleteColor } from '@/app/services/color';
+import { deleteColor } from '@/app/services/random';
 import { RootState } from '@/app/state/store';
 import { FaTrash } from 'react-icons/fa';
 

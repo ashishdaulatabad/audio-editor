@@ -1,16 +1,23 @@
 import { audioService } from "./audioservice";
+import { Maybe } from "./interfaces";
 
 export class Mixer {
-  masterGainNode: GainNode | null = null;
+  masterGainNode: Maybe<GainNode> = null;
+  masterPannerNode: Maybe<StereoPannerNode> = null;
   private gainNodes: GainNode[] = [];
   private channelSplitterNodes: ChannelSplitterNode[] = [];
+  private panNodes: StereoPannerNode[] = [];
+  private mixerViewIdentifier: symbol = Symbol();
+  private isInitialized = false;
+
+  masterAnalyserNodes: {
+    left: AnalyserNode,
+    right: AnalyserNode
+  } | null = null;
   analyserNodes: {
     left: AnalyserNode,
     right: AnalyserNode
   }[] = [];
-  private panNodes: StereoPannerNode[] = [];
-  private mixerViewIdentifier: symbol = Symbol();
-  private isInitialized = false;
 
   constructor(
     private totalMixerCount: number
@@ -32,16 +39,21 @@ export class Mixer {
   }
 
   getPanValue(mixerNumber: number) {
+    if (mixerNumber === 0) {
+      return this.masterPannerNode?.pan.value as number;
+    }
+
     return this.panNodes[mixerNumber - 1].pan.value;
   }
 
-  initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
+  initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode, StereoPannerNode] {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
+    const masterPannerNode = audioContext.createStereoPanner();
 
     const gainNodes = Array.from({ length: this.totalMixerCount }, () => {
       const gainNode = audioContext.createGain();
-      gainNode.connect(masterGainNode as GainNode);
+      gainNode.connect(masterPannerNode);
       return gainNode;
     });
 
@@ -51,20 +63,26 @@ export class Mixer {
       return pannerNode;
     });
 
-    return [gainNodes, pannerNodes, masterGainNode];
+    masterPannerNode.connect(masterGainNode);
+
+    return [gainNodes, pannerNodes, masterGainNode, masterPannerNode];
   }
 
   useMixer() {
     if (!this.isInitialized) {
       const context = audioService.useAudioContext();
-      [this.gainNodes, this.panNodes, this.masterGainNode] = this.initialize(context);
-      this.isInitialized = true;
+      [this.gainNodes, this.panNodes, this.masterGainNode, this.masterPannerNode] = this.initialize(context);
 
       this.analyserNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
         const left = context.createAnalyser();
         const right = context.createAnalyser()
         return { left, right };
       });
+
+      this.masterAnalyserNodes = {
+        left: context.createAnalyser(),
+        right: context.createAnalyser()
+      };
 
       this.channelSplitterNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
         const channelSplitter = context.createChannelSplitter();
@@ -74,6 +92,12 @@ export class Mixer {
         channelSplitter.connect(right, 1);
         return channelSplitter;
       });
+
+      const masterSplitterNode = context.createChannelSplitter();
+      this.masterGainNode.connect(masterSplitterNode);
+      masterSplitterNode.connect(this.masterAnalyserNodes.left, 0);
+      masterSplitterNode.connect(this.masterAnalyserNodes.right, 1);
+      this.isInitialized = true;
     }
 
     return this;
@@ -81,7 +105,7 @@ export class Mixer {
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {
     if (mixerNumber === 0) {
-      node.connect(this.masterGainNode as GainNode);
+      node.connect(this.masterPannerNode as StereoPannerNode);
     } else {
       node.connect(this.panNodes[mixerNumber - 1]);
     }
@@ -93,11 +117,25 @@ export class Mixer {
 
   setGainValue(mixerNumber: number, value: number) {
     console.assert(value >= 0 && value <= 2);
-    this.gainNodes[mixerNumber].gain.value = value;
+
+    if (mixerNumber > 0) {
+      this.gainNodes[mixerNumber - 1].gain.value = value;
+    } else {
+      if (this.masterGainNode) {
+        this.masterGainNode.gain.value = value;
+      }
+    }
   }
 
   setPanValue(mixerNumber: number, value: number) {
     console.assert(value >= -1 && value <= 1);
-    this.panNodes[mixerNumber].pan.value = value;
+
+    if (mixerNumber > 0) {
+      this.panNodes[mixerNumber - 1].pan.value = value;
+    } else {
+      if (this.masterPannerNode) {
+        this.masterPannerNode.pan.value = value;
+      }
+    }
   }
 };

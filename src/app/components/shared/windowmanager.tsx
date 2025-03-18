@@ -44,13 +44,10 @@ function WindowManagerTab(props: React.PropsWithoutRef<{
  * @returns WindowManager JSX
  */
 export function WindowManager() {
-  const windowStore = useSelector((state: RootState) => state.windowStoreReducer.contents);
-  const dispatch = useDispatch();
+  const windowOrdering = useSelector((state: RootState) => state.windowStoreReducer.ordering);
+  const windowContents = useSelector((state: RootState) => state.windowStoreReducer.contents);
 
-  function onClose(index: number) {
-    const { windowSymbol } = windowStore[index];
-    dispatch(removeWindow(windowSymbol))
-  }
+  const dispatch = useDispatch();
 
   /**
    * Close the root
@@ -75,18 +72,18 @@ export function WindowManager() {
    * @param left offset from the left portion of client
    * @param index window index in redux store.
    */
-  function setPosition(top: number, left: number, index: number) {
-    dispatch(setWindowPosition({ x: left, y: top, index }))
+  function setPosition(top: number, left: number, windowSymbol: symbol) {
+    dispatch(setWindowPosition({ x: left, y: top, windowSymbol }))
   }
 
   /**
    * To do: On clicking tab: focus on current tab.
    * @param index 
    */
-  function manageTabClick(index: number) {
-    const { windowSymbol } = windowStore[index];
-    dispatch(focusWindow(windowSymbol));
-  }
+  // function manageTabClick(index: number) {
+  //   const { windowSymbol } = windowStore[index];
+  //   dispatch(focusWindow(windowSymbol));
+  // }
 
   function triggerMinimize(index: number) {
     // dispatch()
@@ -112,12 +109,12 @@ export function WindowManager() {
           })
         }
       </div> */}
-      {windowStore
-        .filter(({ visible }) => visible)
-        .map((window: WindowView<any>, index: number) => {
+      {windowOrdering
+        .map((symbol: symbol, index: number) => {
+          const window = windowContents[symbol];
           return (
             <Window
-              key={index}
+              key={window.windowId}
               index={index}
               w={window.w ?? 800}
               h={window.h ?? 600}
@@ -126,11 +123,12 @@ export function WindowManager() {
               horizontalAlignment={window.horizontalAlignment}
               verticalAlignment={window.verticalAlignment}
               overflow={window.overflow}
-              onPositionChange={(top: number, left: number) => setPosition(top, left, index)}
+              onPositionChange={(top: number, left: number) => setPosition(top, left, window.windowSymbol)}
               zLevel={index}
               header={typeof window.header === 'string' ? <>{window.header}</> : window.header}
               onClose={() => close(window.windowSymbol)}
-              onClick={() => focusOnCurrentWindow(window.windowSymbol)}
+              onClick={(c) => focusOnCurrentWindow(c)}
+              windowSymbol={window.windowSymbol}
             >
               <window.view key={index} {...window.props}></window.view>
             </Window>

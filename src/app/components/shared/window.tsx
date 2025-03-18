@@ -20,17 +20,18 @@ export function Window(props: React.PropsWithChildren<{
   index: number
   onClose?: () => void
   onMinimize?: () => void
-  onClick: () => void
+  onClick: (windowSymbol: symbol) => void
   onPositionChange: (top: number, left: number) => void
   zLevel: number
   header?: React.JSX.Element 
+  windowSymbol: symbol
 }>) {
   /// States
   const [hold, setHold] = React.useState(false);
   const windowRef = React.useRef<HTMLDivElement | null>(null);
 
   function onWindowClick() {
-    props.onClick();
+    props.onClick(props.windowSymbol);
   }
 
   function triggerClose() {
@@ -48,6 +49,7 @@ export function Window(props: React.PropsWithChildren<{
         hold ? 'shadow-lg' : 'shadow-md',
       )}
       data-windowid={props.index}
+      onMouseDown={onWindowClick}
       ref={windowRef}
       onClick={onWindowClick}
       style={{ 
@@ -63,7 +65,10 @@ export function Window(props: React.PropsWithChildren<{
       >
         <div
           className={css("header-content select-none px-3 py-2 text-lg rounded-ss-sm w-full text-left", !hold ? 'cursor-grab' : 'cursor-grabbing')}
-          onMouseDown={() => setHold(true)}
+          onMouseDown={() => {
+            onWindowClick();
+            setHold(true);
+          }}
           onMouseUp={() => setHold(false)}
           onMouseLeave={() => setHold(false)}
         >

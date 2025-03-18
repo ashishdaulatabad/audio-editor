@@ -55,6 +55,7 @@ export function SimpleDropdown<Item extends Object>(props: React.PropsWithoutRef
     }
   }, [visible]);
 
+  // To do: Create a global panel that should show below this list of content.
   return (
     <div className="list relative text-xl text-center content-center items-center">
       <div ref={ref} onClick={() => setVisible(!visible)}>
@@ -64,12 +65,12 @@ export function SimpleDropdown<Item extends Object>(props: React.PropsWithoutRef
       {visible &&
         <ul 
           ref={listRef} 
-          className="list-none absolute z-[20] border border-solid border-primary"
+          className="list-none absolute z-[200] rounded-sm border border-solid border-primary"
         >
           {props.list.map((listItem, index) => (
             <li
               key={index}
-              className="p-2 px-6 bg-darker hover:bg-slate-600 min-w-36 max-h-36 border-b border-solid border-secondary"
+              className="p-2 px-6 bg-darker hover:bg-slate-600 rounded-sm min-w-36 text-start max-h-36 border-b border-solid border-secondary"
               onClick={(e) => selectItem(listItem, index)}
             >
               {props.label(listItem)}

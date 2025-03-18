@@ -27,14 +27,15 @@ function calculateRMS(array: Uint8Array): number {
 export function VolumeLevels(props: React.PropsWithoutRef<{
   orientation?: Orientation
   mixerNumber?: number
+  mixerMaster?: boolean
 }>) {
   const leftRect = React.useRef<HTMLDivElement | null>(null);
   const rightRect = React.useRef<HTMLDivElement | null>(null);
   let handler: symbol | null = null;
+  const leftBuffer = new Uint8Array(2048);
+  const rightBuffer = new Uint8Array(2048);
   
   React.useEffect(() => {
-    const leftBuffer = new Uint8Array(2048);
-    const rightBuffer = new Uint8Array(2048);
 
     function animateVolumeLevels() {
       if (!audioService.audioContext || !audioManager.leftAnalyserNode) {
@@ -43,8 +44,10 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
 
       if (props.mixerNumber === undefined) { 
         audioManager.getTimeData(leftBuffer, rightBuffer);
+      } else if (typeof props.mixerMaster === 'boolean' && props.mixerMaster) {
+        audioManager.getTimeDataFromMixer(0, leftBuffer, rightBuffer);
       } else {
-        audioManager.getTimeDataFromMixer(props.mixerNumber, leftBuffer, rightBuffer);
+        audioManager.getTimeDataFromMixer(props.mixerNumber + 1, leftBuffer, rightBuffer);
       }
 
       if (leftRect.current && rightRect.current) {

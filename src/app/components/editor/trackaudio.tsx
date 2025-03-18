@@ -8,7 +8,7 @@ import { css } from '@/app/services/utils';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { FaCog, FaRegFileAudio, FaTrash } from 'react-icons/fa';
 import { createAudioSample } from '@/app/services/audiotransform';
-import { randomColor } from '@/app/services/color';
+import { getRandomWindowId, randomColor } from '@/app/services/random';
 import { useDispatch } from 'react-redux';
 import { FaRepeat } from 'react-icons/fa6';
 import { addWindowToAction } from '@/app/state/windowstore';
@@ -219,7 +219,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
                 x: 0,
                 y: 0,
                 visible: true,
-                propsUniqueIdentifier: track.trackDetail.scheduledKey
+                propsUniqueIdentifier: track.trackDetail.scheduledKey,
+                windowId: getRandomWindowId(),
               }
             );
             hideContextMenu();

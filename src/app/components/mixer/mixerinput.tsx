@@ -4,17 +4,20 @@ import { Slider } from '../slider';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { Orientation, VolumeLevels } from '../player/volumelevels';
 
-export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) {
+export function MixerInput(props: React.PropsWithoutRef<{
+  mixerNumber: number
+  master: boolean 
+}>) {
   const [gain, setGain] = React.useState(audioManager.useManager().mixer.getGainValue(props.mixerNumber + 1));
   const [panner, setPanner] = React.useState(audioManager.useManager().mixer.getPanValue(props.mixerNumber + 1));
 
   function setGainValue(e: number) {
-    audioManager.setGainNodeForMixer(props.mixerNumber, e);
+    audioManager.setGainNodeForMixer(props.mixerNumber + 1, e);
     setGain(e);
   }
 
   function setPannerValue(e: number) {
-    audioManager.setPannerNodeForMixer(props.mixerNumber, e);
+    audioManager.setPannerNodeForMixer(props.mixerNumber + 1, e);
     setPanner(e);
   }
 
@@ -23,6 +26,7 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
       <VolumeLevels
         orientation={Orientation.Vertical}
         mixerNumber={props.mixerNumber}
+        mixerMaster={props.master}
       />
       <div className="panner-value mb-6">
         <Knob 
@@ -50,7 +54,7 @@ export function MixerInput(props: React.PropsWithoutRef<{mixerNumber: number}>) 
         />
         <label className="text-md select-none">Vol</label>
       </div>
-      <span className="text-nowrap text-sm select-none">Mixer {props.mixerNumber + 1}</span>
+      <span className="text-nowrap text-sm select-none">{props.master ? 'Master' : `Mixer ${props.mixerNumber + 1}`}</span>
     </div>
   )
 }

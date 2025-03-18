@@ -1,7 +1,7 @@
 import { AudioDetails } from '../state/audiostate';
 import { audioService } from './audioservice';
 import { audioManager } from './audiotrackmanager';
-import { randomColor } from './color';
+import { randomColor } from './random';
 import { Maybe } from './interfaces';
 
 type Attr = string |
