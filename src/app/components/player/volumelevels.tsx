@@ -21,6 +21,7 @@ function calculateRMS(array: Uint8Array): number {
 
 /**
  * @description Volume Level Component
+ * @todo Can there be more efficient level drawing method?
  * @param props 
  * @returns 
  */

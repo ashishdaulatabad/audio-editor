@@ -976,6 +976,10 @@ export function Editor() {
 
   const totalHeight = height * audioManager.totalTrackSize;
 
+  // Next plans:
+  // 1. Undo/redo
+  // 2. Tempo based timeframing
+  // 3. Resizable windows.
   return (
     <>
       <div
