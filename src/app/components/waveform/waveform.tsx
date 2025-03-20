@@ -198,7 +198,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               type="number"
               placeholder="---"
               value={typeof audioMixer === 'number' ? audioMixer : undefined}
-              className="block px-0 py-2 text-4xl input rounded-md bg-primary-2 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="block px-0 py-3 text-2xl input rounded-md bg-primary-2 w-18 text-center [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               min={0}
               max={audioManager.totalMixers}
               onInput={changeMixer}

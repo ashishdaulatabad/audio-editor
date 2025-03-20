@@ -186,13 +186,17 @@ const windowManagerSlice = createSlice({
      * @param action action containing the windowSymbol
      */
     batchRemoveWindowWithUniqueIdentifier(state, action: PayloadAction<symbol[]>) {
-      for (const sym of action.payload) {
-        const windowId = state.contents[sym].windowId;
-        delete state.contents[sym];
-        removeRandomWindowId(windowId);
+      for (const key of Object.getOwnPropertySymbols(state.contents)) {
+        const window = state.contents[key];
+
+        if (action.payload.indexOf(window.propsUniqueIdentifier) > -1) {
+          const windowId = state.contents[key].windowId;
+          state.ordering = state.ordering.filter(sym => action.payload.includes(window.windowSymbol));
+          delete state.contents[key];
+          removeRandomWindowId(windowId);
+        }
       }
 
-      state.ordering = state.ordering.filter(sym => action.payload.includes(sym));
     },
     /**
      * Focuses the window that user interacted with
