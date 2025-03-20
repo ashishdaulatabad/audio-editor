@@ -1,4 +1,5 @@
 const colorSet: Set<string> = new Set();
+const windowSet: Set<number> = new Set();
 
 export function randomColor() {
   let value = '';
@@ -17,4 +18,17 @@ export function randomColor() {
 
 export function deleteColor(color: string) {
   colorSet.delete(color);
+}
+
+export function getRandomWindowId() {
+  let value = 0;
+  do {} while (windowSet.has((value = Math.round(Math.random() * (1 << 30)))));
+
+  windowSet.add(value);
+
+  return value;
+}
+
+export function removeRandomWindowId(value: number) {
+  windowSet.delete(value);
 }

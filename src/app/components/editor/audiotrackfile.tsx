@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { DialogContext } from '@/app/providers/dialog';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { deleteColor } from '@/app/services/color';
+import { deleteColor } from '@/app/services/random';
 import { RootState } from '@/app/state/store';
 import { FaTrash } from 'react-icons/fa';
 
@@ -105,7 +105,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   return (
     <div
       className={css(
-        "cursor-pointer text-nowrap text-lg text-ellipsis max-w-full mb-2 p-2 py-1 rounded-sm flex flex-row justify-center items-center select-none",
+        "cursor-pointer max-w-full mb-2 p-2 py-1 rounded-sm flex flex-row justify-center items-center select-none",
         props.isSame ? 'shadow-lg shadow-gray-900' : 'shadow-md shadow-gray-700'
       )}
       key={index}
@@ -117,7 +117,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       <div className="min-w-8 ml-2">
         <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
       </div>
-      <div className={css("w-full font-xl ml-2", { 'font-bold' : props.isSame })}>{file.audioName}</div>
+      <div className={css("w-full font-xl ml-2 text-nowrap text-lg overflow-hidden overflow-ellipsis", { 'font-bold' : props.isSame })}>{file.audioName}</div>
     </div>
   )
 }

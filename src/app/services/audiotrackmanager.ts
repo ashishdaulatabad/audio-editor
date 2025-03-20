@@ -950,8 +950,13 @@ class AudioTrackManager {
   }
 
   getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
-    if (mixer >= 0) {
-      const { left, right } = this.mixer.analyserNodes[mixer];
+    if (mixer > 0) {
+      const { left, right } = this.mixer.useMixer().analyserNodes[mixer - 1];
+
+      left.getByteTimeDomainData(leftArray);
+      right.getByteTimeDomainData(rightArray);
+    } else {
+      const { left, right } = this.mixer.useMixer().masterAnalyserNodes as { left: AnalyserNode, right: AnalyserNode };
 
       left.getByteTimeDomainData(leftArray);
       right.getByteTimeDomainData(rightArray);

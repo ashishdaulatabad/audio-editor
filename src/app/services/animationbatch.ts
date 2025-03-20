@@ -17,9 +17,7 @@ class AnimationBatcher {
   } = {};
   masterHandler: number = 0;
 
-  constructor() {
-    // this.runAnimations();
-  }
+  constructor() {}
 
   runAnimations() {
     this.masterHandler = this.run();
@@ -42,7 +40,9 @@ class AnimationBatcher {
 
         if (animationHandle.allowedFrameTime) {
           // const timeDiff = (currentTimestamp + animationHandle.previousTimestamp) - animationHandle.allowedFrameTime;
-          animationHandle.previousTimestamp += animationHandle.allowedFrameTime;
+          do {
+            animationHandle.previousTimestamp += animationHandle.allowedFrameTime;
+          } while (animationHandle.allowedFrameTime <= currentTimestamp - animationHandle.previousTimestamp);
         } else {
           animationHandle.previousTimestamp = currentTimestamp;
         }

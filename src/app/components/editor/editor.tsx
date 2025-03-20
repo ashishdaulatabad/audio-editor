@@ -57,6 +57,7 @@ import {
   TrackInformation
 } from '@/app/state/trackdetails';
 import { Seeker } from './seeker';
+import { getRandomWindowId } from '@/app/services/random';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -107,6 +108,7 @@ export function Editor() {
   const trackTimeDurationMicros = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMicros);
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const windows = useSelector((state: RootState) => state.windowStoreReducer.contents);
+  const ordering = useSelector((state: RootState) => state.windowStoreReducer.ordering);
   const dispatch = useDispatch();
 
   // Refs
@@ -297,7 +299,8 @@ export function Editor() {
           x: scrollPageRef.current?.scrollLeft ?? 0,
           y: scrollPageRef.current?.scrollTop ?? 0,
           visible: true,
-          propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey
+          propsUniqueIdentifier: trackForEdit.trackDetail.scheduledKey,
+          windowId: getRandomWindowId()
         }
       );
 
@@ -457,7 +460,8 @@ export function Editor() {
     const diffAnchorX = event.nativeEvent.clientX - anchorX;
     const diffAnchorY = event.nativeEvent.clientY - anchorY;
     const windowIdString = element.getAttribute('data-windowid') as string;
-    const windowId = parseInt(windowIdString);
+    const orderingIndex = parseInt(windowIdString);
+    const windowId = ordering[orderingIndex];
     const left = windows[windowId].x;
     const top = windows[windowId].y;
 
@@ -564,11 +568,16 @@ export function Editor() {
     const diffAnchorX = event.nativeEvent.clientX - anchorX;
     const diffAnchorY = event.nativeEvent.clientY - anchorY;
     const windowIdString = element.getAttribute('data-windowid') as string;
-    const windowId = parseInt(windowIdString);
+    const orderingIndex = parseInt(windowIdString);
+    const windowId = ordering[orderingIndex];
     const left = windows[windowId].x;
     const top = windows[windowId].y;
 
-    dispatch(setWindowPosition({ x: left + diffAnchorX, y: top + diffAnchorY, index: windowId }));
+    dispatch(setWindowPosition({
+      x: left + diffAnchorX,
+      y: top + diffAnchorY,
+      windowSymbol: windowId
+    }));
 
     setMovableEntity(null);
     setMovableType(MovableType.None);
@@ -967,6 +976,10 @@ export function Editor() {
 
   const totalHeight = height * audioManager.totalTrackSize;
 
+  // Next plans:
+  // 1. Undo/redo
+  // 2. Tempo based timeframing
+  // 3. Resizable windows.
   return (
     <>
       <div
