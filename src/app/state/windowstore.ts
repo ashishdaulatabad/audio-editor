@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch } from "./store";
-import { Maybe } from "../services/interfaces";
 import { removeRandomWindowId } from "../services/random";
 
 export interface Windowable {}
@@ -246,13 +245,14 @@ const windowManagerSlice = createSlice({
 })
 
 export const {
-  addWindow,
   focusWindow,
   removeWindow,
   setWindowPosition,
   removeWindowWithUniqueIdentifier,
   batchRemoveWindowWithUniqueIdentifier
 } = windowManagerSlice.actions;
+
+const { addWindow } = windowManagerSlice.actions;
 
 /**
  * @description Add window to window management.

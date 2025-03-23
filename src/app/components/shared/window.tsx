@@ -5,6 +5,17 @@ import { FaWindowMinimize } from "react-icons/fa";
 import { HorizontalAlignment, VerticalAlignment } from '../../state/windowstore';
 
 /**
+ * @description Window manipulation mode.
+ */
+export enum WindowManipulationMode {
+  None,
+  Move,
+  ResizeXLeft,
+  ResizeXRight,
+  ResizeYDown
+}
+
+/**
  * @description Creates a resizable window tile that shows the popup.
  * @param props 
  * @returns 
@@ -28,6 +39,7 @@ export function Window(props: React.PropsWithChildren<{
 }>) {
   /// States
   const [hold, setHold] = React.useState(false);
+  const [windowManipulationMode, setWindowManipulationMode] = React.useState(WindowManipulationMode.None);
   const windowRef = React.useRef<HTMLDivElement | null>(null);
 
   function onWindowClick() {
@@ -42,6 +54,25 @@ export function Window(props: React.PropsWithChildren<{
     props.onMinimize?.call(null);
   }
 
+  function onMouseMovedInsideWindow(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    const {
+      clientX,
+      clientY
+    } = event.nativeEvent;
+
+    if (windowRef.current) {
+      const { left, top, width, height } = windowRef.current.getBoundingClientRect();
+
+      if (left + width - clientX <= 10) {
+        setWindowManipulationMode(WindowManipulationMode.ResizeXRight)
+      } else if (clientX - left <= 10) {
+        setWindowManipulationMode(WindowManipulationMode.ResizeXLeft);
+      } else if (top + height - clientY <= 10) {
+        setWindowManipulationMode(WindowManipulationMode.ResizeYDown);
+      }
+    }
+  }
+
   return (
     <div
       className={css(
@@ -50,6 +81,7 @@ export function Window(props: React.PropsWithChildren<{
       )}
       data-windowid={props.index}
       onMouseDown={onWindowClick}
+      onMouseMove={onMouseMovedInsideWindow}
       ref={windowRef}
       onClick={onWindowClick}
       style={{ 

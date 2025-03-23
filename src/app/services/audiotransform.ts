@@ -1,5 +1,5 @@
-import { AudioTrackDetails, SEC_TO_MICROSEC } from "../state/trackdetails";
-import { AudioTransformation } from "./interfaces";
+import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
+import { AudioTransformation } from './interfaces';
 
 /**
  * @description Performs the transformation to the Audio Buffer.

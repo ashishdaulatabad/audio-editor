@@ -58,6 +58,7 @@ import {
 } from '@/app/state/trackdetails';
 import { Seeker } from './seeker';
 import { getRandomWindowId } from '@/app/services/random';
+import { WindowManipulationMode } from '../shared/window';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -92,6 +93,7 @@ export function Editor() {
   // The entity that is movable is either a track or a window.
   const [movableEntity, setMovableEntity] = React.useState<HTMLElement | null>(null);
   const [movableType, setMovableType] = React.useState(MovableType.None);
+  const [windowManipulationMode, setWindowManipulationMode] = React.useState(WindowManipulationMode.None);
 
   const [height, setHeight] = React.useState(90);
   const [dragged, setDragged] = React.useState(false);
@@ -433,7 +435,8 @@ export function Editor() {
 
   /**
    * @description Set drag event for the window element.
-   * This should also focus the current window, while moving rest of them at the last.
+   * This should also focus the current window, while moving rest of them in order of recently 
+   * used window.
    * 
    * @param event 
    * @param topbarElement 
@@ -447,11 +450,12 @@ export function Editor() {
     setAnchorY(event.nativeEvent.clientY);
     setMovableEntity(parentElement);
     setMovableType(MovableType.Window);
+    setWindowManipulationMode(WindowManipulationMode.Move);
   }
 
   /**
    * @description Drag Window based on the current limits
-   * @param event 
+   * @param event Event Details
    * @returns void.
    */
   function dragWindow(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
@@ -983,7 +987,7 @@ export function Editor() {
   return (
     <>
       <div
-        className="h-screen flex flex-col max-h-screen"
+        className="h-screen flex flex-col max-h-screen text-col"
         onClick={checkContextMenu}
         onDrop={onFileDrop}
         onMouseDown={settingDrag}
