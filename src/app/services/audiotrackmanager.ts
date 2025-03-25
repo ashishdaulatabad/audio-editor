@@ -5,6 +5,7 @@ import { clamp } from '../utils';
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
 import { Mixer } from './mixer';
+import { addToAudioNodeList, deregisterFromAudioNodeList } from './noderegistry';
 
 /**
  * @description Type of Multiselected DOM elements that are selected.
@@ -33,7 +34,9 @@ export type AudioBank = {
     audioDetails: Omit<AudioDetails, 'audioId'>
     buffer: AudioBuffer
     panner: StereoPannerNode
+    pannerRegister: symbol,
     gain: GainNode
+    gainRegister: symbol
   }
 };
 
@@ -165,21 +168,12 @@ class AudioTrackManager {
    * @returns rendered raw audio data.
    */
   async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
-    const offlineAudioContext = new OfflineAudioContext(
-      2,
-      Math.ceil(48000 * this.loopEnd),
-      48000
-    );
+    const channels = 2;
+    const bufferLength = Math.ceil(48000 * this.loopEnd);
+    const sampleRate = 48000;
 
+    const offlineAudioContext = new OfflineAudioContext(channels, bufferLength, sampleRate);
     const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
-
-    // gainNodes.forEach((gainNode, index: number) => {
-    //   AudioTrackManager.copySettings(gainNode, this.gainNodes[index])
-    // });
-
-    // pannerNodes.forEach((pannerNode, index: number) => {
-    //   AudioTrackManager.copySettings(pannerNode, this.pannerNodes[index])
-    // });
 
     masterGainNode.connect(offlineAudioContext.destination);
 
@@ -203,16 +197,24 @@ class AudioTrackManager {
     audioDetails: Omit<AudioDetails, 'audioId'>,
     audioBuffer: AudioBuffer
   ): symbol {
-    const symbol = Symbol();
+    const audioBankSymbol = Symbol();
+    const context = audioService.useAudioContext();
 
-    this.audioBank[symbol] = {
+    const gain = context.createGain();
+    const panner = context.createStereoPanner();
+    const gainRegister = addToAudioNodeList(gain);
+    const pannerRegister = addToAudioNodeList(panner);
+
+    this.audioBank[audioBankSymbol] = {
       audioDetails,
       buffer: audioBuffer,
-      gain: audioService.useAudioContext().createGain(),
-      panner: audioService.useAudioContext().createStereoPanner()
+      gainRegister,
+      gain,
+      pannerRegister,
+      panner
     };
 
-    return symbol;
+    return audioBankSymbol;
   }
 
   /**
@@ -231,6 +233,15 @@ class AudioTrackManager {
    */
   unregisterAudioFromAudioBank(sym: symbol): boolean {
     if (Object.hasOwn(this.audioBank, sym)) {
+      // Remove all the settings from the bank.
+      const {
+        gainRegister,
+        pannerRegister
+      } = this.audioBank[sym];
+
+      deregisterFromAudioNodeList(gainRegister);
+      deregisterFromAudioNodeList(pannerRegister);
+
       delete this.audioBank[sym];
       return true;
     }

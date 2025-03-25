@@ -1,12 +1,24 @@
-import { audioService } from "./audioservice";
-import { Maybe } from "./interfaces";
+import { audioService } from './audioservice';
+import { Maybe } from './interfaces';
+import { addToAudioNodeList } from './noderegistry';
 
 export class Mixer {
   masterGainNode: Maybe<GainNode> = null;
+  masterGainRegistry: symbol = Symbol();
+ 
   masterPannerNode: Maybe<StereoPannerNode> = null;
+  masterPannerRegistry: symbol = Symbol();
+
+  private _channelSplitterNodes: ChannelSplitterNode[] = [];
+
+  // Gain node information
   private gainNodes: GainNode[] = [];
-  private channelSplitterNodes: ChannelSplitterNode[] = [];
+  private gainNodeIds: symbol[] = [];
+
+  // Pan node information
   private panNodes: StereoPannerNode[] = [];
+  private panNodeIds: symbol[] = [];
+
   private mixerViewIdentifier: symbol = Symbol();
   private isInitialized = false;
 
@@ -31,6 +43,9 @@ export class Mixer {
     return this.mixerViewIdentifier;
   }
 
+  /**
+   * @description Get gain value from a mixer.
+   */
   getGainValue(mixerNumber: number) {
     if (mixerNumber === 0) {
       return this.masterGainNode?.gain.value as number;
@@ -38,6 +53,11 @@ export class Mixer {
     return this.gainNodes[mixerNumber - 1].gain.value;
   }
 
+  /**
+   * @description Get panner value from a given mixer.
+   * @param mixerNumber 
+   * @returns 
+   */
   getPanValue(mixerNumber: number) {
     if (mixerNumber === 0) {
       return this.masterPannerNode?.pan.value as number;
@@ -46,7 +66,13 @@ export class Mixer {
     return this.panNodes[mixerNumber - 1].pan.value;
   }
 
-  initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode, StereoPannerNode] {
+  /**
+   * @description Initialize all the necessary nodes.
+   * @param context audio context to use.
+   * @param register Register to audio node to create a registry.
+   * @returns List of all nodes, created based on BaseAudioContext.
+   */
+  initialize(context: BaseAudioContext, register: boolean = true): [GainNode[], StereoPannerNode[], GainNode, StereoPannerNode] {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
     const masterPannerNode = audioContext.createStereoPanner();
@@ -64,6 +90,21 @@ export class Mixer {
     });
 
     masterPannerNode.connect(masterGainNode);
+
+    // When register is true, add to Audio Node List for tracking changes performed
+    // during the session.
+    if (register) {
+      this.masterGainRegistry = addToAudioNodeList(masterGainNode);
+      this.masterPannerRegistry = addToAudioNodeList(masterPannerNode);
+
+      pannerNodes.forEach((panNode) => (
+        this.panNodeIds.push(addToAudioNodeList(panNode))
+      ));
+
+      gainNodes.forEach((gainNode) => (
+        this.gainNodeIds.push(addToAudioNodeList(gainNode))
+      ));
+    }
 
     return [gainNodes, pannerNodes, masterGainNode, masterPannerNode];
   }
@@ -84,7 +125,7 @@ export class Mixer {
         right: context.createAnalyser()
       };
 
-      this.channelSplitterNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
+      this._channelSplitterNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
         const channelSplitter = context.createChannelSplitter();
         this.gainNodes[index].connect(channelSplitter);
         const { left, right } = this.analyserNodes[index];

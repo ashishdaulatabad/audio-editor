@@ -2,14 +2,8 @@
  * @description Change Type performed
 */
 export enum ChangeType {
-  TrackAdd,
-  TrackDelete,
-  TrackMove,
-  BulkTrackMove,
-  TrackResize,
-  BulkTrackResize,
-  TrackSlice,
-  KnobChange
+  TrackChanges,
+  KnobChanges
 }
 
 /**
@@ -80,40 +74,31 @@ class ChangeHistory {
    * @param previousSnapshot previous snapshot.
    * @param currentState current state of the track.
    */
-  diffSnapshot<Type>(previousSnapshot: Snapshot<Type>, currentState: Type) {
+  diffSnapshot<Type>(
+    previousSnapshot: Snapshot<Type>,
+    currentState: Type,
+    changeType: ChangeType
+  ) {
     const { state: previousState } = previousSnapshot;
+    // Diff Logic can be different for each type, specialization first, then
+    // move to generalization.
+    switch (changeType) {
+      // Take all scheduled keys and look for changes that are
+      case ChangeType.TrackChanges: {
+        break;
+      }
+
+      // There should be an identifier for all the visible input (e.g.,
+      // Checkbox, knob, slider and Dropdown in future, and others).
+      // that could be modified throughout the page, hence keeping the
+      // previous value and current value to undo changes.
+      case ChangeType.KnobChanges: {
+        break;
+      }
+    }
   }
 
   popHistory() {
     return this.stack.pop();
   }
 };
-
-function evalDifference<T extends Object>(left: T, right: T) {
-  if (typeof left === 'undefined' && left === right) {
-    return;
-  }
-
-  if (left === null || left === undefined || right === null || right === undefined) {
-    return;
-  }
-
-  if (left.constructor !== right.constructor) {
-    return;
-  }
-
-  switch (left.constructor) {
-    case Object.constructor: {
-      // Check all keys
-      break;
-    }
-
-    case Array.constructor: {
-      break;
-    }
-
-    case Symbol.constructor: {
-      break;
-    }
-  }
-}

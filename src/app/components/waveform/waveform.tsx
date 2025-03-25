@@ -103,7 +103,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       transformation
     ).then(data => {
       audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
-      renderAudioWaveform({ ...track }, 200, timePerUnitLineDistanceSecs, true);
+      renderAudioWaveform({ ...track }, 400, timePerUnitLineDistanceSecs, true);
 
       dispatch(applyChangesToModifiedAudio({
         audioId: track.audioId,
@@ -125,7 +125,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   }
 
   function transformSwapStereo() {
-    transform(AudioTransformation.SwapStereo)
+    transform(AudioTransformation.SwapStereo);
   }
 
   function normalize() {

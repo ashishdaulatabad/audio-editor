@@ -157,8 +157,7 @@ export function Editor() {
       const trackIndex = audioElement.getAttribute('data-trackid');
       const trackIntIndex = trackIndex ? parseInt(trackIndex) : 0;
 
-      const left = audioElement.style.left ?? '0px';
-      const offsetX = parseFloat(left.substring(0, left.length - 2));
+      const offsetX = audioElement.offsetLeft;
       /// Starting from offset in millis.
       const offsetInMicros = Math.round((offsetX / lineDist) * timeUnitPerLineMicros);
       const startOffsetInMicros = Math.round((audioElement.scrollLeft / lineDist) * timeUnitPerLineMicros);
@@ -246,28 +245,29 @@ export function Editor() {
     desiredAudioElement: HTMLElement
   ) {
     const element = desiredAudioElement;
-
-    setAnchorX(event.nativeEvent.clientX);
+    const { clientX, offsetX } = event.nativeEvent;
+    const { scrollLeft, clientWidth } = desiredAudioElement;
     const attribute = element.getAttribute('data-selected');
 
     if (
       element.classList.contains('cursor-e-resize') ||
       element.classList.contains('cursor-w-resize')
     ) {
-      setInitialTrackWidth(element.clientWidth);
-      setInitialScrollLeft(element.scrollLeft);
+      setInitialTrackWidth(clientWidth);
+      setInitialScrollLeft(scrollLeft);
 
       if (element.classList.contains('cursor-w-resize')) {
-        setAnchorX(event.nativeEvent.clientX - 2 * (event.nativeEvent.offsetX - desiredAudioElement.scrollLeft));
+        setAnchorX(clientX - 2 * (offsetX - scrollLeft));
         setMode(AudioTrackManipulationMode.ResizeStart);
       } else {
-        setAnchorX(event.nativeEvent.clientX);
+        setAnchorX(clientX);
         setMode(AudioTrackManipulationMode.ResizeEnd);
       }
     } else if (element.classList.contains('cursor-grab')) {
       setMode(AudioTrackManipulationMode.Move);
-      setAnchorX(event.nativeEvent.clientX);
+      setAnchorX(clientX);
     } else {
+      setAnchorX(clientX);
       setMode(AudioTrackManipulationMode.None);
     }
 
@@ -316,27 +316,22 @@ export function Editor() {
         dispatch(cloneMultipleAudioTrack(allSelectedTracks));
       }
     } else {
-      const audioIndex = element?.getAttribute('data-audioid');
-      const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
-      const trackIndex = element?.getAttribute('data-trackid');
-      const intIndex = trackIndex ? parseInt(trackIndex) : 0;
-
       if (event.shiftKey) {
-        dispatch(cloneAudioTrack({ trackNumber: intIndex, audioIndex: audioIntIndex }));
+        dispatch(cloneAudioTrack({ trackNumber, audioIndex }));
       }
 
       const left = element.offsetLeft;
       setPosition(left);
       
       if (
-        !trackDetails[intIndex][audioIntIndex].trackDetail.selected &&
+        !trackDetails[trackNumber][audioIndex].trackDetail.selected &&
         audioManager.isMultiSelected()
       ) {
         dispatch(deselectAllTracks());
         audioManager.clearSelection();
       }
 
-      dispatch(selectAudio(trackDetails[intIndex][audioIntIndex]));
+      dispatch(selectAudio(trackDetails[trackNumber][audioIndex]));
     }
     setMovableEntity(element as HTMLElement);
     setMovableType(MovableType.ScheduledTrack);
@@ -521,19 +516,20 @@ export function Editor() {
           // Manipulate width, scrollLeft and offset based on the initial position.
           // The width cannot exceed the last point of the whole track (not the scrollwidth)
           case AudioTrackManipulationMode.ResizeStart: {
+            // Setting maxWidth
+            const maxWidth = Math.min(position, initialScrollLeft) + initialTrackWidth;
+            const width = clamp(initialTrackWidth - diffAnchorX, 0, maxWidth)
+
+            // Setting left
+            const minLeft = Math.max(0, position - initialScrollLeft);
+            const maxLeft = position + initialTrackWidth;
+            const left = clamp(position + diffAnchorX, minLeft, maxLeft);
+
             Object.assign(
               movableEntity.style,
               {
-                width: clamp(
-                  initialTrackWidth - diffAnchorX,
-                  0,
-                  Math.min(position, initialScrollLeft) + initialTrackWidth,
-                ) + 'px',
-                left: clamp(
-                  position + diffAnchorX,
-                  0,
-                  position + initialTrackWidth,
-                ) + 'px'
+                width: width + 'px',
+                left: left + 'px'
               }
             );
 
@@ -571,6 +567,7 @@ export function Editor() {
 
     const diffAnchorX = event.nativeEvent.clientX - anchorX;
     const diffAnchorY = event.nativeEvent.clientY - anchorY;
+
     const windowIdString = element.getAttribute('data-windowid') as string;
     const orderingIndex = parseInt(windowIdString);
     const windowId = ordering[orderingIndex];
@@ -604,14 +601,14 @@ export function Editor() {
     const selectedAttr = movableEntity.getAttribute('data-selected');
 
     if (selectedAttr === 'true') {
-      const allElements = audioManager.useManager().getNewPositionForMultipleSelectedTracks();
+      const allTrackElements = audioManager.useManager().getNewPositionForMultipleSelectedTracks();
       const allTrackNumbers: number[] = [],
         allAudioIndexes: number[] = [],
         allStartOffsetsInMicros: number[] = [],
         allEndOffsetsInMicros: number[] = [],
         allOffsetsInMicros: number[] = [];
       
-      allElements.forEach((element) => {
+      allTrackElements.forEach((element) => {
         const { domElement, finalPosition, finalScrollLeft, finalWidth } = element;
         const audioIndex = domElement.getAttribute('data-audioid') as string;
         const audioIntIndex = parseInt(audioIndex);
@@ -639,6 +636,7 @@ export function Editor() {
       }));
 
       const movedTrackInfo: AudioTrackDetails[] = [];
+
       allTrackNumbers.forEach((trackNumber, index: number) => {
         const audioIndex = allAudioIndexes[index], 
         offsetInMicros = allOffsetsInMicros[index],
@@ -887,20 +885,20 @@ export function Editor() {
       /// Check left, and right ratio and scroll based on cursor position
       if (event.ctrlKey) {
         if (event.deltaY > 0) {
-          const newLineDist = Math.max(Math.round(lineDist - lineDist * 0.08), 40);
+          const newLineDist = Math.max(Math.round(lineDist * 0.92), 40);
           adjustZooming(event, newLineDist);
           setLineDist(newLineDist);
         } else if (event.deltaY < 0) {
-          const newLineDist = Math.min(Math.round(lineDist + lineDist * 0.08), 500);
+          const newLineDist = Math.min(Math.round(lineDist * 1.08), 400);
           adjustZooming(event, newLineDist);
           setLineDist(newLineDist);
         }
       } else if (event.altKey) {
         if (event.deltaY > 0) {
-          const newHeight = Math.min(Math.round(height + height * 0.08), 120);
+          const newHeight = Math.min(Math.round(height * 1.08), 120);
           setHeight(newHeight);
         } else {
-          const newHeight = Math.max(Math.round(height - height * 0.08), 50);
+          const newHeight = Math.max(Math.round(height * 0.92), 50);
           setHeight(newHeight);
         }
       }
