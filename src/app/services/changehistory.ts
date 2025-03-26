@@ -33,6 +33,23 @@ export type Snapshot<Type> = {
 }
 
 /**
+ * @description Create a state that keeps track of all the changes.
+ * @param state current state
+ * @returns Snapshot of the current type.
+ */
+export function createSnapshot<Type>(state: Type): Snapshot<Type> {
+  // A simple object currently.
+  return { state: structuredClone(state) };
+}
+
+export function updateSnapshot<Type>(
+  storedState: Snapshot<Type>,
+  currentState: Type
+) {
+  // Previous snapshot and current snapshot difference.
+}
+
+/**
  * @description Change Timeline: useful for undo/redo
  * @todo Need to formulate this one.
  */
@@ -57,16 +74,6 @@ class ChangeHistory {
     }
 
     return this.stack[this.stack.length - 1];
-  }
-
-  /**
-   * @description Create a clone of the state.
-   * @param initialState recorded state of the initial application
-   */
-  recordSnapshot<TypeState>(initialState: TypeState): Snapshot<TypeState> {
-    return {
-      state: structuredClone(initialState)
-    };
   }
 
   /**

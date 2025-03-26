@@ -7,9 +7,10 @@ import { SlicerSelection } from '../components/editor/slicer';
 import { AudioTransformation } from '../services/interfaces';
 import { TimeSectionSelection } from '../components/editor/seekbar';
 import { animationBatcher } from '../services/animationbatch';
+import { Snapshot } from '../services/changehistory';
 
 /**
- * Information of the track, like start offset, end offset and selection.
+ * @description Information of the track, like start offset, end offset and selection.
  * Maybe store additional data.
  */
 export type TrackInformation = {
@@ -65,7 +66,12 @@ const initialState: {
   trackDetails: Array.from({length: 30}, () => [])
 }
 
-function getMaxTime(trackDetails: AudioTrackDetails[][]) {
+/**
+ * @description Get max time the track should run.
+ * @param trackDetails Track Details
+ * @returns Max Time in microseconds.
+ */
+function getMaxTime(trackDetails: AudioTrackDetails[][]): number {
   return trackDetails.reduce((maxTime: number, currentArray) => {
     const maxTimeInCurrentTrack = currentArray.reduce((maxTime: number, currentTrack) => {
       // Should always exist in seconds
@@ -102,13 +108,262 @@ function isWithinRegionAndNotSelected(
   );
 }
 
+/**
+ * @description Add audio track to the track list.
+ * @param trackDetails Track Details
+ * @param trackNumber Track Number
+ * @param track new track
+ */
+export function addNewAudioToTrack(
+  trackDetails: AudioTrackDetails[][],
+  trackNumber: number,
+  track: AudioTrackDetails
+) {
+  trackDetails[trackNumber].push(track);
+  // Sort array based on the appearance of each scheduled track
+  // This enable a domino-effect, making user's life easier to pull
+  // out overlapping tracks.
+  trackDetails[trackNumber].sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
+}
+
+export function deleteAudioFromTrack_(
+  trackDetails: AudioTrackDetails[][],
+  trackNumber: number,
+  audioIndex: number
+) {
+  // No need for sorting, since they'll already sorted in-place.
+  const _ = trackDetails[trackNumber].splice(audioIndex, 1);
+}
+
+export function selectAllTrackWithSelectedRegion(
+  trackDetails: AudioTrackDetails[][],
+  regionSelection: RegionSelection
+) {
+  const {
+    trackStart,
+    trackEnd,
+    pointStartSec,
+    pointEndSec,
+  } = regionSelection;
+
+  for (let index = 0; index < trackDetails.length; ++index) {
+    for (const track of trackDetails[index]) {
+      track.trackDetail.selected = index >= trackStart && index <= trackEnd &&
+        isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
+    }
+  }
+}
+
+export function selectAllTrackWithinSeekbarSelection(
+  trackDetails: AudioTrackDetails[][],
+  timeSelection: TimeSectionSelection
+) {
+  const {
+    startTimeMicros,
+    endTimeMicros
+  } = timeSelection;
+
+  const pointStartSec = startTimeMicros / SEC_TO_MICROSEC;
+  const pointEndSec = endTimeMicros / SEC_TO_MICROSEC;
+
+  for (let index = 0; index < trackDetails.length; ++index) {
+    for (const track of trackDetails[index]) {
+      track.trackDetail.selected = isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
+    }
+  }
+}
+
+export function markSelectionForAllAudioTracks(
+  trackDetails: AudioTrackDetails[][],
+  markAs: boolean
+) {
+  for (let index = 0; index < trackDetails.length; ++index) {
+    for (const track of trackDetails[index]) {
+      track.trackDetail.selected = markAs;
+    }
+  }
+}
+
+/**
+ * @description Adds a single track, assumption that the user will 
+ * place this track after the clone, then sorting can be done after
+ * releasing the trigger
+ * 
+ * @param trackDetails 
+ */
+export function cloneSingleAudioTrack(
+  trackDetails: AudioTrackDetails[][],
+  trackNumber: number,
+  audioIndex: number
+) {
+  const track = trackDetails[trackNumber][audioIndex];
+
+  const clonedDetails: AudioTrackDetails = {
+    ...track,
+    trackDetail: {
+      ...track.trackDetail,
+      scheduledKey: Symbol(),
+    }
+  };
+
+  trackDetails[trackNumber].splice(audioIndex + 1, 0, clonedDetails);
+}
+
+/**
+ * @description Adds multiple tracks, assumption that the user will 
+ * place this track after the clone, then sorting can be done after
+ * releasing the trigger
+ * 
+ * @param trackDetails 
+ */
+export function cloneMultipleAudioTracks(
+  trackDetails: AudioTrackDetails[][],
+  trackNumbers: number[],
+  audioIndexes: number[]
+) {
+  console.assert(
+    trackNumbers.length === audioIndexes.length,
+    'Something went wrong with cloning multiple tracks: missing Track/Audio details.'
+  );
+
+  trackNumbers.forEach((trackNumber, index: number) => {
+    cloneSingleAudioTrack(trackDetails, trackNumber, audioIndexes[index]);
+  });
+}
+
+/**
+ * @description Removes scheduled track.
+ * @param trackDetails 
+ */
+export function deleteSingleAudioTrack(
+  trackDetails: AudioTrackDetails[][],
+  trackNumber: number,
+  audioIndex: number
+) {
+  trackDetails[trackNumber].splice(audioIndex, 1);
+}
+
+
+/**
+ * @description Removes scheduled track.
+ * @param trackDetails 
+ */
+export function bulkDeleteTracks(
+  trackDetails: AudioTrackDetails[][],
+  trackNumbers: number[],
+  audioIndexes: number[]
+) {
+  console.assert(
+    trackNumbers.length === audioIndexes.length,
+    'Something went wrong with deleting multiple tracks: missing Track/Audio details.'
+  );
+
+  trackNumbers.forEach((trackNumber, index: number) => {
+    deleteSingleAudioTrack(trackDetails, trackNumber, audioIndexes[index]);
+  });
+}
+
+/**
+ * @description Slice audio if slicer intersects track.
+ * @param trackDetails track details
+ * @param slicerSelection Sliced Details
+ */
+export function sliceAudioTracksAtPoint(
+  trackDetails: AudioTrackDetails[][],
+  slicerSelection: SlicerSelection
+) {
+  const { startTrack, endTrack, pointOfSliceSecs } = slicerSelection
+  const slicesToReschedule = [];
+  
+  for (let trackIndex = startTrack; trackIndex <= endTrack; ++trackIndex) {
+    let audioTracks = trackDetails[trackIndex];
+    const pendingTracksToAppend: AudioTrackDetails[] = [];
+    let atLeastOneSliced = false;
+
+    for (let audioIndex = 0; audioIndex < audioTracks.length; ++audioIndex) {
+      const audio = audioTracks[audioIndex];
+      const offsetInMicros = audio.trackDetail.offsetInMicros;
+      const offsetInSecs = offsetInMicros / SEC_TO_MICROSEC;
+      const oldStartOffset = audio.trackDetail.startOffsetInMicros;
+      const oldEndOffset = audio.trackDetail.endOffsetInMicros;
+      const oldEndDuration = oldEndOffset - oldStartOffset;
+      const endOffsetSecs = (offsetInMicros + oldEndDuration) / SEC_TO_MICROSEC;
+
+      /// Check if intersects.
+      if (endOffsetSecs > pointOfSliceSecs && pointOfSliceSecs > offsetInSecs) {
+        const newEndPoint = (pointOfSliceSecs * SEC_TO_MICROSEC);
+        const firstEndDuration = (newEndPoint - offsetInMicros);
+
+        const firstHalf: AudioTrackDetails = {
+          ...audio,
+          trackDetail: {
+            ...audio.trackDetail,
+            endOffsetInMicros: oldStartOffset + firstEndDuration
+          }
+        }
+
+        const secondHalf: AudioTrackDetails = {
+          ...audio,
+          trackDetail: {
+            ...audio.trackDetail,
+            scheduledKey: Symbol(),
+            offsetInMicros: newEndPoint,
+            startOffsetInMicros: oldStartOffset + firstEndDuration,
+          }
+        };
+
+        audioTracks[audioIndex] = firstHalf;
+        pendingTracksToAppend.push(secondHalf);
+        slicesToReschedule.push(firstHalf, secondHalf);
+        atLeastOneSliced = true;
+      }
+    }
+
+    for (const pendingTrack of pendingTracksToAppend) {
+      audioTracks.push(pendingTrack);
+    }
+
+    if (pendingTracksToAppend.length > 0) {
+      audioTracks.sort((first, second) => (
+        first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
+      ));
+    }
+  }
+}
+
+export function compareSnapshots(
+  snapshot: Snapshot<AudioTrackDetails[][]>, 
+  trackDetails: AudioTrackDetails[][]
+) {
+  const { state } = snapshot;
+
+  for (let trackIndex = 0; trackIndex < trackDetails.length; ++trackIndex) {
+    const currentTrack = trackDetails[trackIndex];
+    const previousTrack = state[trackIndex];
+
+    // Get all unique keys
+    const visitedScheduledTracks = currentTrack
+      .map(track => track.trackDetail.scheduledKey)
+      .concat(previousTrack.map(track => track.trackDetail.scheduledKey))
+      .filter((trackKey, index, trackArray) => trackArray.indexOf(trackKey) === index);
+
+    for (const key of visitedScheduledTracks) {
+      const currentScheduledTrack = currentTrack.find(track => track.trackDetail.scheduledKey === key);
+      const previousScheduledTrack = previousTrack.find(track => track.trackDetail.scheduledKey === key);
+
+      if (currentScheduledTrack && previousScheduledTrack) {
+
+      }
+    }
+  }
+}
+
 export const trackDetailsSlice = createSlice({
   name: 'addAudioToTrack',
   initialState,
   reducers: {
     /**
-     * Toggle status of track
-     * 
+     * @description Toggle status of track
      * @param state current state of the track
      * @param action payload, to pause or play the track
      */

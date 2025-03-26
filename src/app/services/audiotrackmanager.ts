@@ -114,14 +114,6 @@ class AudioTrackManager {
     return [gainNodes, pannerNodes, masterGainNode];
   }
 
-  static copySettings(sourceNode: AudioNode, destinationNode: AudioNode) {
-    if (sourceNode instanceof GainNode && destinationNode instanceof GainNode) {
-      sourceNode.gain.value = destinationNode.gain.value;
-    } else if (sourceNode instanceof StereoPannerNode && destinationNode instanceof StereoPannerNode) {
-      sourceNode.pan.value = destinationNode.pan.value;
-    }
-  }
-
   /**
    * @description set panner for audio file
    * @param audioId audio id
@@ -523,11 +515,9 @@ class AudioTrackManager {
     const newElements: TransformedAudioTrackDetails[] = [];
     
     this.multiSelectedDOMElements.forEach(element => {
-      const left = element.domElement.style.left ?? '0px';
       const scrollLeft = element.domElement.scrollLeft;
       const width = element.domElement.offsetWidth;
-
-      const finalPosition = parseFloat(left.substring(0, left.length - 2));
+      const finalPosition = element.domElement.offsetLeft;
 
       newElements.push({
         ...element,
@@ -547,13 +537,13 @@ class AudioTrackManager {
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
+    // To do: Make 500000 global variable??
     if (timeSelection) {
       if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 500000) return;
     }
+
     this.timeframeSelectionDetails = timeSelection;
   }
-
-  // unselectTimeframe(time)
 
   /**
    * @description Safety function to initialize audiocontext before using audiomanager
@@ -574,6 +564,11 @@ class AudioTrackManager {
 
       this.splitChannel.connect(this.leftAnalyserNode, 0);
       this.splitChannel.connect(this.rightAnalyserNode, 1);
+
+      this.leftAnalyserNode.fftSize = 512;
+      this.rightAnalyserNode.fftSize = 512;
+      this.leftAnalyserNode.smoothingTimeConstant = 0.4;
+      this.rightAnalyserNode.smoothingTimeConstant = 0.4;
     }
 
     return this;
@@ -961,17 +956,26 @@ class AudioTrackManager {
   }
 
   getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
-    if (mixer > 0) {
-      const { left, right } = this.mixer.useMixer().analyserNodes[mixer - 1];
-
-      left.getByteTimeDomainData(leftArray);
-      right.getByteTimeDomainData(rightArray);
-    } else {
-      const { left, right } = this.mixer.useMixer().masterAnalyserNodes as { left: AnalyserNode, right: AnalyserNode };
-
-      left.getByteTimeDomainData(leftArray);
-      right.getByteTimeDomainData(rightArray);
+    const {
+      left,
+      right
+    } = mixer > 0 ? 
+      this.mixer.useMixer().analyserNodes[mixer - 1] :
+      this.mixer.useMixer().masterAnalyserNodes as {
+        left: AnalyserNode,
+        right: AnalyserNode
+      };
+    
+    if (leftArray.length !== left.frequencyBinCount) {
+      leftArray = new Uint8Array(left.frequencyBinCount);
     }
+
+    if (rightArray.length !== right.frequencyBinCount) {
+      rightArray = new Uint8Array(left.frequencyBinCount);
+    }
+
+    left.getByteTimeDomainData(leftArray);
+    right.getByteTimeDomainData(rightArray);
   }
 
   private _updateTimestampOnSelectedTimeframe() {

@@ -33,11 +33,10 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
   const leftRect = React.useRef<HTMLDivElement | null>(null);
   const rightRect = React.useRef<HTMLDivElement | null>(null);
   let handler: symbol | null = null;
-  const leftBuffer = new Uint8Array(2048);
-  const rightBuffer = new Uint8Array(2048);
+  const leftBuffer = new Uint8Array(256);
+  const rightBuffer = new Uint8Array(256);
   
   React.useEffect(() => {
-
     function animateVolumeLevels() {
       if (!audioService.audioContext || !audioManager.leftAnalyserNode) {
         return;
@@ -80,7 +79,7 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
 
     // Returns a handler that manages the animation.
     handler = animationBatcher.addAnimationHandler(animateVolumeLevels);
-    animationBatcher.setAnimationFrame(handler, 30);
+    animationBatcher.setAnimationFrame(handler, 60);
 
     return () => {
       handler && animationBatcher.removeAnimationHandler(handler);
