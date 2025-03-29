@@ -7,7 +7,8 @@ import { SlicerSelection } from '../components/editor/slicer';
 import { AudioTransformation } from '../services/interfaces';
 import { TimeSectionSelection } from '../components/editor/seekbar';
 import { animationBatcher } from '../services/animationbatch';
-import { Snapshot } from '../services/changehistory';
+import { ChangeDetails, ChangeType, Snapshot, updateSnapshot } from '../services/changehistory';
+import { compareValues } from '../services/noderegistry';
 
 /**
  * @description Information of the track, like start offset, end offset and selection.
@@ -206,7 +207,9 @@ export function cloneSingleAudioTrack(
     }
   };
 
-  trackDetails[trackNumber].splice(audioIndex + 1, 0, clonedDetails);
+  // Adding immediately before the given position:
+  // This will create a domino effect while scheduling track.
+  trackDetails[trackNumber].splice(audioIndex, 0, clonedDetails);
 }
 
 /**
@@ -278,7 +281,6 @@ export function sliceAudioTracksAtPoint(
   for (let trackIndex = startTrack; trackIndex <= endTrack; ++trackIndex) {
     let audioTracks = trackDetails[trackIndex];
     const pendingTracksToAppend: AudioTrackDetails[] = [];
-    let atLeastOneSliced = false;
 
     for (let audioIndex = 0; audioIndex < audioTracks.length; ++audioIndex) {
       const audio = audioTracks[audioIndex];
@@ -315,7 +317,6 @@ export function sliceAudioTracksAtPoint(
         audioTracks[audioIndex] = firstHalf;
         pendingTracksToAppend.push(secondHalf);
         slicesToReschedule.push(firstHalf, secondHalf);
-        atLeastOneSliced = true;
       }
     }
 
@@ -331,11 +332,17 @@ export function sliceAudioTracksAtPoint(
   }
 }
 
+/**
+ * @description Compare snapshot with previous snapshot.
+ * @param snapshot captured snapshot,
+ * @param trackDetails 
+ */
 export function compareSnapshots(
   snapshot: Snapshot<AudioTrackDetails[][]>, 
   trackDetails: AudioTrackDetails[][]
-) {
+): Array<ChangeDetails<AudioTrackDetails>> {
   const { state } = snapshot;
+  const changedDetails: ChangeDetails<AudioTrackDetails>[] = [];
 
   for (let trackIndex = 0; trackIndex < trackDetails.length; ++trackIndex) {
     const currentTrack = trackDetails[trackIndex];
@@ -347,15 +354,41 @@ export function compareSnapshots(
       .concat(previousTrack.map(track => track.trackDetail.scheduledKey))
       .filter((trackKey, index, trackArray) => trackArray.indexOf(trackKey) === index);
 
+    // Check if two keys are same.
     for (const key of visitedScheduledTracks) {
-      const currentScheduledTrack = currentTrack.find(track => track.trackDetail.scheduledKey === key);
-      const previousScheduledTrack = previousTrack.find(track => track.trackDetail.scheduledKey === key);
+      const currentScheduledTrack = currentTrack.find(track => (
+        track.trackDetail.scheduledKey === key
+      ));
+      const previousScheduledTrack = previousTrack.find(track => (
+        track.trackDetail.scheduledKey === key
+      ));
 
       if (currentScheduledTrack && previousScheduledTrack) {
-
+        // Perform action if both are not equal.
+        // Add updated values to the track
+        if (!compareValues(currentScheduledTrack, previousScheduledTrack)) {
+          changedDetails.push({
+            changeType: ChangeType.Updated,
+            data: previousScheduledTrack
+          });
+        }
+      } else if (currentScheduledTrack) {
+        // Newly added
+        changedDetails.push({
+          changeType: ChangeType.NewlyCreated,
+          data: currentScheduledTrack
+        });
+      } else if (previousScheduledTrack) {
+        // This will always run, if nothing else.
+        changedDetails.push({
+          changeType: ChangeType.Removed,
+          data: previousScheduledTrack
+        })
       }
     }
   }
+
+  return changedDetails;
 }
 
 export const trackDetailsSlice = createSlice({

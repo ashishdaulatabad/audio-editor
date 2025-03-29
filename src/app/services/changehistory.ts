@@ -1,31 +1,38 @@
 /**
  * @description Change Type performed
 */
-export enum ChangeType {
+export enum WorkspaceChange {
   TrackChanges,
   KnobChanges
 }
 
+export enum ChangeType {
+  NewlyCreated,
+  Removed,
+  Updated,
+}
+
+export type ChangeDetails<ChangeProperties> = {
+  changeType: ChangeType,
+  data: ChangeProperties
+}
+
 /**
  * @description Describes the change type of recently interacted system
+ * @todo maybe design a system that the system subscribes and,
+ * runs the system.
  */
 export interface Change<ChangeProperties> {
   /**
    * @description Change Type
    */
-  changeType: ChangeType
+  workspaceChange: WorkspaceChange
   /**
-   * @description Identifier
+   * @description Updated values: every system of change defined in
+   * ChangeProperties should have a defined identifier, and their own 
+   * method of differentiating changes (at the moment)
    */
-  identifier: symbol
-  /**
-   * @description Initial Change
-   */
-  initialValues: ChangeProperties
-  /**
-   * @description Final Change
-   */
-  finalChange: ChangeProperties
+  updatedValues: Array<ChangeDetails<ChangeProperties>>
 }
 
 export type Snapshot<Type> = {
@@ -47,6 +54,7 @@ export function updateSnapshot<Type>(
   currentState: Type
 ) {
   // Previous snapshot and current snapshot difference.
+
 }
 
 /**
@@ -84,14 +92,14 @@ class ChangeHistory {
   diffSnapshot<Type>(
     previousSnapshot: Snapshot<Type>,
     currentState: Type,
-    changeType: ChangeType
+    changeType: WorkspaceChange
   ) {
     const { state: previousState } = previousSnapshot;
     // Diff Logic can be different for each type, specialization first, then
     // move to generalization.
     switch (changeType) {
       // Take all scheduled keys and look for changes that are
-      case ChangeType.TrackChanges: {
+      case WorkspaceChange.TrackChanges: {
         break;
       }
 
@@ -99,7 +107,7 @@ class ChangeHistory {
       // Checkbox, knob, slider and Dropdown in future, and others).
       // that could be modified throughout the page, hence keeping the
       // previous value and current value to undo changes.
-      case ChangeType.KnobChanges: {
+      case WorkspaceChange.KnobChanges: {
         break;
       }
     }

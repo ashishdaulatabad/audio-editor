@@ -44,8 +44,7 @@ const audioSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Add audio to the audio list.
-     * 
+     * @description Add audio to the audio list.
      * @param state current state
      * @param action Audio to perform
      */
@@ -53,8 +52,7 @@ const audioSlice = createSlice({
       state.contents.push(action.payload);
     },
     /**
-     * Remove audio from the track
-     * 
+     * @description Remove audio from the track
      * @param state current state
      * @param action index of the current audio track in the state.
      */

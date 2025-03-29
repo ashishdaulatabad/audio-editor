@@ -76,7 +76,7 @@ function getParameters(sym: symbol): ParameterChange[] {
  * @todo Improve on this later.
  * @param left left object
  * @param right right object.
- * @returns 
+ * @returns true if objects are equal, else false.
  */
 export function compareValues(left: any, right: any): boolean {
   if (left === right) {
@@ -97,7 +97,7 @@ export function compareValues(left: any, right: any): boolean {
         return Array.isArray(right) && left.length === right.length && 
           left.every((item, index: number) => compareValues(item, right[index]));
       }
-      // Object comparison      
+      // Object comparison
       const leftObjectAttributes = Object.getOwnPropertyNames(left);
       const leftSymbols = Object.getOwnPropertySymbols(left);
 
@@ -106,8 +106,12 @@ export function compareValues(left: any, right: any): boolean {
 
       return leftObjectAttributes.length === rightObjectAttributes.length && 
         leftSymbols.length === rightSymbols.length &&
-        leftObjectAttributes.every(leftKey => right.hasOwnProperty(leftKey) && compareValues(left[leftKey], right[leftKey])) &&
-        leftSymbols.every(leftKey => Object.hasOwn(right, leftKey) && compareValues(left[leftKey], right[leftKey]));
+        leftObjectAttributes.every(leftKey => (
+          right.hasOwnProperty(leftKey) && compareValues(left[leftKey], right[leftKey]
+        ))) &&
+        leftSymbols.every(leftKey => (
+          Object.hasOwn(right, leftKey) && compareValues(left[leftKey], right[leftKey]
+        )));
     }
 
     default: {
