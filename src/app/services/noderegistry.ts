@@ -144,9 +144,7 @@ export function cloneValues(value: any): any {
     // Not to be confused with the class.
     case 'object': {
       if (Array.isArray(value)) {
-        return value.map(elem => (
-          cloneValues(elem)
-        ));
+        return value.map(elem => cloneValues(elem));
       }
 
       const clonedObject: any = new Object();

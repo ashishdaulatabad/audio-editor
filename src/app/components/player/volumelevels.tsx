@@ -16,7 +16,7 @@ function calculateRMS(array: Uint8Array): number {
     rms += p * p;
   }
 
-  return rms > 0 ? Math.round(Math.sqrt(rms / array.length)) : 0;
+  return Math.round(Math.sqrt(rms / length));
 }
 
 /**
@@ -33,8 +33,10 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
   const leftRect = React.useRef<HTMLDivElement | null>(null);
   const rightRect = React.useRef<HTMLDivElement | null>(null);
   let handler: symbol | null = null;
-  const leftBuffer = new Uint8Array(256);
-  const rightBuffer = new Uint8Array(256);
+  const leftBuffer = new Uint8Array(2048);
+  const rightBuffer = new Uint8Array(2048);
+  leftBuffer.fill(0);
+  rightBuffer.fill(0);
   
   React.useEffect(() => {
     function animateVolumeLevels() {
@@ -79,7 +81,7 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
 
     // Returns a handler that manages the animation.
     handler = animationBatcher.addAnimationHandler(animateVolumeLevels);
-    animationBatcher.setAnimationFrame(handler, 60);
+    animationBatcher.setAnimationFrame(handler, 30);
 
     return () => {
       handler && animationBatcher.removeAnimationHandler(handler);

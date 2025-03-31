@@ -31,10 +31,11 @@ import {
   cloneMultipleAudioTrack,
   deleteMultipleAudioTrack,
   deselectAllTracks,
+  rollbackChanges,
   ScheduledInformation,
   SEC_TO_MICROSEC,
   selectAllTracks,
-  selectTracksWithinSelectedSeekbarSection
+  selectTracksWithinSelectedSeekbarSection,
 } from '../../state/trackdetails';
 import {
   createAudioData,
@@ -59,6 +60,8 @@ import {
 import { Seeker } from './seeker';
 import { getRandomWindowId } from '@/app/services/random';
 import { WindowManipulationMode } from '../shared/window';
+import { changeHistory } from '@/app/services/changehistory';
+import { undoSnapshotChange } from '../../state/trackdetails';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -217,7 +220,7 @@ export function Editor() {
           dispatch(addAudio(data));
           dispatch(addAudioToTrack({
             trackNumber: intIndex,
-            trackDetails: {
+            track: {
               ...data,
               trackDetail: {
                 trackNumber: intIndex,
@@ -739,14 +742,16 @@ export function Editor() {
     const trackElement = getTrackElement(parOrTrack) as HTMLElement;
 
     if (trackElement) {
-      const index = trackElement.getAttribute('data-id');
-      const trackNumber = index ? parseInt(index) : 0;
+      const index = trackElement.getAttribute('data-id') as string;
+      const trackNumber = parseInt(index);
       const audioElement = getTrackAudioElement(event.nativeEvent.target as HTMLElement) as HTMLElement;
 
       if (audioElement) {
         const audioIndex = audioElement.getAttribute('data-audioid');
         const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
         const audioTrack = trackDetails[trackNumber][audioIntIndex];
+
+        console.log(trackNumber, audioIntIndex);
 
         audioManager.useManager().removeTrackFromScheduledNodes(audioTrack);
         dispatch(removeWindowWithUniqueIdentifier(audioTrack.trackDetail.scheduledKey));
@@ -791,7 +796,7 @@ export function Editor() {
 
     dispatch(addAudioToTrack({
       trackNumber,
-      trackDetails: newTrack
+      track: newTrack
     }));
 
     audioManager.useManager().scheduleSingleTrack(newTrack.audioId, newTrack.trackDetail);
@@ -838,6 +843,20 @@ export function Editor() {
 
         break;
       }
+
+      case 'z':
+      case 'Z': {
+        if (event.ctrlKey) {
+          const trackChanges = changeHistory.rollbackChange();
+
+          if (trackChanges) {
+            dispatch(rollbackChanges(trackChanges))
+          }
+        }
+
+        break;
+      }
+
       default: {
         break;
       }
@@ -961,7 +980,7 @@ export function Editor() {
     }
   }
 
-  function onScroll(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function onScroll() {
     if (scrollPageRef.current && seekbarRef.current) {
       const left = scrollPageRef.current.scrollLeft;
       seekbarRef.current.scrollLeft = left;
@@ -977,7 +996,6 @@ export function Editor() {
   }
 
   const totalHeight = height * audioManager.totalTrackSize;
-
   // Next plans:
   // 1. Undo/redo
   // 2. Tempo based timeframing

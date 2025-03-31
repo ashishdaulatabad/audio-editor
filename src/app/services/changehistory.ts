@@ -1,3 +1,6 @@
+import { compareSnapshots, AudioTrackDetails } from '../state/trackdetails';
+import { cloneValues } from './noderegistry';
+
 /**
  * @description Change Type performed
 */
@@ -13,8 +16,14 @@ export enum ChangeType {
 }
 
 export type ChangeDetails<ChangeProperties> = {
-  changeType: ChangeType,
+  changeType: ChangeType.Removed | ChangeType.NewlyCreated,
   data: ChangeProperties
+} | {
+  changeType: ChangeType.Updated
+  data: {
+    previous: ChangeProperties
+    current: ChangeProperties
+  }
 }
 
 /**
@@ -46,15 +55,7 @@ export type Snapshot<Type> = {
  */
 export function createSnapshot<Type>(state: Type): Snapshot<Type> {
   // A simple object currently.
-  return { state: structuredClone(state) };
-}
-
-export function updateSnapshot<Type>(
-  storedState: Snapshot<Type>,
-  currentState: Type
-) {
-  // Previous snapshot and current snapshot difference.
-
+  return { state: cloneValues(state) };
 }
 
 /**
@@ -64,6 +65,7 @@ export function updateSnapshot<Type>(
 class ChangeHistory {
   stack: Array<Change<any>> = [];
   maxStackSize = 100;
+  pointer = -1;
 
   constructor() {}
 
@@ -85,22 +87,73 @@ class ChangeHistory {
   }
 
   /**
+   * @description Store diff of changes made to certain action
+   * performed by the user..
+   * @param previousSnapshot previous snapshot.
+   * @param currentState current state of the track.
+   * @param changeType the kind of changes made.
+   */
+  storeChanges<Type>(
+    previousSnapshot: Snapshot<Type>,
+    currentState: Type,
+    changeType: WorkspaceChange,
+  ) {
+    // Diff Logic can be different for each type, specialization first, then
+    // move to generalization.
+    switch (changeType) {
+      case WorkspaceChange.TrackChanges: {
+        const updates = compareSnapshots(
+          previousSnapshot as Snapshot<AudioTrackDetails[][]>, 
+          currentState as AudioTrackDetails[][]
+        );
+
+        if (this.stack.length > this.maxStackSize) {
+          this.stack.shift();
+        }
+
+        if (this.pointer !== this.stack.length - 1) {
+          this.stack = this.stack.slice(0, this.pointer + 1);
+        }
+
+        this.stack.push({
+          workspaceChange: changeType,
+          updatedValues: updates
+        });
+
+        this.pointer = this.stack.length - 1;
+
+        break;
+      }
+
+      // There should be an identifier for all the visible input (e.g.,
+      // Checkbox, knob, slider and Dropdown in future, and others).
+      // that could be modified throughout the page, hence keeping the
+      // previous value and current value to undo changes.
+      case WorkspaceChange.KnobChanges: {
+        this.pointer = this.stack.length - 1;
+        break;
+      }
+    }
+  }
+
+  /**
    * @description calculate diff of all values.
    * @param previousSnapshot previous snapshot.
    * @param currentState current state of the track.
    */
-  diffSnapshot<Type>(
-    previousSnapshot: Snapshot<Type>,
-    currentState: Type,
-    changeType: WorkspaceChange
-  ) {
-    const { state: previousState } = previousSnapshot;
+  rollbackChange<Type>(redo: boolean = false) {
+    if (this.pointer < 0 && !redo) return undefined;
+    if (this.pointer >= this.stack.length && redo) return undefined;
+
+    const change = redo ? 
+      this.stack[++this.pointer] :
+      this.stack[this.pointer--];
     // Diff Logic can be different for each type, specialization first, then
     // move to generalization.
-    switch (changeType) {
+    switch (change.workspaceChange) {
       // Take all scheduled keys and look for changes that are
       case WorkspaceChange.TrackChanges: {
-        break;
+        return change.updatedValues;
       }
 
       // There should be an identifier for all the visible input (e.g.,
@@ -112,8 +165,7 @@ class ChangeHistory {
       }
     }
   }
-
-  popHistory() {
-    return this.stack.pop();
-  }
 };
+
+export const changeHistory = new ChangeHistory();
+        

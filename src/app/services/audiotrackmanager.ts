@@ -317,6 +317,8 @@ class AudioTrackManager {
     } else {
       this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
       this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
+      this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetWidth;
+      this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
     }
   }
 
@@ -565,10 +567,10 @@ class AudioTrackManager {
       this.splitChannel.connect(this.leftAnalyserNode, 0);
       this.splitChannel.connect(this.rightAnalyserNode, 1);
 
-      this.leftAnalyserNode.fftSize = 512;
-      this.rightAnalyserNode.fftSize = 512;
-      this.leftAnalyserNode.smoothingTimeConstant = 0.4;
-      this.rightAnalyserNode.smoothingTimeConstant = 0.4;
+      // this.leftAnalyserNode.fftSize = 512;
+      // this.rightAnalyserNode.fftSize = 512;
+      // this.leftAnalyserNode.smoothingTimeConstant = 0.4;
+      // this.rightAnalyserNode.smoothingTimeConstant = 0.4;
     }
 
     return this;
@@ -951,8 +953,11 @@ class AudioTrackManager {
   }
 
   getTimeData(leftArray: Uint8Array, rightArray: Uint8Array) {
-    (this.leftAnalyserNode as AnalyserNode).getByteTimeDomainData(leftArray);
-    (this.rightAnalyserNode as AnalyserNode).getByteTimeDomainData(rightArray);
+    const left = (this.leftAnalyserNode as AnalyserNode);
+    const right = (this.rightAnalyserNode as AnalyserNode);
+
+    left.getByteTimeDomainData(leftArray);
+    right.getByteTimeDomainData(rightArray);
   }
 
   getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
@@ -965,14 +970,6 @@ class AudioTrackManager {
         left: AnalyserNode,
         right: AnalyserNode
       };
-    
-    if (leftArray.length !== left.frequencyBinCount) {
-      leftArray = new Uint8Array(left.frequencyBinCount);
-    }
-
-    if (rightArray.length !== right.frequencyBinCount) {
-      rightArray = new Uint8Array(left.frequencyBinCount);
-    }
 
     left.getByteTimeDomainData(leftArray);
     right.getByteTimeDomainData(rightArray);

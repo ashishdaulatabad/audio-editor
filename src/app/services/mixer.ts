@@ -131,10 +131,10 @@ export class Mixer {
         const { left, right } = this.analyserNodes[index];
         channelSplitter.connect(left, 0);
         channelSplitter.connect(right, 1);
-        left.fftSize = 512;
-        right.fftSize = 512;
-        left.smoothingTimeConstant = 0.4;
-        right.smoothingTimeConstant = 0.4;
+        // left.fftSize = 512;
+        // right.fftSize = 512;
+        // left.smoothingTimeConstant = 0.4;
+        // right.smoothingTimeConstant = 0.4;
 
         return channelSplitter;
       });
@@ -143,10 +143,10 @@ export class Mixer {
       this.masterGainNode.connect(masterSplitterNode);
       masterSplitterNode.connect(this.masterAnalyserNodes.left, 0);
       masterSplitterNode.connect(this.masterAnalyserNodes.right, 1);
-      this.masterAnalyserNodes.left.fftSize = 512;
-      this.masterAnalyserNodes.right.fftSize = 512;
-      this.masterAnalyserNodes.left.smoothingTimeConstant = 0.4;
-      this.masterAnalyserNodes.right.smoothingTimeConstant = 0.4;
+      // this.masterAnalyserNodes.left.fftSize = 512;
+      // this.masterAnalyserNodes.right.fftSize = 512;
+      // this.masterAnalyserNodes.left.smoothingTimeConstant = 0.4;
+      // this.masterAnalyserNodes.right.smoothingTimeConstant = 0.4;
       this.isInitialized = true;
     }
 
