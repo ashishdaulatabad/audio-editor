@@ -181,7 +181,8 @@ function selectAllTrackWithSelectedRegion(
 
   for (let index = 0; index < trackDetails.length; ++index) {
     for (const track of trackDetails[index]) {
-      track.trackDetail.selected = index >= trackStart && index <= trackEnd &&
+      track.trackDetail.selected = index >= trackStart && 
+        index <= trackEnd &&
         isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
     }
   }
@@ -244,7 +245,7 @@ function cloneSingleAudioTrack(
 
   // Adding immediately before the given position:
   // This will create a domino effect while scheduling track.
-  trackDetails[trackNumber].splice(audioIndex, 0, clonedDetails);
+  trackDetails[trackNumber].push(clonedDetails);
 
   return trackDetails;
 }
@@ -497,6 +498,7 @@ export function undoSnapshotChange(
         const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
 
         console.assert(scheduledKey === currentScheduledKey);
+        audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
         trackDetails[trackNumber].splice(audioIndex, 1);
 
         break;
@@ -505,10 +507,8 @@ export function undoSnapshotChange(
       // Add them back
       case ChangeType.Removed: {
         const { trackNumber, audioIndex, ...rest } = changeDetail.data;
-        const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
-
-        console.assert(rest.trackDetail.scheduledKey !== currentScheduledKey);
         trackDetails[trackNumber].splice(audioIndex, 0, rest);
+        audioManager.scheduleSingleTrack(rest.audioId, trackDetails[trackNumber][audioIndex].trackDetail)
 
         break;
       };
@@ -518,6 +518,7 @@ export function undoSnapshotChange(
         const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
         console.assert(rest.trackDetail.scheduledKey === currentScheduledKey);
         trackDetails[trackNumber][audioIndex] = rest;
+        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][audioIndex].trackDetail)
 
         break;
       }
@@ -877,6 +878,9 @@ export const trackDetailsSlice = createSlice({
 
     rollbackChanges(state, action: PayloadAction<ChangeDetails<AudioTrackChangeDetails>[]>) {
       undoSnapshotChange(state.trackDetails, action.payload);
+      const maxTime = getMaxTime(state.trackDetails);
+      state.maxTimeMicros = maxTime + twoMinuteInMicros;
+      audioManager.setLoopEnd(maxTime);
     }
   }
 });

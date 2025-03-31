@@ -317,7 +317,7 @@ class AudioTrackManager {
     } else {
       this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
       this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
-      this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetWidth;
+      this.multiSelectedDOMElements[existingElementIndex].initialWidth = domElement.offsetWidth;
       this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
     }
   }
@@ -338,6 +338,15 @@ class AudioTrackManager {
     if (existingElementIndex > -1) {
       this.multiSelectedDOMElements.splice(existingElementIndex, 1);
     }
+  }
+
+  /**
+   * @description Cleanup Selection: Remove elements not attached to DOM element
+   */
+  cleanupSelectedDOMElements() {
+    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(dom => (
+      dom.domElement.isConnected
+    ));
   }
 
   /**

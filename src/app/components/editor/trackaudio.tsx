@@ -79,12 +79,10 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       } else {
         audioManager.deleteFromSelectedAudioTracks(track.trackDetail.scheduledKey);
       }
-    }
-  }, [track.trackDetail.selected, props.lineDist]);
 
-  React.useEffect(() => {
-    if (divRef.current && spanRef.current) {
-      setWidthAndScrollLeft(divRef.current, spanRef.current, track);
+      if (spanRef.current) {
+        setWidthAndScrollLeft(divRef.current, spanRef.current, track);
+      }
     }
   }, [track.trackDetail, props.lineDist]);
 

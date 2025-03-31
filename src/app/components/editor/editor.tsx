@@ -142,6 +142,7 @@ export function Editor() {
   const totalLines = Math.floor(width / lineDist);
 
   const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
+  audioManager.cleanupSelectedDOMElements();
 
   /**
    * Set offset relative to the offset of current workspace.
