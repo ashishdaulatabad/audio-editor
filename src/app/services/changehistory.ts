@@ -137,6 +137,38 @@ class ChangeHistory {
   }
 
   /**
+   * @description Clear all changes within history type.
+   * @param changeType Filter to work on.
+   * @param identifier Should return true if history change needs to be deleted.
+   */
+  clearHistoryContainingItem<ChangeProperties>(
+    changeType: WorkspaceChange,
+    identifierFn: (fn: ChangeDetails<ChangeProperties>) => boolean
+  ) {
+    const len = this.stack.length;
+    let subtractPointerBy = 0;
+
+    for (let index = 0; index < len; ++index) {
+      const stackChange = this.stack[index];
+
+      if (changeType === stackChange.workspaceChange) {
+        const { updatedValues } = stackChange;
+
+        stackChange.updatedValues = updatedValues.filter(item => !identifierFn(item));
+
+        if (stackChange.updatedValues.length === 0) {       
+          if (index < this.pointer) {
+            ++subtractPointerBy;
+          }
+        }
+      }
+    }
+
+    this.stack = this.stack.filter((stack) => stack.updatedValues.length > 0);
+    this.pointer -= subtractPointerBy;
+  }
+
+  /**
    * @description calculate diff of all values.
    * @param previousSnapshot previous snapshot.
    * @param currentState current state of the track.

@@ -22,6 +22,7 @@ import {
 
 import { css } from '@/app/services/utils';
 import { Waveform } from '@/assets/wave';
+import { ChangeDetails, changeHistory, ChangeType, WorkspaceChange } from '@/app/services/changehistory';
 
 interface AudioTrackFileProps {
   isSame: boolean
@@ -68,6 +69,18 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
     audioManager.unregisterAudioFromAudioBank(file.audioId);
+    // Currently delete all the audio changes
+    changeHistory.clearHistoryContainingItem(
+      WorkspaceChange.TrackChanges,
+      (item: ChangeDetails<AudioTrackDetails>) => {
+        if (item.changeType === ChangeType.Updated) {
+          return item.data.current.audioId === file.audioId
+        }
+        return item.data.audioId === file.audioId
+      }
+    );
+    // Also todo: Remove knob changes related to this track.
+    /// Also clear all possible history values that contains this audio ID
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
@@ -81,10 +94,12 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     dispatch(removeAudio(index));
     // Delete annotated color
     deleteColor(file.colorAnnotation);
+
     // Reset to default
     if (props.selected) {
       dispatch(resetToDefault());
     }
+
     hideContextMenu();
   }
 

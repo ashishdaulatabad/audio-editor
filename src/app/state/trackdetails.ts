@@ -513,6 +513,7 @@ export function undoSnapshotChange(
         break;
       };
 
+      // Change to previous
       case ChangeType.Updated: {
         const { trackNumber, audioIndex, ...rest } = changeDetail.data.previous;
         const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
@@ -630,7 +631,6 @@ export const trackDetailsSlice = createSlice({
     },
     /// Add an audio to certain track number
     addAudioToTrack(state, action: PayloadAction<{ trackNumber: number, track: AudioTrackDetails }>) {
-      const snapshot = createSnapshot(state.trackDetails);
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, addNewAudioToTrack);
       // Calculate the maxTime 
       const { track } = action.payload;
@@ -645,16 +645,12 @@ export const trackDetailsSlice = createSlice({
       if (currentTime < endTime) {
         state.maxTimeMicros = endTime + twoMinuteInMicros;
         audioManager.setLoopEnd(endTime);
-      } else {
-        const maxTime = getMaxTime(state.trackDetails);
-        state.maxTimeMicros = maxTime + twoMinuteInMicros;
-        audioManager.setLoopEnd(maxTime);
       }
     },
     /// Delete the audio to certain track number
     deleteAudioFromTrack(state, action: PayloadAction<{trackNumber: number, audioIndex: number}>) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteAudioFromTrack_);
-      /// Now find the next longest track among all the tracks exists with offset
+      // Now find the next longest track among all the tracks exists with offset
       const maxTime = getMaxTime(state.trackDetails);
 
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
@@ -691,11 +687,11 @@ export const trackDetailsSlice = createSlice({
     },
     /// Selecting all tracks.
     selectAllTracks(state) {
-      markSelectionForAllAudioTracks(state.trackDetails, true)
+      markSelectionForAllAudioTracks(state.trackDetails, true);
     },
     /// Selecting all tracks.
     deselectAllTracks(state) {
-      markSelectionForAllAudioTracks(state.trackDetails, true)
+      markSelectionForAllAudioTracks(state.trackDetails, false);
     },
     /**
      * Create a clone of multiple audio tracks.
