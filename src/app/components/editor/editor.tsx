@@ -57,11 +57,9 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
-import { Seeker } from './seeker';
 import { getRandomWindowId } from '@/app/services/random';
 import { WindowManipulationMode } from '../shared/window';
-import { changeHistory } from '@/app/services/changehistory';
-import { undoSnapshotChange } from '../../state/trackdetails';
+import { changeHistory, WorkspaceChange } from '@/app/services/changehistory';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -851,7 +849,16 @@ export function Editor() {
           const trackChanges = changeHistory.rollbackChange();
 
           if (trackChanges) {
-            dispatch(rollbackChanges(trackChanges))
+            switch (trackChanges.workspaceChange) {
+              case WorkspaceChange.TrackChanges: {
+                dispatch(rollbackChanges(trackChanges.updatedValues))
+                break;
+              }
+
+              case WorkspaceChange.KnobChanges: {
+                break;
+              }
+            }
           }
         }
 

@@ -157,7 +157,7 @@ class ChangeHistory {
         stackChange.updatedValues = updatedValues.filter(item => !identifierFn(item));
 
         if (stackChange.updatedValues.length === 0) {       
-          if (index < this.pointer) {
+          if (index <= this.pointer) {
             ++subtractPointerBy;
           }
         }
@@ -182,20 +182,7 @@ class ChangeHistory {
       this.stack[this.pointer--];
     // Diff Logic can be different for each type, specialization first, then
     // move to generalization.
-    switch (change.workspaceChange) {
-      // Take all scheduled keys and look for changes that are
-      case WorkspaceChange.TrackChanges: {
-        return change.updatedValues;
-      }
-
-      // There should be an identifier for all the visible input (e.g.,
-      // Checkbox, knob, slider and Dropdown in future, and others).
-      // that could be modified throughout the page, hence keeping the
-      // previous value and current value to undo changes.
-      case WorkspaceChange.KnobChanges: {
-        break;
-      }
-    }
+    return change;
   }
 };
 

@@ -481,6 +481,18 @@ function setMultipleOffsets(
   return trackDetails;
 }
 
+function removeAudioFromAllScheduledTrack(
+  trackDetails: AudioTrackDetails[][],
+  audioId: symbol,
+) {
+  /// Filter all the tracks that contains this Audio
+  for (let index = 0; index < trackDetails.length; ++index) {
+    trackDetails[index] = trackDetails[index].filter(detail => detail.audioId !== audioId);
+  }
+
+  return trackDetails;
+}
+
 export type AudioTrackChangeDetails = AudioTrackDetails & {
   trackNumber: number
   audioIndex: number
@@ -857,19 +869,20 @@ export const trackDetailsSlice = createSlice({
       audioManager.setLoopEnd(maxTime);
     },
     /// Remove all the tracks related to this audio ID.
-    removeAudioFromAllTracks(state, action: PayloadAction<symbol>){
-      const snapshot = createSnapshot(state.trackDetails);
-      const { payload: audioIdToDelete } = action;
-
-      /// Filter all the tracks that contains this Audio
-      for (let index = 0; index < state.trackDetails.length; ++index) {
-        state.trackDetails[index] = state.trackDetails[index].filter(detail => detail.audioId !== audioIdToDelete);
+    removeAudioFromAllTracks(state, action: PayloadAction<{
+      audioId: symbol,
+      noSnapshot: true
+    }>){
+      const { audioId, noSnapshot } = action.payload;
+      if (!noSnapshot) {
+        state.trackDetails = processTrackHistory(state.trackDetails, audioId, removeAudioFromAllScheduledTrack);
+      } else {
+        state.trackDetails = removeAudioFromAllScheduledTrack(state.trackDetails, audioId);
       }
 
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
-      changeHistory.storeChanges(snapshot, state.trackDetails, WorkspaceChange.TrackChanges);
     },
 
     rollbackChanges(state, action: PayloadAction<ChangeDetails<AudioTrackChangeDetails>[]>) {

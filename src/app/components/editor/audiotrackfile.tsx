@@ -89,7 +89,10 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     // Cleanup opened window with same audio ids.
     dispatch(batchRemoveWindowWithUniqueIdentifier(allTrackAudioIds));
     // Cleanup tracks.
-    dispatch(removeAudioFromAllTracks(file.audioId));
+    dispatch(removeAudioFromAllTracks({
+      audioId: file.audioId,
+      noSnapshot: true
+    }));
     // Cleanup from audio list.
     dispatch(removeAudio(index));
     // Delete annotated color
