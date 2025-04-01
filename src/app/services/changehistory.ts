@@ -64,7 +64,7 @@ export function createSnapshot<Type>(state: Type): Snapshot<Type> {
  */
 class ChangeHistory {
   stack: Array<Change<any>> = [];
-  maxStackSize = 100;
+  maxStackSize = 150;
   pointer = -1;
 
   constructor() {}
@@ -115,10 +115,13 @@ class ChangeHistory {
           this.stack = this.stack.slice(0, this.pointer + 1);
         }
 
-        this.stack.push({
-          workspaceChange: changeType,
-          updatedValues: updates
-        });
+        // Push when any changes are there.
+        if (updates.length > 0) {
+          this.stack.push({
+            workspaceChange: changeType,
+            updatedValues: updates
+          });
+        }
 
         this.pointer = this.stack.length - 1;
 

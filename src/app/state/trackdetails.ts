@@ -500,18 +500,25 @@ export type AudioTrackChangeDetails = AudioTrackDetails & {
 
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
-  changeDetails: ChangeDetails<AudioTrackChangeDetails>[]
+  changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
+  redo = false
 ) {
   for (const changeDetail of changeDetails) {
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
-        const { trackNumber, audioIndex, trackDetail: { scheduledKey } } = changeDetail.data;
-        const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
+        const { trackNumber, audioIndex, audioId, trackDetail } = changeDetail.data;
 
-        console.assert(scheduledKey === currentScheduledKey);
-        audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
-        trackDetails[trackNumber].splice(audioIndex, 1);
+        if (!redo) {
+          const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
+
+          console.assert(trackDetail.scheduledKey === currentScheduledKey);
+          audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
+          trackDetails[trackNumber].splice(audioIndex, 1);
+        } else {
+          audioManager.scheduleSingleTrack(audioId, trackDetail);
+          trackDetails[trackNumber].splice(audioIndex, 0, changeDetail.data);
+        }
 
         break;
       };
@@ -519,15 +526,26 @@ export function undoSnapshotChange(
       // Add them back
       case ChangeType.Removed: {
         const { trackNumber, audioIndex, ...rest } = changeDetail.data;
-        trackDetails[trackNumber].splice(audioIndex, 0, rest);
-        audioManager.scheduleSingleTrack(rest.audioId, trackDetails[trackNumber][audioIndex].trackDetail)
+
+        if (!redo) {
+          trackDetails[trackNumber].splice(audioIndex, 0, rest);
+          audioManager.scheduleSingleTrack(rest.audioId, rest.trackDetail)
+        } else {
+          console.assert(trackDetails[trackNumber][audioIndex].trackDetail.scheduledKey === rest.trackDetail.scheduledKey);
+
+          audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
+          trackDetails[trackNumber].splice(audioIndex, 1);
+        }
 
         break;
       };
 
       // Change to previous
       case ChangeType.Updated: {
-        const { trackNumber, audioIndex, ...rest } = changeDetail.data.previous;
+        const { trackNumber, audioIndex, ...rest } = !redo ? 
+          changeDetail.data.previous :
+          changeDetail.data.current;
+
         const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
         console.assert(rest.trackDetail.scheduledKey === currentScheduledKey);
         trackDetails[trackNumber][audioIndex] = rest;
@@ -885,8 +903,13 @@ export const trackDetailsSlice = createSlice({
       audioManager.setLoopEnd(maxTime);
     },
 
-    rollbackChanges(state, action: PayloadAction<ChangeDetails<AudioTrackChangeDetails>[]>) {
-      undoSnapshotChange(state.trackDetails, action.payload);
+    rollbackChanges(state, action: PayloadAction<{
+      updatedChanges: ChangeDetails<AudioTrackChangeDetails>[],
+      redo: boolean
+    }>) {
+      const { updatedChanges, redo } = action.payload;
+
+      undoSnapshotChange(state.trackDetails, updatedChanges, redo);
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);

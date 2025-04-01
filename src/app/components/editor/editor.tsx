@@ -845,13 +845,34 @@ export function Editor() {
 
       case 'z':
       case 'Z': {
-        if (event.ctrlKey) {
+        if (event.ctrlKey && event.shiftKey) {
+          const trackChanges = changeHistory.rollbackChange(true);
+
+          if (trackChanges) {
+            switch (trackChanges.workspaceChange) {
+              case WorkspaceChange.TrackChanges: {
+                dispatch(rollbackChanges({
+                  updatedChanges: trackChanges.updatedValues,
+                  redo: true
+                }));
+                break;
+              }
+
+              case WorkspaceChange.KnobChanges: {
+                break;
+              }
+            }
+          }
+        } else if (event.ctrlKey) {
           const trackChanges = changeHistory.rollbackChange();
 
           if (trackChanges) {
             switch (trackChanges.workspaceChange) {
               case WorkspaceChange.TrackChanges: {
-                dispatch(rollbackChanges(trackChanges.updatedValues))
+                dispatch(rollbackChanges({
+                  updatedChanges: trackChanges.updatedValues,
+                  redo: false
+                }))
                 break;
               }
 
