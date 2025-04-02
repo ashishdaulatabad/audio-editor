@@ -8,9 +8,6 @@ import {
   AudioDetails,
 } from '@/app/state/audiostate';
 
-/**
- * @description Audio track list component
- */
 export function AudioTrackList() {
   // Selectors
   // const [search, setSearch] = React.useState('');

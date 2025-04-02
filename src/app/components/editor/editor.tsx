@@ -79,10 +79,6 @@ export enum MovableType {
   Window
 }
 
-/**
- * Main editor for creating a workspace.
- * @returns editor JSX.Element
- */
 export function Editor() {
   // All states
   const [anchorX, setAnchorX] = React.useState(0);
@@ -142,13 +138,6 @@ export function Editor() {
   const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
   audioManager.cleanupSelectedDOMElements();
 
-  /**
-   * Set offset relative to the offset of current workspace.
-   * 
-   * @param track Track to move
-   * @param lineDist Line Distance Info.
-   * @returns Modified information about the audio track.
-   */
   function setOffset(track: HTMLElement, lineDist: number) {
     const audioElement = getTrackAudioElement(track) as HTMLElement;
 
@@ -188,11 +177,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Performing action on dropping an audio file.
-   * @param event Drop Event
-   * @returns void.
-   */
   function onFileDrop(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     event.preventDefault();
     event.stopPropagation();
@@ -237,11 +221,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Set Dragging Mode, either resizing or moving track, one or multiple tracks.
-   * @param event Event triggered
-   * @param desiredAudioElement Anchor Audio Element.
-   */
   function setTrackDraggingMode(
     event: React.MouseEvent<HTMLDivElement, DragEvent>,
     desiredAudioElement: HTMLElement
@@ -339,29 +318,14 @@ export function Editor() {
     setMovableType(MovableType.ScheduledTrack);
   }
 
-  /**
-   * Check if element track is audio
-   * @param element to check if it is an audio element
-   * @returns boolean
-   */
   function isAudioTrack(element: HTMLElement) {
     return element.classList.contains('track-audio');
   }
 
-  /**
-   * Check if element track is audio
-   * @param element to check if it is a track element
-   * @returns boolean
-   */
   function isTrack(element: HTMLElement) {
     return element.classList.contains('track');
   }
 
-  /**
-   * Check if element is a top of headbar.
-   * @param element to check if it is a window header.
-   * @returns boolean
-   */
   function isWindowHeader(element: HTMLElement) {
     return element.classList.contains('topbar');
   }
@@ -430,14 +394,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Set drag event for the window element.
-   * This should also focus the current window, while moving rest of them in order of recently 
-   * used window.
-   * 
-   * @param event 
-   * @param topbarElement 
-   */
   function setupDraggingWindow(
     event: React.MouseEvent<HTMLElement, DragEvent>,
     topbarElement: HTMLElement
@@ -450,11 +406,6 @@ export function Editor() {
     setWindowManipulationMode(WindowManipulationMode.Move);
   }
 
-  /**
-   * @description Drag Window based on the current limits
-   * @param event Event Details
-   * @returns void.
-   */
   function dragWindow(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     const element: HTMLElement = movableEntity as HTMLElement;
 
@@ -475,11 +426,6 @@ export function Editor() {
     );
   }
 
-  /**
-   * Drag the track onto new position.
-   * @param event 
-   * @returns void
-   */
   function dragTrack(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (mode !== AudioTrackManipulationMode.None && event.buttons === 1 && movableEntity) {
       event.preventDefault();
@@ -560,10 +506,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * Apply changes to states after releasing mouse event by user.
-   * @param event event details.
-   */
   function unsetWindowDrag(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     const element: HTMLElement = movableEntity as HTMLElement;
 
@@ -717,20 +659,10 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description attempt multiple paint on current selected audio track.
-   * - [ ] To do: this function
-   * @param event 
-   */
   function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     
   }
 
-  /**
-   * @description Delete current track that exist in the scheduled track.
-   * @param event Event details regarding the track.
-   * @returns void.
-   */
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     event.preventDefault();
 
@@ -760,14 +692,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Add currently selected track to one of the tracks the
-   * user last interacted with.
-   * 
-   * @param event Event related to interacted details.
-   * @param desiredElement Element to work on
-   * @returns void
-   */
   function addCurrentTrack(
     event: React.MouseEvent<HTMLElement, MouseEvent>,
     desiredElement: HTMLElement
@@ -890,12 +814,6 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Adjust zooming in/out of the workspace, makes it easier for user
-   * for precision work.
-   * @param event Event details
-   * @param newLineDist New Distance measured between two lines.
-   */
   function adjustZooming(event: WheelEvent, newLineDist: number) {
     if (scrollPageRef.current) {
       const target = event.target as HTMLElement;
@@ -911,6 +829,7 @@ export function Editor() {
 
   /**
    * @description Zooming-in or zooming-out
+   * @todo Is there a performant way?
    * @param event Wheel Event
    * @returns void
    */
@@ -951,24 +870,10 @@ export function Editor() {
     }
   }
 
-  /**
-   * @description Slice intersected tracks in new track.
-   * 
-   * Improvement; move slicing logic in different file instead of dispatching,
-   * to prevent audio scheduling inside the reducer method.
-   * 
-   * @param sliceInformation Information related to slicing of audio track.
-   * @returns void.
-   */
   function sliceIntersectingTracks(sliceInformation: SlicerSelection) {
     dispatch(sliceAudioTracks(sliceInformation));
   }
 
-  /**
-   * @description Select tracks that intersects the region selector.
-   * @param event RegionSelection, describes the rectangular coordinates of selection
-   * @returns void
-   */
   function selectTracksEnveloped(event: RegionSelection) {
     dispatch(selectTracksWithinSpecifiedRegion(event));
   }
@@ -1023,8 +928,9 @@ export function Editor() {
   }
 
   const totalHeight = height * audioManager.totalTrackSize;
+
   // Next plans:
-  // 1. Undo/redo
+  // 1. Undo/redo Knobs and Sliders.
   // 2. Tempo based timeframing
   // 3. Resizable windows.
   return (

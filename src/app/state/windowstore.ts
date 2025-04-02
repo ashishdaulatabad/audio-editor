@@ -101,18 +101,6 @@ const windowManagerSlice = createSlice({
   name: 'windowManager',
   initialState,
   reducers: {
-    /**
-     * @description Add window to the state
-     * - [ ] To do: Directly tie the window manager state to identifier of 
-     * the entity (either a plugin in future or the current track.).
-     * 
-     * i.e., If user wants to open an already opened scheduled track, then that
-     * key must be searched in an already opened windows, otherwise there would be
-     * multiple windows for the same tracks.
-     * 
-     * @param state current state of the window manager.
-     * @param action action with detailed information about the window manager.
-     */
     addWindow(
       state: InitialType<any>, 
       action: PayloadAction<WindowView<any>>
@@ -135,12 +123,6 @@ const windowManagerSlice = createSlice({
       state.contents[action.payload.windowSymbol] = action.payload;
       state.ordering.push(action.payload.windowSymbol);
     },
-    /**
-     * Remove the window from the system.
-     *
-     * @param state current state
-     * @param action action containing the windowSymbol
-     */
     removeWindow(state, action: PayloadAction<symbol>) {
       if (Object.hasOwn(state.contents, action.payload)) {
         const { windowId } = state.contents[action.payload];
@@ -154,12 +136,6 @@ const windowManagerSlice = createSlice({
         }
       }
     },
-    /**
-     * Remove the window identified by unique identifier.
-
-     * @param state current state
-     * @param action action containing the windowSymbol
-     */
     removeWindowWithUniqueIdentifier(state, action: PayloadAction<symbol>) {
       for (const key of Object.getOwnPropertySymbols(state.contents)) {
         const window = state.contents[key];
@@ -178,12 +154,6 @@ const windowManagerSlice = createSlice({
         }
       }
     },
-    /**
-     * Batch remove the window identified by unique identifier.
-
-     * @param state current state
-     * @param action action containing the windowSymbol
-     */
     batchRemoveWindowWithUniqueIdentifier(state, action: PayloadAction<symbol[]>) {
       for (const key of Object.getOwnPropertySymbols(state.contents)) {
         const window = state.contents[key];
@@ -197,15 +167,6 @@ const windowManagerSlice = createSlice({
       }
 
     },
-    /**
-     * Focuses the window that user interacted with
-     * - [ ] To do: Find a better way to focus, i.e.,
-     *   - Search the window
-     *   - Focus while maintaining the order.
-     *   - Keep the stacking order in separate array (Maybe splice and put it like in a queue??)
-     * @param state current state
-     * @param action window symbol
-     */
     focusWindow(state, action: PayloadAction<symbol>) {
       const index = state.ordering.indexOf(action.payload);
 
@@ -214,14 +175,6 @@ const windowManagerSlice = createSlice({
         state.ordering.push(value);
       }
     },
-    /**
-     * Set the current window position.
-     * 
-     * > **Note**: The position should be set after the uses finishes dragging the
-     * > window and releases the trigger from the mouse
-     * @param state current state
-     * @param action Details related to changes in current window.
-     */
     setWindowPosition(
       state,
       action: PayloadAction<{

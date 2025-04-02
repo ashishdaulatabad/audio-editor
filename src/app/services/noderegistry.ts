@@ -5,7 +5,9 @@
 
 export enum NodeType {
   Gain,
-  StereoPan
+  StereoPan,
+  BufferSourcePlaybackRate,
+  BufferSourceDetune
 }
 
 export type ParameterChange = {
@@ -32,6 +34,7 @@ export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
 
 /**
  * @description Removes audio node from registry, when cleaned up.
+ * @todo Clear history related to this node.
  * @param sym identifier for the AudioNode.
  */
 export function deregisterFromAudioNodeRegistryList(sym: symbol) {
@@ -69,16 +72,19 @@ function getParameters(sym: symbol): ParameterChange[] {
     }];
   }
 
+  if (node instanceof AudioBufferSourceNode) {
+    return [{
+      type: NodeType.BufferSourcePlaybackRate,
+      value: node.playbackRate.value
+    }, {
+      type: NodeType.BufferSourceDetune,
+      value: node.detune.value
+    }];
+  }
+
   return [];
 }
 
-/**
- * @description basic deep comparison.
- * @todo Improve on this later.
- * @param left left object
- * @param right right object.
- * @returns true if objects are equal, else false.
- */
 export function compareValues(left: any, right: any): boolean {
   if (left === right) {
     return true;
@@ -121,11 +127,6 @@ export function compareValues(left: any, right: any): boolean {
   }
 }
 
-/**
- * @todo Implement better cloning algorithm
- * @param value 
- * @returns 
- */
 export function cloneValues(value: any): any {
   if (value === null) {
     return null;

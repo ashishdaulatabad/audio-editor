@@ -146,10 +146,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     setPlaybackRate(e);
   }
 
-  /**
-   * @description Change Mixer value
-   * @param e event details
-   */
   function changeMixer(e: React.KeyboardEvent<HTMLInputElement>) {
     const newMixerValue = parseInt((e.target as HTMLInputElement).value);
     audioManager.setMixerValue(track.audioId, newMixerValue);

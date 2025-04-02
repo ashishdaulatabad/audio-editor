@@ -2,8 +2,7 @@ import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
 import { AudioTransformation } from './interfaces';
 
 /**
- * @description Performs the transformation to the Audio Buffer.
- * - [ ] To do: Maybe keep note of exact-recoverable transformation types:
+ * @todo Maybe keep note of exact-recoverable transformation types:
  * There might be case where user wants to undo all the modification done in 
  * waveform window?
  * 

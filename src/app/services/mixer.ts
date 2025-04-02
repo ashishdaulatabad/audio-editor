@@ -43,9 +43,6 @@ export class Mixer {
     return this.mixerViewIdentifier;
   }
 
-  /**
-   * @description Get gain value from a mixer.
-   */
   getGainValue(mixerNumber: number) {
     if (mixerNumber === 0) {
       return this.masterGainNode?.gain.value as number;
@@ -53,11 +50,6 @@ export class Mixer {
     return this.gainNodes[mixerNumber - 1].gain.value;
   }
 
-  /**
-   * @description Get panner value from a given mixer.
-   * @param mixerNumber 
-   * @returns 
-   */
   getPanValue(mixerNumber: number) {
     if (mixerNumber === 0) {
       return this.masterPannerNode?.pan.value as number;

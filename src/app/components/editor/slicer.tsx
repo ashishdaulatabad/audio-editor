@@ -51,11 +51,6 @@ interface SlicerProps {
   onSliceSelect: (slicer: SlicerSelection) => void
 }
 
-/**
- * @description Slicer component that tracks
- * @param props Metadata of workspace
- * @returns Slice component
- */
 export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startX, setStartX] = React.useState(0);
   const [startY, setStartY] = React.useState(0);

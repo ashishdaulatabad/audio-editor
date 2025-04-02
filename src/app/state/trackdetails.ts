@@ -539,7 +539,8 @@ export function undoSnapshotChange(
 }
 
 /**
- * @description Compare snapshot with previous snapshot.
+ * @description Compare snapshot with previous snapshot, used with change history
+ * for storing changes between action..
  * @param snapshot captured snapshot,
  * @param trackDetails 
  */
@@ -784,11 +785,6 @@ export const trackDetailsSlice = createSlice({
         audioManager.setLoopEnd(maxTime);
       }
     },
-    /**
-     * @description Set new buffer to audio.
-     * @param state current state 
-     * @param action action to perform.
-     */
     applyChangesToModifiedAudio(
       state,
       action: PayloadAction<{

@@ -79,12 +79,6 @@ function swapStereo(buffer: Array<Float32Array>) {
   }
 }
 
-/**
- * @description Normalize Audio by taking peak value of the current track.
- * - [ ] To do: store this value, to undo/redo the normalization.
- * @param buffer Float32Array buffer.
- * @returns void (in future should return Normalize Factor).
- */
 function normalizeAudio(
   buffer: Array<Float32Array>
 ) {

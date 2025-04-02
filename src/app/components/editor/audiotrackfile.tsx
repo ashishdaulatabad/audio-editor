@@ -106,10 +106,6 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     hideContextMenu();
   }
 
-  /**
-   * @description Open a custom context.
-   * @param event event details
-   */
   function openContextMenu(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     event.preventDefault();
 

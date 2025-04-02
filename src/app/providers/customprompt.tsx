@@ -50,12 +50,6 @@ export const PromptMenuProvider = (props: React.PropsWithChildren) => {
     return visible;
   }
 
-  /**
-   * @description Show Prompt at certain location.
-   * @param promptDetails Details that the prompt needs to ask.
-   * @param x x location in client window.
-   * @param y y location in client window.
-   */
   function showPrompt(promptDetails: PromptInputInformation[], x: number, y: number) {
     setItems(promptDetails);
     setX(x);
