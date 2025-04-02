@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createAudioData } from '../../services/utils';
 import { AudioTrackFile } from './audiotrackfile';
 import {
-  addAudio,
+  addIntoAudioBank,
   AudioDetails,
 } from '@/app/state/audiostate';
 
@@ -14,7 +14,7 @@ import {
 export function AudioTrackList() {
   // Selectors
   // const [search, setSearch] = React.useState('');
-  const files = useSelector((state: RootState) => state.audioReducer.contents);
+  const files = useSelector((state: RootState) => state.audioReducer.audioBankList);
   const selected = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
  
   const dispatch = useDispatch();
@@ -28,7 +28,7 @@ export function AudioTrackList() {
       const file = inputElement.files as FileList;
       createAudioData(files, file[0]).then((data) => {
         if (data !== null) {
-          dispatch(addAudio(data));
+          dispatch(addIntoAudioBank(data));
         }
       });
     };

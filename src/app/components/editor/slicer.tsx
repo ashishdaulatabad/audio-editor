@@ -61,10 +61,6 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startY, setStartY] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
 
-  /**
-   * @description Setup dragging for slicing tracks.
-   * @param event Event details
-   */
   function setupDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setStartX(event.nativeEvent.offsetX);
     const multiplier = event.nativeEvent.offsetY / props.trackHeight;
@@ -73,10 +69,6 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(level);
   }
 
-  /** 
-   * @description End slicing operation
-   * @returns void
-   */
   function leaveSlicer() {
     const pointOfSliceSecs = (startX / props.lineDist) * props.unitTime;
     const trackFirst = Math.round(startY / props.trackHeight);
@@ -96,10 +88,6 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(0);
   }
 
-  /**
-   * @description Drag slicer.
-   * @param event Event details.
-   */
   function dragSlicer(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (event.buttons === 1) {
       const multiplier = event.nativeEvent.offsetY / props.trackHeight;

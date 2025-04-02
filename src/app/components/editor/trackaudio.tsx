@@ -1,6 +1,6 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { addAudio, AudioDetails } from '@/app/state/audiostate';
+import { addIntoAudioBank, AudioDetails } from '@/app/state/audiostate';
 import { AudioTrackDetails, deleteAudioFromTrack, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
 import { Waveform } from '@/assets/wave';
 import { Canvas } from '../shared/customcanvas';
@@ -47,10 +47,9 @@ interface TrackAudioProps {
 }
 
 export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
-  /// Refs
   const track = props.audioDetails;
-  // const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.trackId]);
-  // const track = tracks[props.index]
+
+  /// Refs
   const spanRef = React.createRef<HTMLSpanElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
@@ -158,7 +157,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       };
       const audioId = audioManager.registerAudioInAudioBank(newTrackDetails, data);
 
-      dispatch(addAudio({
+      dispatch(addIntoAudioBank({
         ...newTrackDetails,
         audioId,
       }));

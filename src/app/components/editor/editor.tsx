@@ -4,7 +4,7 @@ import { TrackInfo } from './trackinfo';
 import { AudioTrackList } from './audiotracklist';
 import { Seekbar, TimeSectionSelection } from './seekbar';
 import { useDispatch, useSelector } from 'react-redux';
-import { addAudio } from '@/app/state/audiostate';
+import { addIntoAudioBank } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
 import { selectAudio } from '@/app/state/selectedaudiostate';
 import { audioManager } from '@/app/services/audiotrackmanager';
@@ -105,7 +105,7 @@ export function Editor() {
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
 
   // Redux states
-  const store = useSelector((state: RootState) => state.audioReducer.contents);
+  const store = useSelector((state: RootState) => state.audioReducer.audioBankList);
   const currentTrack = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
   const trackDetails = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const trackTimeDurationMicros = useSelector((state: RootState) => state.trackDetailsReducer.maxTimeMicros);
@@ -216,7 +216,7 @@ export function Editor() {
         event.nativeEvent.dataTransfer.files[0],
       ).then(data => {
         if (data !== null) {
-          dispatch(addAudio(data));
+          dispatch(addIntoAudioBank(data));
           dispatch(addAudioToTrack({
             trackNumber: intIndex,
             track: {

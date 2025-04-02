@@ -8,7 +8,7 @@ import { deleteColor } from '@/app/services/random';
 import { RootState } from '@/app/state/store';
 import { FaTrash } from 'react-icons/fa';
 
-import { removeAudio } from '@/app/state/audiostate';
+import { removeAudioFromBank } from '@/app/state/audiostate';
 import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
 import {
   resetToDefault,
@@ -32,7 +32,7 @@ interface AudioTrackFileProps {
 
 export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>) {
   const index = props.index;
-  const file = useSelector((state: RootState) => state.audioReducer.contents[index]);
+  const file = useSelector((state: RootState) => state.audioReducer.audioBankList[index]);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const dispatch = useDispatch();
 
@@ -65,7 +65,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
 
   function onDeleteSelected() {
     /// Maybe make a common method for this.
-    audioManager.removeAllAudioFromScheduledNodes(file.audioId);
+    audioManager.removeScheduledAudioInstancesFromScheduledNodes(file.audioId);
     audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
     audioManager.removeOffscreenCanvas(file.audioId);
     audioManager.unregisterAudioFromAudioBank(file.audioId);
@@ -94,7 +94,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       noSnapshot: true
     }));
     // Cleanup from audio list.
-    dispatch(removeAudio(index));
+    dispatch(removeAudioFromBank(index));
     // Delete annotated color
     deleteColor(file.colorAnnotation);
 

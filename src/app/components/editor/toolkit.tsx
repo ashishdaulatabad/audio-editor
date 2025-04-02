@@ -32,11 +32,6 @@ interface ToolkitProps {
   onModeSelect: (mode: ModeType) => void
 }
 
-/**
- * @description Creates Toolkit to easily edit the audio contents
- * @param props 
- * @returns 
- */
 export function Toolkit(props: React.PropsWithoutRef<ToolkitProps>) {
   return (
     <div className="toolkit-container sticky bg-darker flex flex-row min-h-[62px] min-w-44 z-[11] border-t border-darker-2">

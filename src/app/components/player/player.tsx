@@ -7,7 +7,7 @@ import { Pause } from '@/assets/pause';
 import { Play } from '@/assets/play';
 import { VolumeLevels } from './volumelevels';
 import { Knob } from '../knob';
-import { addAudio } from '@/app/state/audiostate';
+import { addIntoAudioBank } from '@/app/state/audiostate';
 import { getRandomWindowId, randomColor } from '@/app/services/random';
 import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
@@ -47,9 +47,6 @@ export function Timer() {
   )
 }
 
-/**
- * @description Player at the top bar
- */
 export function Player() {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
@@ -130,7 +127,7 @@ export function Player() {
       effects: []
     };
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
-    dispatch(addAudio({
+    dispatch(addIntoAudioBank({
       ...details,
       audioId: newAudioId
     }));

@@ -32,39 +32,29 @@ export interface AudioDetails {
 }
 
 export interface AudioContentState {
-  contents: AudioDetails[]
+  audioBankList: AudioDetails[]
 }
 
 const initialState: AudioContentState = {
-  contents: []
+  audioBankList: []
 }
 
 const audioSlice = createSlice({
   name: 'audioLibSlice',
   initialState,
   reducers: {
-    /**
-     * @description Add audio to the audio list.
-     * @param state current state
-     * @param action Audio to perform
-     */
-    addAudio(state, action: PayloadAction<AudioDetails>) {
-      state.contents.push(action.payload);
+    addIntoAudioBank(state, action: PayloadAction<AudioDetails>) {
+      state.audioBankList.push(action.payload);
     },
-    /**
-     * @description Remove audio from the track
-     * @param state current state
-     * @param action index of the current audio track in the state.
-     */
-    removeAudio(state, action: PayloadAction<number>) {
-      state.contents.splice(action.payload, 1);
+    removeAudioFromBank(state, action: PayloadAction<number>) {
+      state.audioBankList.splice(action.payload, 1);
     }
   }
 });
 
 export const {
-  addAudio,
-  removeAudio,
+  addIntoAudioBank,
+  removeAudioFromBank,
 } = audioSlice.actions;
 
 export default audioSlice.reducer;

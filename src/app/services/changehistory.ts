@@ -142,7 +142,7 @@ class ChangeHistory {
   /**
    * @description Clear all changes within history type.
    * @param changeType Filter to work on.
-   * @param identifier Should return true if history change needs to be deleted.
+   * @param identifierFn Should return true if history change needs to be deleted.
    */
   clearHistoryContainingItem<ChangeProperties>(
     changeType: WorkspaceChange,
@@ -171,11 +171,6 @@ class ChangeHistory {
     this.pointer -= subtractPointerBy;
   }
 
-  /**
-   * @description calculate diff of all values.
-   * @param previousSnapshot previous snapshot.
-   * @param currentState current state of the track.
-   */
   rollbackChange<Type>(redo: boolean = false) {
     if (this.pointer < 0 && !redo) return undefined;
     if (this.pointer >= this.stack.length && redo) return undefined;
@@ -183,8 +178,7 @@ class ChangeHistory {
     const change = redo ? 
       this.stack[++this.pointer] :
       this.stack[this.pointer--];
-    // Diff Logic can be different for each type, specialization first, then
-    // move to generalization.
+
     return change;
   }
 };

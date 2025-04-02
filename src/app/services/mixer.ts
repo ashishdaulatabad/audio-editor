@@ -1,6 +1,6 @@
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
-import { addToAudioNodeList } from './noderegistry';
+import { addToAudioNodeRegistryList } from './noderegistry';
 
 export class Mixer {
   masterGainNode: Maybe<GainNode> = null;
@@ -94,15 +94,15 @@ export class Mixer {
     // When register is true, add to Audio Node List for tracking changes performed
     // during the session.
     if (register) {
-      this.masterGainRegistry = addToAudioNodeList(masterGainNode);
-      this.masterPannerRegistry = addToAudioNodeList(masterPannerNode);
+      this.masterGainRegistry = addToAudioNodeRegistryList(masterGainNode);
+      this.masterPannerRegistry = addToAudioNodeRegistryList(masterPannerNode);
 
       pannerNodes.forEach((panNode) => (
-        this.panNodeIds.push(addToAudioNodeList(panNode))
+        this.panNodeIds.push(addToAudioNodeRegistryList(panNode))
       ));
 
       gainNodes.forEach((gainNode) => (
-        this.gainNodeIds.push(addToAudioNodeList(gainNode))
+        this.gainNodeIds.push(addToAudioNodeRegistryList(gainNode))
       ));
     }
 

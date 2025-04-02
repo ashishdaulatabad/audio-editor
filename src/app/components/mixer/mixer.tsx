@@ -6,11 +6,6 @@ export interface MixerProps {
 
 }
 
-/**
- * @description Mixer control.
- * @param props Mixer Props
- * @returns mixer component
- */
 export function MixerMaster(props: React.PropsWithoutRef<MixerProps>) {
   const totalMixers = audioManager.totalMixers;
 

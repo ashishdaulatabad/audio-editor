@@ -91,10 +91,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     return () => {};
   });
 
-  /**
-   * @description General transformation of Audio.
-   * @param transformation Details.
-   */
   function transform(transformation: AudioTransformation) {
     setTransformationInProgress(true);
 

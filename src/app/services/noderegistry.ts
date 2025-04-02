@@ -21,8 +21,9 @@ const registry: {
 /**
  * @description Registers and returns a identifer, for trackable
  * changes in user interface.
+ * @param AudioNode node needed to register.
  */
-export function addToAudioNodeList(audioNode: AudioNode): symbol {
+export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
   const sym = Symbol();
   registry[sym] = audioNode;
 
@@ -30,15 +31,15 @@ export function addToAudioNodeList(audioNode: AudioNode): symbol {
 }
 
 /**
- * @description Removes audio node from registry
- * @param sym identifier for the node.
+ * @description Removes audio node from registry, when cleaned up.
+ * @param sym identifier for the AudioNode.
  */
-export function deregisterFromAudioNodeList(sym: symbol) {
+export function deregisterFromAudioNodeRegistryList(sym: symbol) {
   delete registry[sym];
 }
 
 /**
- * @description get audio node.
+ * @description Get audio node.
  * @param sym symbol
  * @returns AudioNode if exists, undefined otherwise
  */

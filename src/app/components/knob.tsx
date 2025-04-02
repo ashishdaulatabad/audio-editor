@@ -92,7 +92,6 @@ const START_ANGLE = 3 * Math.PI / 4;
  */
 export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   // States
-  // To do: Perform a mapped value
   const [value, setValue] = React.useState(props.value ?? 0);
   const [hold, setHold] = React.useState(false);
   const [holdY, setHoldY] = React.useState<number>(0);
