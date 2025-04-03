@@ -173,7 +173,7 @@ class ChangeHistory {
 
   rollbackChange<Type>(redo: boolean = false) {
     if (this.pointer < 0 && !redo) return undefined;
-    if (this.pointer >= this.stack.length && redo) return undefined;
+    if (this.pointer >= this.stack.length - 1 && redo) return undefined;
 
     const change = redo ? 
       this.stack[++this.pointer] :
