@@ -459,8 +459,8 @@ class AudioTrackManager {
   }
 
   /**
-   * @description Retrieves all the positions of the current tracks.
-   * @returns 
+   * @description Retrieves positions of the selected tracks.
+   * This is managed here instead of letting react handling it.
    */
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
     const newElements: SelectedTrackInfo = {
@@ -546,6 +546,13 @@ class AudioTrackManager {
     }
 
     return this;
+  }
+
+  cleanupAudioData(audioId: symbol) {
+    this.removeScheduledAudioInstancesFromScheduledNodes(audioId);
+    this.deleteAudioFromSelectedAudioTracks(audioId);
+    this.removeOffscreenCanvas(audioId);
+    this.unregisterAudioFromAudioBank(audioId);
   }
 
   setLoopEnd(valueMicros: number) {

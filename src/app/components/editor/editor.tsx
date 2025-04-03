@@ -96,7 +96,6 @@ export function Editor() {
   const [dragged, setDragged] = React.useState(false);
   const [lineDist, setLineDist] = React.useState(100);
   const [trackForEdit, selectTrackForEdit] = React.useState<AudioTrackDetails | null>(null);
-  const [paintedTrackLast, selectPaintedTrackLast] = React.useState<AudioTrackDetails | null>(null);
   const [selectedRegion, setSelectedRegion] = React.useState<TimeSectionSelection | null>(null);
   const [currentMode, setCurrentMode] = React.useState<ModeType>(ModeType.DefaultSelector);
 

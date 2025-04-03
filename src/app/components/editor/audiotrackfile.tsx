@@ -36,11 +36,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const dispatch = useDispatch();
 
-  /**
-   * @description Select currently selected slice.
-   * @param index 
-   */
-  function selectAudioSlice() {
+  function selectActiveAudioForScheduling() {
     dispatch(selectAudio({
       ...file,
       trackDetail: {
@@ -65,10 +61,8 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
 
   function onDeleteSelected() {
     /// Maybe make a common method for this.
-    audioManager.removeScheduledAudioInstancesFromScheduledNodes(file.audioId);
-    audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
-    audioManager.removeOffscreenCanvas(file.audioId);
-    audioManager.unregisterAudioFromAudioBank(file.audioId);
+    audioManager.cleanupAudioData(file.audioId);
+
     // Currently delete all the audio changes
     changeHistory.clearHistoryContainingItem(
       WorkspaceChange.TrackChanges,
@@ -124,7 +118,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       )}
       key={index}
       data-index={index}
-      onClick={selectAudioSlice}
+      onClick={selectActiveAudioForScheduling}
       onContextMenu={openContextMenu}
       style={{background: file.colorAnnotation}}
     >

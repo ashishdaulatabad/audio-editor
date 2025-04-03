@@ -83,7 +83,14 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         setWidthAndScrollLeft(divRef.current, spanRef.current, track);
       }
     }
-  }, [track.trackDetail, props.lineDist]);
+
+    return () => {
+      if (track.trackDetail.selected) {
+        audioManager.deleteFromSelectedAudioTracks(track.trackDetail.scheduledKey);
+      }
+    }
+  }, [track.trackDetail, track.trackDetail.selected, props.lineDist]);
+
 
   function calculateLeft(track: AudioTrackDetails) {
     return (track.trackDetail.offsetInMicros / timeUnitMicros) * props.lineDist;

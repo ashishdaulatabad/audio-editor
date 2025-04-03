@@ -73,7 +73,7 @@ const initialState: {
   status: Status.Pause,
   maxTimeMicros: twoMinuteInMicros,
   trackDetails: Array.from({length: 30}, () => [])
-}
+};
 
 /**
  * @description Get max time the track should run.
@@ -141,7 +141,9 @@ function addNewAudioToTrack(
   // Probably sort array based on the appearance of each scheduled track?
   // This enable a domino-effect, making user's life easier to pull
   // out overlapping tracks.
-  trackDetails[trackNumber].sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
+  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  ));
 
   return trackDetails;
 }
@@ -237,9 +239,14 @@ function cloneSingleAudioTrack(
     }
   };
 
+  clonedDetails.trackDetail.selected = false;
+
   // Todo: Check adding immediately near the specified position, at the start or 
   // at the end, need to create a domino effect while scheduling track.
   trackDetails[trackNumber].push(clonedDetails);
+  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  // ));
 
   return trackDetails;
 }
@@ -276,11 +283,13 @@ function cloneMultipleAudioTracks(
       ...track,
       trackDetail: {
         ...track.trackDetail,
+        // New cloned data: so new scheduled data.
         scheduledKey: Symbol(),
       }
     };
+    clonedDetails.trackDetail.selected = false;
 
-    trackDetails[trackNumber].splice(audioIndex, 0, clonedDetails);
+    trackDetails[trackNumber].push(clonedDetails);
   });
 
   return trackDetails;
@@ -320,7 +329,7 @@ function bulkDeleteTracks(
   );
 
   trackNumbers.forEach((trackNumber, index: number) => {
-    trackDetails[trackNumber].splice(audioIndexes[index], 1);
+    trackDetails[trackNumber] = trackDetails[trackNumber].filter((_, audioIndex) => !audioIndexes.includes(audioIndex));
   });
 
   return trackDetails;
@@ -381,10 +390,10 @@ function sliceAudioTracksAtPoint(
 
     for (const pendingTrack of pendingTracksToAppend) {
       audioTracks.push(pendingTrack);
-      }
+    }
 
     if (pendingTracksToAppend.length > 0) {
-      audioTracks.sort((first, second) => (
+      audioTracks = audioTracks.sort((first, second) => (
         first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
       ));
     }
@@ -416,6 +425,10 @@ function setTrackOffsetToAFinalPoint(
   trackDetails[trackNumber][audioIndex].trackDetail.offsetInMicros = offsetInMicros;
   trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMicros = startOffsetInMicros;
+
+  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  ));
 
   return trackDetails;
 }
@@ -484,17 +497,26 @@ export function undoSnapshotChange(
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
   redo = false
 ) {
-  for (const changeDetail of changeDetails) {
+  // Reverse order: changes are inserted in order, splicing
+  // should keep all indexes intact.
+  // Another way is to do filter.
+  for (const changeDetail of changeDetails.reverse()) {
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
-        const { trackNumber, audioIndex, audioId, trackDetail } = changeDetail.data;
+        const {
+          trackNumber,
+          audioIndex,
+          audioId,
+          trackDetail
+        } = changeDetail.data;
 
         if (!redo) {
           const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
 
           console.assert(trackDetail.scheduledKey === currentScheduledKey);
           audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
+          // Tracks cannot be removed like this:
           trackDetails[trackNumber].splice(audioIndex, 1);
         } else {
           audioManager.scheduleSingleTrack(audioId, trackDetail);
@@ -506,7 +528,11 @@ export function undoSnapshotChange(
 
       // Add them back
       case ChangeType.Removed: {
-        const { trackNumber, audioIndex, ...rest } = changeDetail.data;
+        const {
+          trackNumber,
+          audioIndex,
+          ...rest
+        } = changeDetail.data;
 
         if (!redo) {
           trackDetails[trackNumber].splice(audioIndex, 0, rest);
@@ -585,7 +611,7 @@ export function compareSnapshots(
               current: {
                 ...currentTrack[currentScheduledTrackIndex],
                 trackNumber: trackIndex,
-                audioIndex: previousScheduledTrackIndex
+                audioIndex: currentScheduledTrackIndex
               }
             }
           });
