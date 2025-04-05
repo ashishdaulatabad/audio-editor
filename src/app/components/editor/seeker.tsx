@@ -5,11 +5,6 @@ import { Status } from "@/app/state/trackdetails";
 import { useSelector } from "react-redux";
 import { animationBatcher } from "@/app/services/animationbatch";
 
-/**
- * @description Seeker component
- * @param props Props.
- * @returns void
- */
 export function Seeker(props: {
   lineDist: number
   timePerUnitLine: number

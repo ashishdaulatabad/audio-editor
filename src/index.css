@@ -28,6 +28,7 @@ a:hover {
   --secondary: rgb(51 65 85);
   --darker: rgb(30 41 59);
   --darker-2: rgb(15 23 42);
+  --font: #fef;
 }
 
 [data-theme="blueacc"] {
@@ -36,6 +37,7 @@ a:hover {
   --secondary: rgb(51 54 85);
   --darker: rgb(30 32 63);
   --darker-2: rgb(22, 24, 47);
+  --font: #fef;
 }
 
 [data-theme="greenacc"] {
@@ -44,6 +46,7 @@ a:hover {
   --secondary: rgb(54, 75, 59);
   --darker: rgb(41, 57, 42);
   --darker-2: rgb(32, 43, 33);
+  --font: #fef;
 }
 
 [data-theme="redacc"] {
@@ -52,6 +55,7 @@ a:hover {
   --secondary: rgb(71, 49, 45);
   --darker: rgb(49, 36, 33);
   --darker-2: rgb(31, 22, 21);
+  --font: #fef;
 }
 
 [data-theme="yellowacc"] {
@@ -60,6 +64,7 @@ a:hover {
   --secondary: rgb(70, 69, 54);
   --darker: rgb(61, 59, 44);
   --darker-2: rgb(48, 47, 35);
+  --font: #fef;
 }
 
 [data-theme="magentaacc"] {
@@ -68,6 +73,7 @@ a:hover {
   --secondary: rgb(75, 61, 76);
   --darker: rgb(44, 37, 44);
   --darker-2: rgb(27, 23, 27);
+  --font: #fef;
 }
 
 [data-theme="orangeacc"] {
@@ -76,6 +82,7 @@ a:hover {
   --secondary: rgb(74, 69, 59);
   --darker: rgb(53, 48, 40);
   --darker-2: rgb(35, 33, 27);
+  --font: #fef;
 }
 
 [data-theme="otheracc"] {
@@ -84,6 +91,20 @@ a:hover {
   --secondary: #394c52;
   --darker: #1b272c;
   --darker-2: #172225;
+  --font: #fef;
+}
+
+[data-theme="orangelightacc"] {
+  --primary-2: #ffffff;
+  --primary: #ffffff;
+  --secondary: #d0a038;
+  --darker: #bd8008;
+  --darker-2: #ad9145;
+  --font: #010;
+}
+
+.text-col {
+  color: var(--font);
 }
 
 .border-primary-2 {

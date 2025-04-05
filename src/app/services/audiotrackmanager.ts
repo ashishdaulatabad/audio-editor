@@ -5,6 +5,7 @@ import { clamp } from '../utils';
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
 import { Mixer } from './mixer';
+import { addToAudioNodeRegistryList, deregisterFromAudioNodeRegistryList } from './noderegistry';
 
 /**
  * @description Type of Multiselected DOM elements that are selected.
@@ -33,7 +34,9 @@ export type AudioBank = {
     audioDetails: Omit<AudioDetails, 'audioId'>
     buffer: AudioBuffer
     panner: StereoPannerNode
+    pannerRegister: symbol,
     gain: GainNode
+    gainRegister: symbol
   }
 };
 
@@ -111,49 +114,21 @@ class AudioTrackManager {
     return [gainNodes, pannerNodes, masterGainNode];
   }
 
-  static copySettings(sourceNode: AudioNode, destinationNode: AudioNode) {
-    if (sourceNode instanceof GainNode && destinationNode instanceof GainNode) {
-      sourceNode.gain.value = destinationNode.gain.value;
-    } else if (sourceNode instanceof StereoPannerNode && destinationNode instanceof StereoPannerNode) {
-      sourceNode.pan.value = destinationNode.pan.value;
-    }
-  }
-
-  /**
-   * @description set panner for audio file
-   * @param audioId audio id
-   * @param pan panner value
-   */
   setPannerForAudio(audioId: symbol, pan: number) {
     const { panner } = this.audioBank[audioId];
     panner.pan.value = pan;
   }
 
-  /**
-   * @description get panner value for audio file
-   * @param audioId audio id
-   * @returns pan value in range [-1,1]
-   */
   getPannerForAudio(audioId: symbol) {
     const { panner } = this.audioBank[audioId];
     return panner.pan.value;
   }
 
-  /**
-   * @description Set gain value for certain audio file.
-   * @param audioId audio id to set
-   * @param value value to set.
-   */
   setGainForAudio(audioId: symbol, value: number) {
     const { gain } = this.audioBank[audioId];
     gain.gain.value = value;
   }
-  
-  /**
-   * @description Get gain value for certain audio file.
-   * @param audioId audio id to get
-   * @returns gain number
-   */
+
   getGainForAudio(audioId: symbol) {
     const { gain } = this.audioBank[audioId];
     return gain.gain.value;
@@ -165,21 +140,12 @@ class AudioTrackManager {
    * @returns rendered raw audio data.
    */
   async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
-    const offlineAudioContext = new OfflineAudioContext(
-      2,
-      Math.ceil(48000 * this.loopEnd),
-      48000
-    );
+    const channels = 2;
+    const bufferLength = Math.ceil(48000 * this.loopEnd);
+    const sampleRate = 48000;
 
+    const offlineAudioContext = new OfflineAudioContext(channels, bufferLength, sampleRate);
     const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
-
-    // gainNodes.forEach((gainNode, index: number) => {
-    //   AudioTrackManager.copySettings(gainNode, this.gainNodes[index])
-    // });
-
-    // pannerNodes.forEach((pannerNode, index: number) => {
-    //   AudioTrackManager.copySettings(pannerNode, this.pannerNodes[index])
-    // });
 
     masterGainNode.connect(offlineAudioContext.destination);
 
@@ -195,6 +161,7 @@ class AudioTrackManager {
 
   /**
    * @description Store registered audio bank in an audio bank registry
+   * - Stores registry with node registry list for undo/redo operation.
    * @param audioDetails details regarding the Audio
    * @param audioBuffer Audio Buffer
    * @returns A unique symbol that identifies this audio reference.
@@ -203,16 +170,24 @@ class AudioTrackManager {
     audioDetails: Omit<AudioDetails, 'audioId'>,
     audioBuffer: AudioBuffer
   ): symbol {
-    const symbol = Symbol();
+    const audioBankSymbol = Symbol();
+    const context = audioService.useAudioContext();
 
-    this.audioBank[symbol] = {
+    const gain = context.createGain();
+    const panner = context.createStereoPanner();
+    const gainRegister = addToAudioNodeRegistryList(gain);
+    const pannerRegister = addToAudioNodeRegistryList(panner);
+
+    this.audioBank[audioBankSymbol] = {
       audioDetails,
       buffer: audioBuffer,
-      gain: audioService.useAudioContext().createGain(),
-      panner: audioService.useAudioContext().createStereoPanner()
+      gainRegister,
+      gain,
+      pannerRegister,
+      panner
     };
 
-    return symbol;
+    return audioBankSymbol;
   }
 
   /**
@@ -231,6 +206,15 @@ class AudioTrackManager {
    */
   unregisterAudioFromAudioBank(sym: symbol): boolean {
     if (Object.hasOwn(this.audioBank, sym)) {
+      // Remove all the settings from the bank.
+      const {
+        gainRegister,
+        pannerRegister
+      } = this.audioBank[sym];
+
+      deregisterFromAudioNodeRegistryList(gainRegister);
+      deregisterFromAudioNodeRegistryList(pannerRegister);
+
       delete this.audioBank[sym];
       return true;
     }
@@ -239,11 +223,6 @@ class AudioTrackManager {
     return false;
   }
 
-  /**
-   * @description Get Raw Audio Buffer.
-   * @param symbol identifier of audio in audio bank
-   * @returns buffer reference
-   */
   getAudioBuffer(symbol: symbol): AudioBuffer | null {
     if (Object.hasOwn(this.audioBank, symbol)) {
       return this.audioBank[symbol].buffer;
@@ -252,21 +231,11 @@ class AudioTrackManager {
     return null;
   }
 
-  /**
-   * @description Get Assigned Mixer.
-   * @param symbol identifier of audio in audio bank
-   * @returns mixer attached to this node
-   */
   getMixerValue(symbol: symbol): number {
     return this.audioBank[symbol].audioDetails.mixerNumber;
   }
 
-  /**
-   * @description Assign new mixer.
-   * @todo Copy all the settings of this mixer when performing this operation
-   * @param symbol identifier of audio in audio bank
-   * @returns mixer attached to this node
-   */
+
   setMixerValue(symbol: symbol, mixerValue: number) {
     this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
     this.audioBank[symbol].panner.disconnect();
@@ -275,9 +244,6 @@ class AudioTrackManager {
     this.audioBank[symbol].panner = newPanner;
   }
 
-  /**
-   * @description Clear all selection of DOM Elements
-   */
   clearSelection() {
     this.multiSelectedDOMElements = [];
   }
@@ -314,6 +280,8 @@ class AudioTrackManager {
     } else {
       this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
       this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
+      this.multiSelectedDOMElements[existingElementIndex].initialWidth = domElement.offsetWidth;
+      this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
     }
   }
 
@@ -333,6 +301,15 @@ class AudioTrackManager {
     if (existingElementIndex > -1) {
       this.multiSelectedDOMElements.splice(existingElementIndex, 1);
     }
+  }
+
+  /**
+   * @description Cleanup Selection: Remove elements not attached to DOM element
+   */
+  cleanupSelectedDOMElements() {
+    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(dom => (
+      dom.domElement.isConnected
+    ));
   }
 
   /**
@@ -482,8 +459,8 @@ class AudioTrackManager {
   }
 
   /**
-   * @description Retrieves all the positions of the current tracks.
-   * @returns 
+   * @description Retrieves positions of the selected tracks.
+   * This is managed here instead of letting react handling it.
    */
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
     const newElements: SelectedTrackInfo = {
@@ -512,11 +489,9 @@ class AudioTrackManager {
     const newElements: TransformedAudioTrackDetails[] = [];
     
     this.multiSelectedDOMElements.forEach(element => {
-      const left = element.domElement.style.left ?? '0px';
       const scrollLeft = element.domElement.scrollLeft;
       const width = element.domElement.offsetWidth;
-
-      const finalPosition = parseFloat(left.substring(0, left.length - 2));
+      const finalPosition = element.domElement.offsetLeft;
 
       newElements.push({
         ...element,
@@ -536,13 +511,13 @@ class AudioTrackManager {
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
+    // To do: Make 500000 global variable??
     if (timeSelection) {
       if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 500000) return;
     }
+
     this.timeframeSelectionDetails = timeSelection;
   }
-
-  // unselectTimeframe(time)
 
   /**
    * @description Safety function to initialize audiocontext before using audiomanager
@@ -563,9 +538,21 @@ class AudioTrackManager {
 
       this.splitChannel.connect(this.leftAnalyserNode, 0);
       this.splitChannel.connect(this.rightAnalyserNode, 1);
+
+      // this.leftAnalyserNode.fftSize = 512;
+      // this.rightAnalyserNode.fftSize = 512;
+      // this.leftAnalyserNode.smoothingTimeConstant = 0.4;
+      // this.rightAnalyserNode.smoothingTimeConstant = 0.4;
     }
 
     return this;
+  }
+
+  cleanupAudioData(audioId: symbol) {
+    this.removeScheduledAudioInstancesFromScheduledNodes(audioId);
+    this.deleteAudioFromSelectedAudioTracks(audioId);
+    this.removeOffscreenCanvas(audioId);
+    this.unregisterAudioFromAudioBank(audioId);
   }
 
   setLoopEnd(valueMicros: number) {
@@ -608,10 +595,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @description Schedule all audio tracks Offline
-   * @param audioTrackDetails 2D array containing all tracks.
-   */
   scheduleOffline(
     audioTrackDetails: AudioTrackDetails[][],
     pannerNodes: StereoPannerNode[],
@@ -633,10 +616,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * Removes scheduled tracks.
-   * @param track 
-   */
   removeTrackFromScheduledNodes(track: AudioTrackDetails) {
     const symbolKey = track.trackDetail.scheduledKey;
 
@@ -650,10 +629,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @description Remove scheduled nodes from scheduled items.
-   * @param scheduledKeys list of scheduled keys.
-   */
   removeScheduledTracksFromScheduledKeys(scheduledKeys: symbol[]) {
     for (const key of scheduledKeys) {
       const node = this.scheduledNodes[key]
@@ -665,12 +640,7 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @description Remove all scheduled nodes from this audio
-   * @param id audio id to remove
-   * @returns void
-   */
-  removeAllAudioFromScheduledNodes(id: symbol) {
+  removeScheduledAudioInstancesFromScheduledNodes(id: symbol) {
     const allKeys = Object.getOwnPropertySymbols(this.scheduledNodes);
 
     for (const key of allKeys) {
@@ -684,13 +654,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * Schedule a single track at a given offset.
-   * 
-   * @param track Track to schedule
-   * @param trackNumber Track number to join to
-   * @param trackOffsetMillis Offset in `ms`
-   */
   scheduleSingleTrack(
     audioId: symbol,
     trackDetails: SubType<AudioTrackDetails, 'trackDetail'>
@@ -826,7 +789,7 @@ class AudioTrackManager {
   }
 
   /**
-   * @description Reschedule all audio tracks that are scheduled, or to be scheduled.
+   * @description Reschedule audio tracks, with changed details to accomodate new changes.
    * @param audioTrackDetails All track details
    * @param movedAudioTracks Moved scheduled that contains additional information to override.
    */
@@ -860,10 +823,6 @@ class AudioTrackManager {
     } 
   }
 
-  /**
-   * @description Reschedule an already scheduled track.
-   * @param track track detail
-   */
   rescheduleAudioFromScheduledNodes(
     audioKey: symbol
   ) {
@@ -878,10 +837,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @description Reschedule an already scheduled track.
-   * @param track track detail
-   */
   rescheduleTrackFromScheduledNodes(
     scheduledKey: symbol,
     trackDetail: SubType<AudioTrackDetails, 'trackDetail'>
@@ -895,12 +850,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @description Reschedules moved track with new details.
-   * @param track current track to modify
-   * @param trackNumber track number for this scheduled audio: to attach it to gain node.
-   * @param trackOffsetMicros new offset of scheduled track in micros.
-   */
   rescheduleMovedTrackFromScheduledNodes(
     audioId: symbol,
     trackDetail: SubType<AudioTrackDetails, 'trackDetail'>, 
@@ -929,9 +878,6 @@ class AudioTrackManager {
     }
   }
 
-  /**
-   * @returns Status; true if context is paused, else false.
-   */
   isPaused() {
     return this.paused;
   }
@@ -945,22 +891,26 @@ class AudioTrackManager {
   }
 
   getTimeData(leftArray: Uint8Array, rightArray: Uint8Array) {
-    (this.leftAnalyserNode as AnalyserNode).getByteTimeDomainData(leftArray);
-    (this.rightAnalyserNode as AnalyserNode).getByteTimeDomainData(rightArray);
+    const left = (this.leftAnalyserNode as AnalyserNode);
+    const right = (this.rightAnalyserNode as AnalyserNode);
+
+    left.getByteTimeDomainData(leftArray);
+    right.getByteTimeDomainData(rightArray);
   }
 
   getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
-    if (mixer > 0) {
-      const { left, right } = this.mixer.useMixer().analyserNodes[mixer - 1];
+    const {
+      left,
+      right
+    } = mixer > 0 ? 
+      this.mixer.useMixer().analyserNodes[mixer - 1] :
+      this.mixer.useMixer().masterAnalyserNodes as {
+        left: AnalyserNode,
+        right: AnalyserNode
+      };
 
-      left.getByteTimeDomainData(leftArray);
-      right.getByteTimeDomainData(rightArray);
-    } else {
-      const { left, right } = this.mixer.useMixer().masterAnalyserNodes as { left: AnalyserNode, right: AnalyserNode };
-
-      left.getByteTimeDomainData(leftArray);
-      right.getByteTimeDomainData(rightArray);
-    }
+    left.getByteTimeDomainData(leftArray);
+    right.getByteTimeDomainData(rightArray);
   }
 
   private _updateTimestampOnSelectedTimeframe() {

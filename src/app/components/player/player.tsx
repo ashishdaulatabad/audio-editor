@@ -7,7 +7,7 @@ import { Pause } from '@/assets/pause';
 import { Play } from '@/assets/play';
 import { VolumeLevels } from './volumelevels';
 import { Knob } from '../knob';
-import { addAudio } from '@/app/state/audiostate';
+import { addIntoAudioBank } from '@/app/state/audiostate';
 import { getRandomWindowId, randomColor } from '@/app/services/random';
 import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
@@ -15,19 +15,10 @@ import { Mixer } from '@/assets/mixer';
 import { animationBatcher } from '@/app/services/animationbatch';
 import { SimpleDropdown } from '../shared/dropdown';
 
-/**
- * @description Player at the top bar
- */
-export function Player() {
+export function Timer() {
   const [timer, setTimer] = React.useState('00:00');
-
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
-  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
-
   const ref = React.createRef<HTMLDivElement>();
-  const [masterVol, setMasterVol] = React.useState(1);
-  const dispatch = useDispatch();
-
+  
   React.useEffect(() => {
     let intervalId: symbol | null = null;
     intervalId = animationBatcher.addAnimationHandler(animateTimer);
@@ -44,7 +35,23 @@ export function Player() {
     return () => {
       animationBatcher.removeAnimationHandler(intervalId);
     }
-  }, []);
+  });
+
+  return (
+    <div
+      className="timer bg-secondary text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
+      ref={ref}
+    >
+      {timer}
+    </div>
+  )
+}
+
+export function Player() {
+  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+  const [masterVol, setMasterVol] = React.useState(1);
+  const dispatch = useDispatch();
 
   function pause() {
     dispatch(togglePlay(status === Status.Pause ? Status.Play : Status.Pause));
@@ -120,7 +127,7 @@ export function Player() {
       effects: []
     };
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
-    dispatch(addAudio({
+    dispatch(addIntoAudioBank({
       ...details,
       audioId: newAudioId
     }));
@@ -148,12 +155,7 @@ export function Player() {
         <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
         <div>{Math.round(masterVol * 100)}</div>
       </div>
-      <div
-        className="timer bg-secondary text-2xl text-pretty p-2 rounded-md min-w-28 text-center select-none"
-        ref={ref}
-      >
-        {timer}
-      </div>
+      <Timer />
       <span
         onClick={pause}
         className="ml-2 pause play bg-secondary p-2 rounded-md cursor-pointer"

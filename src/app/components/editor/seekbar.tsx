@@ -79,10 +79,6 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   } = props;
   const labelMultiplier = Math.ceil(50 / lineDist);
 
-  /**
-   * @description Seek to certain point.
-   * @param event 
-   */
   function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (!isUserSelectingRegion && props.mode === ModeType.DefaultSelector) {
       const { offsetX } = event.nativeEvent;
@@ -94,17 +90,10 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     }
   }
 
-  /**
-   * @description Perform certain tasks when the loop is ended
-   */
   function onLoopEnd() {
     audioManager.useManager().rescheduleAllTracks(tracks);
   }
 
-  /**
-   * @description Handle Mouse Down Event
-   * @param event
-   */
   function handleMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     if (
       // Region select between ranges iff current cursor is Region Select.

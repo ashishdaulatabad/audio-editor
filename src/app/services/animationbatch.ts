@@ -3,9 +3,6 @@ export enum AnimationState {
   Suspended
 }
 
-/**
- * @description Batching animation that runs throughout.
- */
 class AnimationBatcher {
   handlerStates: {
     [k: symbol]: {
@@ -39,7 +36,6 @@ class AnimationBatcher {
         animationHandle.fn();
 
         if (animationHandle.allowedFrameTime) {
-          // const timeDiff = (currentTimestamp + animationHandle.previousTimestamp) - animationHandle.allowedFrameTime;
           do {
             animationHandle.previousTimestamp += animationHandle.allowedFrameTime;
           } while (animationHandle.allowedFrameTime <= currentTimestamp - animationHandle.previousTimestamp);
@@ -53,9 +49,6 @@ class AnimationBatcher {
     return this.masterHandler;
   }
 
-  /**
-   * @description Stop animation frame
-   */
   stopAnimation() {
     cancelAnimationFrame(this.masterHandler);
   }

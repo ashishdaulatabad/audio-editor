@@ -16,11 +16,10 @@ function calculateRMS(array: Uint8Array): number {
     rms += p * p;
   }
 
-  return rms > 0 ? Math.round(Math.sqrt(rms / array.length)) : 0;
+  return Math.round(Math.sqrt(rms / length));
 }
 
 /**
- * @description Volume Level Component
  * @todo Can there be more efficient level drawing method?
  * @param props 
  * @returns 
@@ -35,9 +34,10 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
   let handler: symbol | null = null;
   const leftBuffer = new Uint8Array(2048);
   const rightBuffer = new Uint8Array(2048);
+  leftBuffer.fill(0);
+  rightBuffer.fill(0);
   
   React.useEffect(() => {
-
     function animateVolumeLevels() {
       if (!audioService.audioContext || !audioManager.leftAnalyserNode) {
         return;

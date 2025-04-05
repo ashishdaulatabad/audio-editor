@@ -82,13 +82,16 @@ const START_ANGLE = 3 * Math.PI / 4;
 
 /**
  * @description Knob component
- * @todo Can just rotate with transform instead of manually calculating angle??
+ * @todo 
+ * - Can just rotate with transform instead of manually calculating angle??
+ * - On Change via
+ *  1. Scroll, debounce and then register as this controller changed.
+ *  2. Mouse Drag, register as this controller changed when the trigger is released.
  * @param props 
  * @returns 
  */
 export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   // States
-  // To do: Perform a mapped value
   const [value, setValue] = React.useState(props.value ?? 0);
   const [hold, setHold] = React.useState(false);
   const [holdY, setHoldY] = React.useState<number>(0);
@@ -142,7 +145,10 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
 
   React.useEffect(() => {
     ref.current?.addEventListener('wheel', onScroll, { passive: false });
-    return () => ref.current?.removeEventListener('wheel', onScroll)
+    // Cleanup
+    return () => {
+      ref.current?.removeEventListener('wheel', onScroll);
+    }
   }, [props.value]);
 
   const factorX = calcVectorX(-value);
@@ -170,7 +176,11 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
       onMouseLeave={releaseKnob}
       onMouseMove={moveKnob}
     >
-      <svg xmlns={svgxmlns} width={centerX * 2} height={centerY * 2}>
+      <svg
+        xmlns={svgxmlns}
+        width={centerX * 2}
+        height={centerY * 2}
+      >
         <path
           stroke="#666"
           fill="none"

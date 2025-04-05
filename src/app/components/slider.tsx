@@ -1,9 +1,6 @@
 import React from 'react';
 import { clamp, svgxmlns } from '../utils';
 
-/**
- * @description Slider Settings.
- */
 interface SliderSettings {
   h: number
   pd: number

@@ -91,10 +91,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     return () => {};
   });
 
-  /**
-   * @description General transformation of Audio.
-   * @param transformation Details.
-   */
   function transform(transformation: AudioTransformation) {
     setTransformationInProgress(true);
 
@@ -103,7 +99,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       transformation
     ).then(data => {
       audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
-      renderAudioWaveform({ ...track }, 200, timePerUnitLineDistanceSecs, true);
+      renderAudioWaveform({ ...track }, 400, timePerUnitLineDistanceSecs, true);
 
       dispatch(applyChangesToModifiedAudio({
         audioId: track.audioId,
@@ -125,7 +121,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   }
 
   function transformSwapStereo() {
-    transform(AudioTransformation.SwapStereo)
+    transform(AudioTransformation.SwapStereo);
   }
 
   function normalize() {
@@ -150,10 +146,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     setPlaybackRate(e);
   }
 
-  /**
-   * @description Change Mixer value
-   * @param e event details
-   */
   function changeMixer(e: React.KeyboardEvent<HTMLInputElement>) {
     const newMixerValue = parseInt((e.target as HTMLInputElement).value);
     audioManager.setMixerValue(track.audioId, newMixerValue);

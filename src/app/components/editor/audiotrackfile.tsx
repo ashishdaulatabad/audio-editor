@@ -8,7 +8,7 @@ import { deleteColor } from '@/app/services/random';
 import { RootState } from '@/app/state/store';
 import { FaTrash } from 'react-icons/fa';
 
-import { removeAudio } from '@/app/state/audiostate';
+import { removeAudioFromBank } from '@/app/state/audiostate';
 import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
 import {
   resetToDefault,
@@ -22,6 +22,7 @@ import {
 
 import { css } from '@/app/services/utils';
 import { Waveform } from '@/assets/wave';
+import { ChangeDetails, changeHistory, ChangeType, WorkspaceChange } from '@/app/services/changehistory';
 
 interface AudioTrackFileProps {
   isSame: boolean
@@ -31,15 +32,11 @@ interface AudioTrackFileProps {
 
 export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>) {
   const index = props.index;
-  const file = useSelector((state: RootState) => state.audioReducer.contents[index]);
+  const file = useSelector((state: RootState) => state.audioReducer.audioBankList[index]);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
   const dispatch = useDispatch();
 
-  /**
-   * @description Select currently selected slice.
-   * @param index 
-   */
-  function selectAudioSlice() {
+  function selectActiveAudioForScheduling() {
     dispatch(selectAudio({
       ...file,
       trackDetail: {
@@ -64,10 +61,20 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
 
   function onDeleteSelected() {
     /// Maybe make a common method for this.
-    audioManager.removeAllAudioFromScheduledNodes(file.audioId);
-    audioManager.deleteAudioFromSelectedAudioTracks(file.audioId);
-    audioManager.removeOffscreenCanvas(file.audioId);
-    audioManager.unregisterAudioFromAudioBank(file.audioId);
+    audioManager.cleanupAudioData(file.audioId);
+
+    // Currently delete all the audio changes
+    changeHistory.clearHistoryContainingItem(
+      WorkspaceChange.TrackChanges,
+      (item: ChangeDetails<AudioTrackDetails>) => {
+        if (item.changeType === ChangeType.Updated) {
+          return item.data.current.audioId === file.audioId
+        }
+        return item.data.audioId === file.audioId
+      }
+    );
+    // Also todo: Remove knob changes related to this track.
+    /// Also clear all possible history values that contains this audio ID
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
@@ -76,22 +83,23 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     // Cleanup opened window with same audio ids.
     dispatch(batchRemoveWindowWithUniqueIdentifier(allTrackAudioIds));
     // Cleanup tracks.
-    dispatch(removeAudioFromAllTracks(file.audioId));
+    dispatch(removeAudioFromAllTracks({
+      audioId: file.audioId,
+      noSnapshot: true
+    }));
     // Cleanup from audio list.
-    dispatch(removeAudio(index));
+    dispatch(removeAudioFromBank(index));
     // Delete annotated color
     deleteColor(file.colorAnnotation);
+
     // Reset to default
     if (props.selected) {
       dispatch(resetToDefault());
     }
+
     hideContextMenu();
   }
 
-  /**
-   * @description Open a custom context.
-   * @param event event details
-   */
   function openContextMenu(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     event.preventDefault();
 
@@ -110,7 +118,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       )}
       key={index}
       data-index={index}
-      onClick={selectAudioSlice}
+      onClick={selectActiveAudioForScheduling}
       onContextMenu={openContextMenu}
       style={{background: file.colorAnnotation}}
     >
