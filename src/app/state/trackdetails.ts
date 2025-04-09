@@ -17,6 +17,7 @@ import {
   Snapshot,
   WorkspaceChange
 } from '../services/changehistory';
+import { TimeframeMode } from '../components/player/player';
 
 /**
  * @description Information of the track, like start offset, end offset and selection.
@@ -66,12 +67,16 @@ export type AudioTrackDetails = AudioDetails & {
 
 /// Setting extra time buffer to 2 minutes.
 const initialState: {
-  status: Status,
-  maxTimeMicros: number,
+  status: Status
+  maxTimeMicros: number
+  timeframeMode: TimeframeMode
+  timePerUnitLineInSeconds: number
   trackDetails: AudioTrackDetails[][]
 } = {
   status: Status.Pause,
   maxTimeMicros: twoMinuteInMicros,
+  timeframeMode: TimeframeMode.Time,
+  timePerUnitLineInSeconds: 5,
   trackDetails: Array.from({length: 30}, () => [])
 };
 
@@ -556,7 +561,7 @@ export function undoSnapshotChange(
         const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
         console.assert(rest.trackDetail.scheduledKey === currentScheduledKey);
         trackDetails[trackNumber][audioIndex] = rest;
-        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][audioIndex].trackDetail)
+        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][audioIndex].trackDetail);
 
         break;
       }
@@ -662,6 +667,10 @@ export const trackDetailsSlice = createSlice({
         });
       }
     },
+    changeTimeframeMode(state, action: PayloadAction<TimeframeMode>) {
+      // Based on this, the timer may change.
+      state.timeframeMode = action.payload;
+    },
     /// Add an audio to certain track number
     addAudioToTrack(state, action: PayloadAction<{ trackNumber: number, track: AudioTrackDetails }>) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, addNewAudioToTrack);
@@ -669,8 +678,8 @@ export const trackDetailsSlice = createSlice({
       const { track } = action.payload;
       const currentTime = state.maxTimeMicros - twoMinuteInMicros;
 
-      const startTimeOfTrack = track.trackDetail.startOffsetInMicros ?? 0;
-      const endTimeOfTrack = track.trackDetail.endOffsetInMicros ?? ((track.duration as number) * SEC_TO_MICROSEC);
+      const startTimeOfTrack = track.trackDetail.startOffsetInMicros;
+      const endTimeOfTrack = track.trackDetail.endOffsetInMicros;
 
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
       const endTime = track.trackDetail.offsetInMicros + trackTotalTime;

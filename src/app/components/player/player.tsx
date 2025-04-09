@@ -13,7 +13,12 @@ import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from '@/assets/mixer';
 import { animationBatcher } from '@/app/services/animationbatch';
-import { SimpleDropdown } from '../shared/dropdown';
+import { SimpleDropdown } from '../shared/dropdown/dropdown';
+
+export enum TimeframeMode {
+  Time,
+  Beat
+}
 
 export function Timer() {
   const [timer, setTimer] = React.useState('00:00');
@@ -109,8 +114,23 @@ export function Player() {
     },
   ];
 
+  const timeframeModeOptions = [
+    {
+      label: 'Time',
+      value: TimeframeMode.Time,
+    },
+    {
+      label: 'Tempo',
+      value: TimeframeMode.Beat
+    }
+  ];
+
   function onThemeSelect(e: any) {
-    document.body.setAttribute('data-theme', e.value);
+    document.body.setAttribute('data-theme', e);
+  }
+
+  function setTimeframeModeValue(value: any) {
+    // setTimeframeModeValue
   }
 
   /**
@@ -137,7 +157,15 @@ export function Player() {
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
         <ul className="list-none flex flex-row">
-          <li className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none cursor-pointer">
+          <li className="inline-block hover:bg-slate-600 rounded-sm text-xl select-none cursor-pointer">
+            <SimpleDropdown
+              placeholder="SS"
+              label={(item) => <>{item.label}</>}
+              list={timeframeModeOptions}
+              onSelect={setTimeframeModeValue}
+            ></SimpleDropdown>
+          </li>
+          <li className="inline-block hover:bg-slate-600 rounded-sm text-xl select-none cursor-pointer">
             <SimpleDropdown
               placeholder="Select Theme"
               label={(item) => <>{item.label}</>}
