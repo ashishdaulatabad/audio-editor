@@ -157,7 +157,7 @@ export function Player() {
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
         <ul className="list-none flex flex-row">
-          <li className="inline-block hover:bg-slate-600 rounded-sm text-xl select-none cursor-pointer">
+          <li className="inline-block hover:bg-slate-600 rounded-sm select-none cursor-pointer">
             <SimpleDropdown
               placeholder="SS"
               label={(item) => <>{item.label}</>}
@@ -165,7 +165,7 @@ export function Player() {
               onSelect={setTimeframeModeValue}
             ></SimpleDropdown>
           </li>
-          <li className="inline-block hover:bg-slate-600 rounded-sm text-xl select-none cursor-pointer">
+          <li className="inline-block hover:bg-slate-600 rounded-sm select-none cursor-pointer">
             <SimpleDropdown
               placeholder="Select Theme"
               label={(item) => <>{item.label}</>}

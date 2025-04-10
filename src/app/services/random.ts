@@ -1,5 +1,6 @@
 const colorSet: Set<string> = new Set();
 const windowSet: Set<number> = new Set();
+const trackIdSet: Set<number> = new Set();
 
 export function randomColor() {
   let value = '';
@@ -18,6 +19,20 @@ export function randomColor() {
 
 export function deleteColor(color: string) {
   colorSet.delete(color);
+}
+
+export function getRandomTrackId(): number {
+  let value = 0;
+  do {
+    value = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  } while (trackIdSet.has(value));
+
+  trackIdSet.add(value);
+  return value;
+}
+
+export function deleteTrackId(id: number): boolean {
+  return trackIdSet.delete(id);
 }
 
 export function getRandomWindowId() {

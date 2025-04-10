@@ -18,6 +18,7 @@ import {
   WorkspaceChange
 } from '../services/changehistory';
 import { TimeframeMode } from '../components/player/player';
+import { deleteTrackId, getRandomTrackId } from '../services/random';
 
 /**
  * @description Information of the track, like start offset, end offset and selection.
@@ -54,6 +55,7 @@ const twoMinuteInMicros: number = 2 * 60 * SEC_TO_MICROSEC;
 export type ScheduledInformation = {
   offsetInMicros: number,
   scheduledKey: symbol,
+  id: number,
   trackNumber: number
 };
 
@@ -169,45 +171,6 @@ function deleteAudioFromTrack_(
   return trackDetails;
 }
 
-function selectAllTrackWithSelectedRegion(
-  trackDetails: AudioTrackDetails[][],
-  regionSelection: RegionSelection
-) {
-  const {
-    trackStart,
-    trackEnd,
-    pointStartSec,
-    pointEndSec,
-  } = regionSelection;
-
-  for (let index = 0; index < trackDetails.length; ++index) {
-    for (const track of trackDetails[index]) {
-      track.trackDetail.selected = index >= trackStart && 
-        index <= trackEnd &&
-        isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
-    }
-  }
-}
-
-function selectAllTrackWithinSeekbarSelection(
-  trackDetails: AudioTrackDetails[][],
-  timeSelection: TimeSectionSelection
-) {
-  const {
-    startTimeMicros,
-    endTimeMicros
-  } = timeSelection;
-
-  const pointStartSec = startTimeMicros / SEC_TO_MICROSEC;
-  const pointEndSec = endTimeMicros / SEC_TO_MICROSEC;
-
-  for (let index = 0; index < trackDetails.length; ++index) {
-    for (const track of trackDetails[index]) {
-      track.trackDetail.selected = isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
-    }
-  }
-}
-
 function markSelectionForAllAudioTracks(
   trackDetails: AudioTrackDetails[][],
   markAs: boolean
@@ -241,6 +204,7 @@ function cloneSingleAudioTrack(
     trackDetail: {
       ...track.trackDetail,
       scheduledKey: Symbol(),
+      id: getRandomTrackId(),
     }
   };
 
@@ -249,9 +213,9 @@ function cloneSingleAudioTrack(
   // Todo: Check adding immediately near the specified position, at the start or 
   // at the end, need to create a domino effect while scheduling track.
   trackDetails[trackNumber].push(clonedDetails);
-  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  // ));
+  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  ));
 
   return trackDetails;
 }
@@ -290,6 +254,7 @@ function cloneMultipleAudioTracks(
         ...track.trackDetail,
         // New cloned data: so new scheduled data.
         scheduledKey: Symbol(),
+        id: getRandomTrackId(),
       }
     };
     clonedDetails.trackDetail.selected = false;
@@ -312,7 +277,8 @@ function deleteSingleAudioTrack(
     audioIndex
   } = action;
 
-  trackDetails[trackNumber].splice(audioIndex, 1);
+  const removedTrack = trackDetails[trackNumber].splice(audioIndex, 1);
+  deleteTrackId(removedTrack[0].trackDetail.id);
   return trackDetails;
 }
 
@@ -334,7 +300,20 @@ function bulkDeleteTracks(
   );
 
   trackNumbers.forEach((trackNumber, index: number) => {
-    trackDetails[trackNumber] = trackDetails[trackNumber].filter((_, audioIndex) => !audioIndexes.includes(audioIndex));
+    const includedTracks: AudioTrackDetails[] = [], excludedTracks: AudioTrackDetails[] = [];
+
+    trackDetails[trackNumber].forEach((track, audioIndex) => {
+      if (!audioIndexes.includes(audioIndex)) {
+        includedTracks.push(track)
+      } else {
+        excludedTracks.push(track);
+      }
+    });
+
+    trackDetails[trackNumber] = includedTracks;
+    excludedTracks.forEach(excludedTrack => {
+      deleteTrackId(excludedTrack.trackDetail.id);
+    });
   });
 
   return trackDetails;
@@ -377,6 +356,7 @@ function sliceAudioTracksAtPoint(
           }
         }
 
+        // Creating a new track
         const secondHalf: AudioTrackDetails = {
           ...audio,
           trackDetail: {
@@ -384,6 +364,7 @@ function sliceAudioTracksAtPoint(
             scheduledKey: Symbol(),
             offsetInMicros: newEndPoint,
             startOffsetInMicros: oldStartOffset + firstEndDuration,
+            id: getRandomTrackId()
           }
         };
 
@@ -497,6 +478,8 @@ export type AudioTrackChangeDetails = AudioTrackDetails & {
   audioIndex: number
 }
 
+// Todo: Revisit and change based on scheduledKeys instead of trackNumber and audioIndex,
+// unless they are removed or added.
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
@@ -517,15 +500,28 @@ export function undoSnapshotChange(
         } = changeDetail.data;
 
         if (!redo) {
-          const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
+          const {
+            scheduledKey: currentScheduledKey,
+            id 
+          } = trackDetails[trackNumber][audioIndex].trackDetail;
 
           console.assert(trackDetail.scheduledKey === currentScheduledKey);
+          deleteTrackId(id);
           audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
           // Tracks cannot be removed like this:
           trackDetails[trackNumber].splice(audioIndex, 1);
         } else {
-          audioManager.scheduleSingleTrack(audioId, trackDetail);
-          trackDetails[trackNumber].splice(audioIndex, 0, changeDetail.data);
+          const newData = {
+            ...changeDetail.data,
+            trackDetail: {
+              ...changeDetail.data.trackDetail,
+              // We create a new one to avoid collision.
+              id: getRandomTrackId()
+            }
+          };
+
+          audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
+          trackDetails[trackNumber].splice(audioIndex, 0, newData);
         }
 
         break;
@@ -540,11 +536,22 @@ export function undoSnapshotChange(
         } = changeDetail.data;
 
         if (!redo) {
-          trackDetails[trackNumber].splice(audioIndex, 0, rest);
-          audioManager.scheduleSingleTrack(rest.audioId, rest.trackDetail)
+          const newData = {
+            ...rest,
+            trackDetail: {
+              ...rest.trackDetail,
+              id: getRandomTrackId(),
+            }
+          };
+
+          trackDetails[trackNumber].splice(audioIndex, 0, newData);
+          audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail)
         } else {
           console.assert(trackDetails[trackNumber][audioIndex].trackDetail.scheduledKey === rest.trackDetail.scheduledKey);
 
+          const trackId = trackDetails[trackNumber][audioIndex].trackDetail.id;
+
+          deleteTrackId(trackId);
           audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
           trackDetails[trackNumber].splice(audioIndex, 1);
         }

@@ -23,6 +23,9 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const selectedStart = (((props.selectedContent?.startTimeMicros || 0) / timeUnitLine) * lineDist);
   const selectedEnd = (((props.selectedContent?.endTimeMicros || 0) / timeUnitLine) * lineDist);
 
+  if (trackData.length) {
+    console.log(trackData.map(track => track.trackDetail.id));
+  }
   return (
     <div 
       className="track relative box-border border-solid border-slate-700"
@@ -36,7 +39,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
             trackId={props.id}
             timeUnitPerLineDistanceSecs={timeUnit}
             audioDetails={track}
-            key={index}
+            key={track.trackDetail.id}
             height={props.h}
           />
         ))

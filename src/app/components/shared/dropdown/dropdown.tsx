@@ -73,7 +73,7 @@ export function SimpleDropdown<Item extends Object>(
 
   // To do: Create a global panel that should render just below this list of content.
   return (
-    <div ref={ref} className="list p-3 min-w-36 border border-solid border-white/20 relative text-xl text-center content-center items-center">
+    <div ref={ref} className="list p-3 min-w-36 border border-solid border-white/20 relative text-center content-center items-center">
       <div className="label" onClick={prepareDropdownPanel}>
         {
           !selectedItem ? 

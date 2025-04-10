@@ -18,8 +18,12 @@ import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { PromptMenuContext } from '@/app/providers/customprompt';
 import { clamp } from '@/app/utils';
-import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
+import {
+  ResizingGroup,
+  ResizingHandle,
+  ResizingWindowPanel
+} from '../shared/resizablepanels';
 import {
   addWindowToAction,
   batchRemoveWindowWithUniqueIdentifier,
@@ -57,7 +61,7 @@ import {
   togglePlay,
   TrackInformation
 } from '@/app/state/trackdetails';
-import { getRandomWindowId } from '@/app/services/random';
+import { getRandomTrackId, getRandomWindowId } from '@/app/services/random';
 import { WindowManipulationMode } from '../shared/window';
 import { changeHistory, WorkspaceChange } from '@/app/services/changehistory';
 
@@ -166,7 +170,7 @@ export function Editor() {
         offsetInMicros,
         startOffsetInMicros,
         endOffsetInMicros
-      }
+      };
     }
 
     return {
@@ -208,6 +212,7 @@ export function Editor() {
                 trackNumber: intIndex,
                 offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
+                id: getRandomTrackId(),
                 startOffsetInMicros: 0,
                 playbackRate: 1,
                 endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
@@ -620,6 +625,7 @@ export function Editor() {
         offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
         endOffsetInMicros,
+        id: getRandomTrackId(),
         playbackRate: 1,
         startOffsetInMicros,
         selected: track.trackDetail.selected
@@ -709,6 +715,7 @@ export function Editor() {
       trackDetail: {
         ...currentTrack.trackDetail,
         offsetInMicros,
+        id: getRandomTrackId(),
         trackNumber,
         scheduledKey: Symbol(),
       }
