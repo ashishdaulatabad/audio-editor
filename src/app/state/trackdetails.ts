@@ -90,7 +90,7 @@ const initialState: {
 function getMaxTime(trackDetails: AudioTrackDetails[][]): number {
   return trackDetails.reduce((maxTime: number, currentArray) => {
     const maxTimeInCurrentTrack = currentArray.reduce((maxTime: number, currentTrack) => {
-      // Should always exist in seconds
+      // Should always exist in microseconds
       const startTimeOfTrack = currentTrack.trackDetail.startOffsetInMicros;
       const endTimeOfTrack = currentTrack.trackDetail.endOffsetInMicros;
 
@@ -155,22 +155,6 @@ function addNewAudioToTrack(
   return trackDetails;
 }
 
-function deleteAudioFromTrack_(
-  trackDetails: AudioTrackDetails[][],
-  action: {
-    trackNumber: number,
-    audioIndex: number
-  }
-): AudioTrackDetails[][] {
-  const {
-    trackNumber,
-    audioIndex
-  } = action;
-  // No need for sorting, since they'll be already sorted in-place.
-  const _ = trackDetails[trackNumber].splice(audioIndex, 1);
-  return trackDetails;
-}
-
 function markSelectionForAllAudioTracks(
   trackDetails: AudioTrackDetails[][],
   markAs: boolean
@@ -213,9 +197,9 @@ function cloneSingleAudioTrack(
   // Todo: Check adding immediately near the specified position, at the start or 
   // at the end, need to create a domino effect while scheduling track.
   trackDetails[trackNumber].push(clonedDetails);
-  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  ));
+  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  // ));
 
   return trackDetails;
 }
@@ -458,6 +442,8 @@ function setMultipleOffsets(
     trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   }
 
+  // Todo: Sort them after moving all these tracks.
+
   return trackDetails;
 }
 
@@ -698,7 +684,7 @@ export const trackDetailsSlice = createSlice({
     },
     /// Delete the audio to certain track number
     deleteAudioFromTrack(state, action: PayloadAction<{trackNumber: number, audioIndex: number}>) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteAudioFromTrack_);
+      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteSingleAudioTrack);
       // Now find the next longest track among all the tracks exists with offset
       const maxTime = getMaxTime(state.trackDetails);
 

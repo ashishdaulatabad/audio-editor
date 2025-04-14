@@ -625,7 +625,7 @@ export function Editor() {
         offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
         endOffsetInMicros,
-        id: getRandomTrackId(),
+        id: track.trackDetail.id,
         playbackRate: 1,
         startOffsetInMicros,
         selected: track.trackDetail.selected

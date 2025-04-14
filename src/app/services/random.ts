@@ -37,7 +37,7 @@ export function deleteTrackId(id: number): boolean {
 
 export function getRandomWindowId() {
   let value = 0;
-  do {} while (windowSet.has((value = Math.round(Math.random() * (1 << 30)))));
+  do {} while (windowSet.has((value = Math.round(Math.random() * Number.MAX_SAFE_INTEGER))));
 
   windowSet.add(value);
 
