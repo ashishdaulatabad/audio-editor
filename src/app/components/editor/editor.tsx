@@ -212,7 +212,7 @@ export function Editor() {
                 trackNumber: intIndex,
                 offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
-                id: getRandomTrackId(),
+                id: -1,
                 startOffsetInMicros: 0,
                 playbackRate: 1,
                 endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
@@ -715,7 +715,7 @@ export function Editor() {
       trackDetail: {
         ...currentTrack.trackDetail,
         offsetInMicros,
-        id: getRandomTrackId(),
+        id: -1,
         trackNumber,
         scheduledKey: Symbol(),
       }

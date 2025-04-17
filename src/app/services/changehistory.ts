@@ -45,7 +45,7 @@ export interface Change<ChangeProperties> {
 }
 
 export type Snapshot<Type> = {
-  readonly state: Type
+  state: Type
 }
 
 /**

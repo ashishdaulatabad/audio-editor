@@ -74,12 +74,14 @@ const initialState: {
   timeframeMode: TimeframeMode
   timePerUnitLineInSeconds: number
   trackDetails: AudioTrackDetails[][]
+  trackUniqueIds: Array<number>
 } = {
   status: Status.Pause,
   maxTimeMicros: twoMinuteInMicros,
   timeframeMode: TimeframeMode.Time,
   timePerUnitLineInSeconds: 5,
-  trackDetails: Array.from({length: 30}, () => [])
+  trackDetails: Array.from({length: 30}, () => []),
+  trackUniqueIds: new Array<number>(),
 };
 
 /**
@@ -136,6 +138,25 @@ function processTrackHistory<Action>(
   return finalState;
 }
 
+function syncAllIds(state: AudioTrackDetails[][], existingIds: Array<number>) {
+  const newIds = [];
+
+  for (const trackElements of state) {
+    for (const trackElement of trackElements) {
+      const id = trackElement.trackDetail.id;
+
+      if (id === -1) {
+        const newId = getRandomTrackId(existingIds);
+        trackElement.trackDetail.id = newId;
+      }
+
+      newIds.push(trackElement.trackDetail.id);
+    }
+  }
+
+  return newIds;
+}
+
 function addNewAudioToTrack(
   trackDetails: AudioTrackDetails[][],
   action: {
@@ -188,7 +209,7 @@ function cloneSingleAudioTrack(
     trackDetail: {
       ...track.trackDetail,
       scheduledKey: Symbol(),
-      id: getRandomTrackId(),
+      id: -1,
     }
   };
 
@@ -197,9 +218,9 @@ function cloneSingleAudioTrack(
   // Todo: Check adding immediately near the specified position, at the start or 
   // at the end, need to create a domino effect while scheduling track.
   trackDetails[trackNumber].push(clonedDetails);
-  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  // ));
+  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  ));
 
   return trackDetails;
 }
@@ -238,7 +259,7 @@ function cloneMultipleAudioTracks(
         ...track.trackDetail,
         // New cloned data: so new scheduled data.
         scheduledKey: Symbol(),
-        id: getRandomTrackId(),
+        id: -1,
       }
     };
     clonedDetails.trackDetail.selected = false;
@@ -261,8 +282,7 @@ function deleteSingleAudioTrack(
     audioIndex
   } = action;
 
-  const removedTrack = trackDetails[trackNumber].splice(audioIndex, 1);
-  deleteTrackId(removedTrack[0].trackDetail.id);
+  trackDetails[trackNumber].splice(audioIndex, 1);
   return trackDetails;
 }
 
@@ -295,9 +315,6 @@ function bulkDeleteTracks(
     });
 
     trackDetails[trackNumber] = includedTracks;
-    excludedTracks.forEach(excludedTrack => {
-      deleteTrackId(excludedTrack.trackDetail.id);
-    });
   });
 
   return trackDetails;
@@ -348,7 +365,7 @@ function sliceAudioTracksAtPoint(
             scheduledKey: Symbol(),
             offsetInMicros: newEndPoint,
             startOffsetInMicros: oldStartOffset + firstEndDuration,
-            id: getRandomTrackId()
+            id: -1
           }
         };
 
@@ -362,11 +379,11 @@ function sliceAudioTracksAtPoint(
       audioTracks.push(pendingTrack);
     }
 
-    if (pendingTracksToAppend.length > 0) {
-      audioTracks = audioTracks.sort((first, second) => (
-        first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
-      ));
-    }
+    // if (pendingTracksToAppend.length > 0) {
+    //   audioTracks = audioTracks.sort((first, second) => (
+    //     first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
+    //   ));
+    // }
   }
 
   audioManager.rescheduleAllTracks(trackDetails, slicesToReschedule);
@@ -396,9 +413,9 @@ function setTrackOffsetToAFinalPoint(
   trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMicros = startOffsetInMicros;
 
-  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  ));
+  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  // ));
 
   return trackDetails;
 }
@@ -442,6 +459,13 @@ function setMultipleOffsets(
     trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   }
 
+  // const uniqueTrackNumbers = [...new Set(allTrackNumbers)];
+  // uniqueTrackNumbers.forEach(trackNumber => {
+  //   trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+  //     a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  //   ));
+  // });
+
   // Todo: Sort them after moving all these tracks.
 
   return trackDetails;
@@ -469,12 +493,16 @@ export type AudioTrackChangeDetails = AudioTrackDetails & {
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
+  trackIdSet: Array<number>,
   redo = false
 ) {
   // Reverse order: changes are inserted in order, splicing
   // should keep all indexes intact.
   // Another way is to do filter.
-  for (const changeDetail of changeDetails.reverse()) {
+  const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
+  const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
+
+  for (const changeDetail of changeDetails) {
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
@@ -485,29 +513,31 @@ export function undoSnapshotChange(
           trackDetail
         } = changeDetail.data;
 
+        // Undo state: Remove
         if (!redo) {
           const {
             scheduledKey: currentScheduledKey,
             id 
           } = trackDetails[trackNumber][audioIndex].trackDetail;
-
           console.assert(trackDetail.scheduledKey === currentScheduledKey);
-          deleteTrackId(id);
+          deleteTrackId(trackIdSet, id);
+          // console.log(audioIndex, cloneValues(trackDetails[trackNumber]), trackDetail.scheduledKey === currentScheduledKey, deleteTrackId(id));
           audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
           // Tracks cannot be removed like this:
-          trackDetails[trackNumber].splice(audioIndex, 1);
+          audioTracksToRemove[trackNumber].push(audioIndex);
+          // trackDetails[trackNumber].splice(audioIndex, 1);
         } else {
           const newData = {
             ...changeDetail.data,
             trackDetail: {
               ...changeDetail.data.trackDetail,
               // We create a new one to avoid collision.
-              id: getRandomTrackId()
+              id: -1
             }
           };
-
+          tracksToAdd[trackNumber].push(newData);
           audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
-          trackDetails[trackNumber].splice(audioIndex, 0, newData);
+          // trackDetails[trackNumber].splice(audioIndex, 0, newData);
         }
 
         break;
@@ -526,20 +556,21 @@ export function undoSnapshotChange(
             ...rest,
             trackDetail: {
               ...rest.trackDetail,
-              id: getRandomTrackId(),
+              id: -1,
             }
           };
-
-          trackDetails[trackNumber].splice(audioIndex, 0, newData);
+          tracksToAdd[trackNumber].push(newData);
+          // trackDetails[trackNumber].splice(audioIndex, 0, newData);
           audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail)
         } else {
           console.assert(trackDetails[trackNumber][audioIndex].trackDetail.scheduledKey === rest.trackDetail.scheduledKey);
 
           const trackId = trackDetails[trackNumber][audioIndex].trackDetail.id;
 
-          deleteTrackId(trackId);
+          deleteTrackId(trackIdSet, trackId);
           audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
-          trackDetails[trackNumber].splice(audioIndex, 1);
+          audioTracksToRemove[trackNumber].push(audioIndex);
+          // trackDetails[trackNumber].splice(audioIndex, 1);
         }
 
         break;
@@ -550,16 +581,28 @@ export function undoSnapshotChange(
         const { trackNumber, audioIndex, ...rest } = !redo ? 
           changeDetail.data.previous :
           changeDetail.data.current;
+        const { audioIndex: previousAudioIndex } = !redo ? 
+          changeDetail.data.current :
+          changeDetail.data.previous;
 
-        const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][audioIndex].trackDetail;
+        const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][previousAudioIndex].trackDetail;
         console.assert(rest.trackDetail.scheduledKey === currentScheduledKey);
-        trackDetails[trackNumber][audioIndex] = rest;
-        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][audioIndex].trackDetail);
+        trackDetails[trackNumber][previousAudioIndex] = rest;
+        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][previousAudioIndex].trackDetail);
 
         break;
       }
     }
   }
+
+  tracksToAdd.forEach((track, trackNumber) => {
+    const audioIndexes = audioTracksToRemove[trackNumber];
+
+    trackDetails[trackNumber] = trackDetails[trackNumber]
+      .filter((_, index) => audioIndexes.indexOf(index) === -1)
+      .concat(track)
+      // .sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
+  });
 }
 
 /**
@@ -665,8 +708,15 @@ export const trackDetailsSlice = createSlice({
       state.timeframeMode = action.payload;
     },
     /// Add an audio to certain track number
-    addAudioToTrack(state, action: PayloadAction<{ trackNumber: number, track: AudioTrackDetails }>) {
+    addAudioToTrack(
+      state,
+      action: PayloadAction<{
+        trackNumber: number,
+        track: AudioTrackDetails
+      }>
+    ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, addNewAudioToTrack);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
       // Calculate the maxTime 
       const { track } = action.payload;
       const currentTime = state.maxTimeMicros - twoMinuteInMicros;
@@ -683,8 +733,15 @@ export const trackDetailsSlice = createSlice({
       }
     },
     /// Delete the audio to certain track number
-    deleteAudioFromTrack(state, action: PayloadAction<{trackNumber: number, audioIndex: number}>) {
+    deleteAudioFromTrack(
+      state,
+      action: PayloadAction<{
+        trackNumber: number, 
+        audioIndex: number
+      }>
+    ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteSingleAudioTrack);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
       // Now find the next longest track among all the tracks exists with offset
       const maxTime = getMaxTime(state.trackDetails);
 
@@ -734,6 +791,7 @@ export const trackDetailsSlice = createSlice({
       }>
     ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, cloneMultipleAudioTracks);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
     deleteMultipleAudioTrack(
       state,
@@ -743,6 +801,7 @@ export const trackDetailsSlice = createSlice({
       }>
     ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, bulkDeleteTracks);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
 
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
@@ -756,10 +815,12 @@ export const trackDetailsSlice = createSlice({
       }>
     ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, cloneSingleAudioTrack);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
 
     sliceAudioTracks(state, action: PayloadAction<SlicerSelection>) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, sliceAudioTracksAtPoint);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
 
     /**
@@ -820,7 +881,10 @@ export const trackDetailsSlice = createSlice({
         transformation: AudioTransformation
       }>
     ) {
-      const { audioId, transformation } = action.payload;
+      const {
+        audioId,
+        transformation
+      } = action.payload;
 
       for (const track of state.trackDetails) {
         for (const audio of track) {
@@ -857,12 +921,16 @@ export const trackDetailsSlice = createSlice({
       audioId: symbol,
       noSnapshot: true
     }>){
-      const { audioId, noSnapshot } = action.payload;
+      const {
+        audioId,
+        noSnapshot
+      } = action.payload;
       if (!noSnapshot) {
         state.trackDetails = processTrackHistory(state.trackDetails, audioId, removeAudioFromAllScheduledTrack);
       } else {
         state.trackDetails = removeAudioFromAllScheduledTrack(state.trackDetails, audioId);
       }
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
 
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
@@ -875,7 +943,8 @@ export const trackDetailsSlice = createSlice({
     }>) {
       const { updatedChanges, redo } = action.payload;
 
-      undoSnapshotChange(state.trackDetails, updatedChanges, redo);
+      undoSnapshotChange(state.trackDetails, updatedChanges, state.trackUniqueIds, redo);
+      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);

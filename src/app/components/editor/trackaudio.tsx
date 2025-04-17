@@ -240,6 +240,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     <div
       title={`Track: ${track.audioName}`}
       ref={divRef}
+      data-id={track.trackDetail.id}
       data-audioid={props.index}
       data-trackid={props.trackId}
       data-selected={track.trackDetail.selected}
