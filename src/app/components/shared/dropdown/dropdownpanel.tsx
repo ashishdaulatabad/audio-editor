@@ -44,6 +44,11 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
       onSelect
     } = info;
 
+    if (content === itemList) {
+      hideDropdownPanel();
+      return;      
+    }
+
     setLeft(x);
     setTop(y);
     setItemList(content)

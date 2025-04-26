@@ -4,6 +4,8 @@ import {
   DropdownPanelContextInfo,
   ListItem
 } from './dropdownpanel';
+import { FaChevronDown } from 'react-icons/fa';
+import { css } from '@/app/services/utils';
 
 export type SimpleDropdownProps<Item extends Object> = {
   /**
@@ -40,7 +42,7 @@ export function SimpleDropdown<Item extends Object>(
 
   const { 
     showDropdownPanel,
-    // hideDropdownPanel
+    hideDropdownPanel
   } = React.useContext(DropdownPanelContext) as DropdownPanelContextInfo<Item>;
 
   function prepareDropdownPanel() {
@@ -73,13 +75,19 @@ export function SimpleDropdown<Item extends Object>(
 
   // To do: Create a global panel that should render just below this list of content.
   return (
-    <div ref={ref} className="list p-3 min-w-36 border border-solid border-white/20 relative text-center content-center items-center">
-      <div className="label" onClick={prepareDropdownPanel}>
+    <div
+      ref={ref}
+      className={css(
+        "list p-3 min-w-36 border border-solid border-white/20 relative text-center content-center items-center",
+      )}
+    >
+      <div className="label flex text-center content-center justify-between" onClick={prepareDropdownPanel}>
         {
           !selectedItem ? 
             <span className="placeholder">{props.placeholder ?? ''}</span> :
             <span className="selected-item">{props.label(selectedItem)}</span>
         }
+        <FaChevronDown className="mt-1" />
       </div>
     </div>
   );

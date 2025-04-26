@@ -88,51 +88,6 @@ export function Player() {
     )
   }
 
-  const themeOptions: {
-    label: string,
-    value: string
-  }[] = [
-    {
-      label: 'Default',
-      value: 'default'
-    },
-    {
-      label: 'Blue',
-      value: 'blueacc'
-    },
-    {
-      label: 'Red',
-      value: 'redacc'
-    },
-    {
-      label: 'Magenta',
-      value: 'magentaacc'
-    },
-    {
-      label: 'Green',
-      value: 'greenacc'
-    },
-  ];
-
-  const timeframeModeOptions = [
-    {
-      label: 'Time',
-      value: TimeframeMode.Time,
-    },
-    {
-      label: 'Tempo',
-      value: TimeframeMode.Beat
-    }
-  ];
-
-  function onThemeSelect(e: any) {
-    document.body.setAttribute('data-theme', e);
-  }
-
-  function setTimeframeModeValue(value: any) {
-    // setTimeframeModeValue
-  }
-
   /**
    * @description Exporting into audio file.
    * @todo: This.
@@ -157,22 +112,6 @@ export function Player() {
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
         <ul className="list-none flex flex-row">
-          <li className="inline-block hover:bg-slate-600 rounded-sm select-none cursor-pointer">
-            <SimpleDropdown
-              placeholder="SS"
-              label={(item) => <>{item.label}</>}
-              list={timeframeModeOptions}
-              onSelect={setTimeframeModeValue}
-            ></SimpleDropdown>
-          </li>
-          <li className="inline-block hover:bg-slate-600 rounded-sm select-none cursor-pointer">
-            <SimpleDropdown
-              placeholder="Select Theme"
-              label={(item) => <>{item.label}</>}
-              list={themeOptions}
-              onSelect={onThemeSelect}
-            ></SimpleDropdown>
-          </li>
           <li
             onClick={exportIntoAudioFile}
             className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
