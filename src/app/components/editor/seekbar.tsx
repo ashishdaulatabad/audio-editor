@@ -5,7 +5,7 @@ import { audioManager } from '@/app/services/audiotrackmanager';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/state/store';
 import { ModeType } from './toolkit';
-import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
+import { SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
 
 /**
  * @description Timeframe selected by the user.

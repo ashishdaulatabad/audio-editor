@@ -1,7 +1,7 @@
 import React from "react";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
-import { Status } from "@/app/state/trackdetails";
+import { Status } from "@/app/state/trackdetails/trackdetails";
 import { useSelector } from "react-redux";
 import { animationBatcher } from "@/app/services/animationbatch";
 

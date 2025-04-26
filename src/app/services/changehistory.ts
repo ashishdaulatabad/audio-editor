@@ -1,5 +1,8 @@
-import { compareSnapshots, AudioTrackDetails } from '../state/trackdetails';
+import {
+  AudioTrackDetails
+} from '@/app/state/trackdetails/trackdetails';
 import { cloneValues } from './noderegistry';
+import { compareSnapshots } from '@/app/state/trackdetails/tracksnapshots';
 
 /**
  * @description Change Type performed

@@ -4,7 +4,7 @@ import { svgxmlns } from '@/app/utils'
 import { useSelector } from 'react-redux';
 import { TrackAudio } from './trackaudio';
 import { TimeSectionSelection } from './seekbar';
-import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
+import { SEC_TO_MICROSEC } from '@/app/state//trackdetails/trackdetails';
 
 interface TrackProps {
   id: number

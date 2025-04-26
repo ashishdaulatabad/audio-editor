@@ -31,17 +31,6 @@ import {
   setWindowPosition,
 } from '@/app/state/windowstore';
 import {
-  cloneAudioTrack,
-  cloneMultipleAudioTrack,
-  deleteMultipleAudioTrack,
-  deselectAllTracks,
-  rollbackChanges,
-  ScheduledInformation,
-  SEC_TO_MICROSEC,
-  selectAllTracks,
-  selectTracksWithinSelectedSeekbarSection,
-} from '../../state/trackdetails';
-import {
   createAudioData,
   css,
   getTrackAudioElement,
@@ -59,11 +48,26 @@ import {
   sliceAudioTracks,
   Status,
   togglePlay,
+  rollbackChanges,
+  cloneAudioTrack,
+  cloneMultipleAudioTrack,
+  deleteMultipleAudioTrack,
+  ScheduledInformation,
+  SEC_TO_MICROSEC,
+  deselectAllTracks,
+  selectAllTracks,
+  selectTracksWithinSelectedSeekbarSection,
   TrackInformation
-} from '@/app/state/trackdetails';
-import { getRandomTrackId, getRandomWindowId } from '@/app/services/random';
+} from '@/app/state/trackdetails/trackdetails';
+import {
+  getRandomTrackId,
+  getRandomWindowId
+} from '@/app/services/random';
 import { WindowManipulationMode } from '../shared/window';
-import { changeHistory, WorkspaceChange } from '@/app/services/changehistory';
+import {
+  changeHistory,
+  WorkspaceChange
+} from '@/app/services/changehistory';
 
 /**
  * @description Movable Type, for handling all the move events.

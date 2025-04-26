@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { RootState } from '@/app/state/store';
-import { Status, togglePlay } from '@/app/state/trackdetails';
+import { Status, togglePlay } from '@/app/state/trackdetails/trackdetails';
 import { Pause } from '@/assets/pause';
 import { Play } from '@/assets/play';
 import { VolumeLevels } from './volumelevels';

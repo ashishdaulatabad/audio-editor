@@ -1,11 +1,14 @@
 import { TimeSectionSelection } from '../components/editor/seekbar';
 import { AudioDetails } from '../state/audiostate';
-import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
 import { clamp } from '../utils';
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
 import { Mixer } from './mixer';
 import { addToAudioNodeRegistryList, deregisterFromAudioNodeRegistryList } from './noderegistry';
+import {
+  AudioTrackDetails,
+  SEC_TO_MICROSEC
+} from '@/app/state/trackdetails/trackdetails';
 
 /**
  * @description Type of Multiselected DOM elements that are selected.

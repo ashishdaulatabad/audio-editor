@@ -1,7 +1,7 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { addIntoAudioBank, AudioDetails } from '@/app/state/audiostate';
-import { AudioTrackDetails, deleteAudioFromTrack, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
+import { AudioTrackDetails, deleteAudioFromTrack, SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
 import { Waveform } from '@/assets/wave';
 import { Canvas } from '../shared/customcanvas';
 import { css } from '@/app/services/utils';

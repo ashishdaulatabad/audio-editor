@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AudioDetails } from './audiostate';
-import { audioService } from '../services/audioservice';
-import { audioManager } from '../services/audiotrackmanager';
-import { RegionSelection } from '../components/editor/regionselect';
-import { SlicerSelection } from '../components/editor/slicer';
-import { AudioTransformation } from '../services/interfaces';
-import { TimeSectionSelection } from '../components/editor/seekbar';
-import { animationBatcher } from '../services/animationbatch';
-import { compareValues, cloneValues } from '../services/noderegistry';
+import { AudioDetails } from '../audiostate';
+import { audioService } from '@/app/services/audioservice';
+import { audioManager } from '@/app/services/audiotrackmanager';
+import { RegionSelection } from '@/app/components/editor/regionselect';
+import { SlicerSelection } from '@/app/components/editor/slicer';
+import { AudioTransformation } from '@/app/services/interfaces';
+import { TimeSectionSelection } from '@/app/components/editor/seekbar';
+import { animationBatcher } from '@/app/services/animationbatch';
+import { compareValues, cloneValues } from '@/app/services/noderegistry';
 
 import {
   ChangeDetails,
@@ -16,9 +16,10 @@ import {
   createSnapshot,
   Snapshot,
   WorkspaceChange
-} from '../services/changehistory';
-import { TimeframeMode } from '../components/player/player';
-import { deleteTrackId, getRandomTrackId } from '../services/random';
+} from '@/app/services/changehistory';
+import { TimeframeMode } from '@/app/components/player/player';
+import { deleteTrackId, getRandomTrackId } from '@/app/services/random';
+import { undoSnapshotChange } from './tracksnapshots';
 
 /**
  * @description Information of the track, like start offset, end offset and selection.
@@ -485,203 +486,6 @@ function removeAudioFromAllScheduledTrack(
 
 export type AudioTrackChangeDetails = AudioTrackDetails & {
   trackNumber: number
-  audioIndex: number
-}
-
-// Todo: Revisit and change based on scheduledKeys instead of trackNumber and audioIndex,
-// unless they are removed or added.
-export function undoSnapshotChange(
-  trackDetails: AudioTrackDetails[][],
-  changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
-  trackIdSet: Array<number>,
-  redo = false
-) {
-  // Reverse order: changes are inserted in order, splicing
-  // should keep all indexes intact.
-  // Another way is to do filter.
-  const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
-  const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
-
-  for (const changeDetail of changeDetails) {
-    switch (changeDetail.changeType) {
-      // Remove the values.
-      case ChangeType.NewlyCreated: {
-        const {
-          trackNumber,
-          audioIndex,
-          audioId,
-          trackDetail
-        } = changeDetail.data;
-
-        // Undo state: Remove
-        if (!redo) {
-          const {
-            scheduledKey: currentScheduledKey,
-            id 
-          } = trackDetails[trackNumber][audioIndex].trackDetail;
-          console.assert(trackDetail.scheduledKey === currentScheduledKey);
-          deleteTrackId(trackIdSet, id);
-          // console.log(audioIndex, cloneValues(trackDetails[trackNumber]), trackDetail.scheduledKey === currentScheduledKey, deleteTrackId(id));
-          audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
-          // Tracks cannot be removed like this:
-          audioTracksToRemove[trackNumber].push(audioIndex);
-          // trackDetails[trackNumber].splice(audioIndex, 1);
-        } else {
-          const newData = {
-            ...changeDetail.data,
-            trackDetail: {
-              ...changeDetail.data.trackDetail,
-              // We create a new one to avoid collision.
-              id: -1
-            }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
-          // trackDetails[trackNumber].splice(audioIndex, 0, newData);
-        }
-
-        break;
-      };
-
-      // Add them back
-      case ChangeType.Removed: {
-        const {
-          trackNumber,
-          audioIndex,
-          ...rest
-        } = changeDetail.data;
-
-        if (!redo) {
-          const newData = {
-            ...rest,
-            trackDetail: {
-              ...rest.trackDetail,
-              id: -1,
-            }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          // trackDetails[trackNumber].splice(audioIndex, 0, newData);
-          audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail)
-        } else {
-          console.assert(trackDetails[trackNumber][audioIndex].trackDetail.scheduledKey === rest.trackDetail.scheduledKey);
-
-          const trackId = trackDetails[trackNumber][audioIndex].trackDetail.id;
-
-          deleteTrackId(trackIdSet, trackId);
-          audioManager.removeTrackFromScheduledNodes(trackDetails[trackNumber][audioIndex]);
-          audioTracksToRemove[trackNumber].push(audioIndex);
-          // trackDetails[trackNumber].splice(audioIndex, 1);
-        }
-
-        break;
-      };
-
-      // Change to previous
-      case ChangeType.Updated: {
-        const { trackNumber, audioIndex, ...rest } = !redo ? 
-          changeDetail.data.previous :
-          changeDetail.data.current;
-        const { audioIndex: previousAudioIndex } = !redo ? 
-          changeDetail.data.current :
-          changeDetail.data.previous;
-
-        const { scheduledKey: currentScheduledKey } = trackDetails[trackNumber][previousAudioIndex].trackDetail;
-        console.assert(rest.trackDetail.scheduledKey === currentScheduledKey);
-        trackDetails[trackNumber][previousAudioIndex] = rest;
-        audioManager.rescheduleTrackFromScheduledNodes(currentScheduledKey, trackDetails[trackNumber][previousAudioIndex].trackDetail);
-
-        break;
-      }
-    }
-  }
-
-  tracksToAdd.forEach((track, trackNumber) => {
-    const audioIndexes = audioTracksToRemove[trackNumber];
-
-    trackDetails[trackNumber] = trackDetails[trackNumber]
-      .filter((_, index) => audioIndexes.indexOf(index) === -1)
-      .concat(track)
-      // .sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
-  });
-}
-
-/**
- * @description Compare snapshot with previous snapshot, used with change history
- * for storing changes between action..
- * @param snapshot captured snapshot,
- * @param trackDetails 
- */
-export function compareSnapshots(
-  snapshot: Snapshot<AudioTrackDetails[][]>, 
-  trackDetails: AudioTrackDetails[][]
-): Array<ChangeDetails<AudioTrackChangeDetails>> {
-  const { state } = snapshot;
-  const changedDetails: ChangeDetails<AudioTrackChangeDetails>[] = [];
-
-  for (let trackIndex = 0; trackIndex < trackDetails.length; ++trackIndex) {
-    const previousTrack = state[trackIndex];
-    const currentTrack = trackDetails[trackIndex];
-
-    // Get all unique keys
-    const visitedScheduledTracks = currentTrack
-      .map(track => track.trackDetail.scheduledKey)
-      .concat(previousTrack.map(track => track.trackDetail.scheduledKey))
-      .filter((trackKey, index, trackArray) => trackArray.indexOf(trackKey) === index);
-
-    // Check if two keys are same.
-    for (const key of visitedScheduledTracks) {
-      const currentScheduledTrackIndex = currentTrack.findIndex(track => (
-        track.trackDetail.scheduledKey === key
-      ));
-      const previousScheduledTrackIndex = previousTrack.findIndex(track => (
-        track.trackDetail.scheduledKey === key
-      ));
-
-      if (currentScheduledTrackIndex > -1 && previousScheduledTrackIndex > -1) {
-        // Perform action if both are not equal.
-        // Add updated values to the track
-        if (!compareValues(currentTrack[currentScheduledTrackIndex], previousTrack[previousScheduledTrackIndex])) {
-          changedDetails.push({
-            changeType: ChangeType.Updated,
-            data: {
-              previous: {
-                ...previousTrack[previousScheduledTrackIndex],
-                trackNumber: trackIndex,
-                audioIndex: previousScheduledTrackIndex
-              },
-              current: {
-                ...currentTrack[currentScheduledTrackIndex],
-                trackNumber: trackIndex,
-                audioIndex: currentScheduledTrackIndex
-              }
-            }
-          });
-        }
-      } else if (currentScheduledTrackIndex > -1) {
-        // Newly added
-        changedDetails.push({
-          changeType: ChangeType.NewlyCreated,
-          data: {
-            ...currentTrack[currentScheduledTrackIndex],
-            trackNumber: trackIndex,
-            audioIndex: currentScheduledTrackIndex
-          }
-        });
-      } else {
-        // This will always run, if nothing else.
-        changedDetails.push({
-          changeType: ChangeType.Removed,
-          data: {
-            ...previousTrack[previousScheduledTrackIndex],
-            trackNumber: trackIndex,
-            audioIndex: previousScheduledTrackIndex
-          }
-        });
-      }
-    }
-  }
-
-  return changedDetails;
 }
 
 export const trackDetailsSlice = createSlice({
