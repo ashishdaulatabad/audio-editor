@@ -380,11 +380,11 @@ function sliceAudioTracksAtPoint(
       audioTracks.push(pendingTrack);
     }
 
-    // if (pendingTracksToAppend.length > 0) {
-    //   audioTracks = audioTracks.sort((first, second) => (
-    //     first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
-    //   ));
-    // }
+    if (pendingTracksToAppend.length > 0) {
+      audioTracks = audioTracks.sort((first, second) => (
+        first.trackDetail.offsetInMicros - second.trackDetail.offsetInMicros
+      ));
+    }
   }
 
   audioManager.rescheduleAllTracks(trackDetails, slicesToReschedule);
@@ -414,9 +414,9 @@ function setTrackOffsetToAFinalPoint(
   trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   trackDetails[trackNumber][audioIndex].trackDetail.startOffsetInMicros = startOffsetInMicros;
 
-  // trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-  //   a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  // ));
+  trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+    a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+  ));
 
   return trackDetails;
 }
@@ -460,12 +460,12 @@ function setMultipleOffsets(
     trackDetails[trackNumber][audioIndex].trackDetail.endOffsetInMicros = endOffsetInMicros;
   }
 
-  // const uniqueTrackNumbers = [...new Set(allTrackNumbers)];
-  // uniqueTrackNumbers.forEach(trackNumber => {
-  //   trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
-  //     a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
-  //   ));
-  // });
+  const uniqueTrackNumbers = [...new Set(allTrackNumbers)];
+  uniqueTrackNumbers.forEach(trackNumber => {
+    trackDetails[trackNumber] = trackDetails[trackNumber].sort((a, b) => (
+      a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+    ));
+  });
 
   // Todo: Sort them after moving all these tracks.
 
