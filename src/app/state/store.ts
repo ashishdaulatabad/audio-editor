@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import audioReducer from './audiostate'; 
 import selectedAudioSliceReducer from './selectedaudiostate';
-import trackDetailsReducer from './trackdetails';
+import trackDetailsReducer from './trackdetails/trackdetails';
 import windowStoreReducer from './windowstore';
 
 export const store = configureStore({

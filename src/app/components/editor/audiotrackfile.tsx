@@ -18,7 +18,7 @@ import {
   AudioTrackDetails,
   removeAudioFromAllTracks,
   SEC_TO_MICROSEC
-} from '@/app/state/trackdetails';
+} from '@/app/state/trackdetails/trackdetails';
 
 import { css } from '@/app/services/utils';
 import { Waveform } from '@/assets/wave';

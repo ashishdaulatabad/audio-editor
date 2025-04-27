@@ -1,4 +1,7 @@
-import { AudioTrackDetails, SEC_TO_MICROSEC } from '../state/trackdetails';
+import {
+  AudioTrackDetails,
+  SEC_TO_MICROSEC
+} from '@/app/state/trackdetails/trackdetails';
 import { AudioTransformation } from './interfaces';
 
 /**

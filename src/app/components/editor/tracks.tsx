@@ -4,7 +4,7 @@ import { svgxmlns } from '@/app/utils'
 import { useSelector } from 'react-redux';
 import { TrackAudio } from './trackaudio';
 import { TimeSectionSelection } from './seekbar';
-import { SEC_TO_MICROSEC } from '@/app/state/trackdetails';
+import { SEC_TO_MICROSEC } from '@/app/state//trackdetails/trackdetails';
 
 interface TrackProps {
   id: number
@@ -17,11 +17,15 @@ interface TrackProps {
 
 export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const trackData = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
+  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const timeUnitLine = SEC_TO_MICROSEC * timeUnit
   const selectedStart = (((props.selectedContent?.startTimeMicros || 0) / timeUnitLine) * lineDist);
   const selectedEnd = (((props.selectedContent?.endTimeMicros || 0) / timeUnitLine) * lineDist);
+
+  
 
   return (
     <div 
@@ -36,7 +40,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
             trackId={props.id}
             timeUnitPerLineDistanceSecs={timeUnit}
             audioDetails={track}
-            key={index}
+            key={track.trackDetail.id}
             height={props.h}
           />
         ))

@@ -1,6 +1,9 @@
 import React from 'react';
 import { audioManager } from '@/app/services/audiotrackmanager';
-import { applyChangesToModifiedAudio, SEC_TO_MICROSEC } from '@/app/state/trackdetails';
+import {
+  applyChangesToModifiedAudio,
+  SEC_TO_MICROSEC
+} from '@/app/state/trackdetails/trackdetails';
 import { Checkbox } from '../checkbox';
 import { transformAudio } from '@/app/services/audiotransform';
 import { useDispatch, useSelector } from 'react-redux';

@@ -18,25 +18,18 @@ import { Slicer, SlicerSelection } from './slicer';
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { PromptMenuContext } from '@/app/providers/customprompt';
 import { clamp } from '@/app/utils';
-import { ResizingGroup, ResizingHandle, ResizingWindowPanel } from '../shared/resizablepanels';
 
+import {
+  ResizingGroup,
+  ResizingHandle,
+  ResizingWindowPanel
+} from '../shared/resizablepanels';
 import {
   addWindowToAction,
   batchRemoveWindowWithUniqueIdentifier,
   removeWindowWithUniqueIdentifier,
   setWindowPosition,
 } from '@/app/state/windowstore';
-import {
-  cloneAudioTrack,
-  cloneMultipleAudioTrack,
-  deleteMultipleAudioTrack,
-  deselectAllTracks,
-  rollbackChanges,
-  ScheduledInformation,
-  SEC_TO_MICROSEC,
-  selectAllTracks,
-  selectTracksWithinSelectedSeekbarSection,
-} from '../../state/trackdetails';
 import {
   createAudioData,
   css,
@@ -55,11 +48,25 @@ import {
   sliceAudioTracks,
   Status,
   togglePlay,
+  rollbackChanges,
+  cloneAudioTrack,
+  cloneMultipleAudioTrack,
+  deleteMultipleAudioTrack,
+  ScheduledInformation,
+  SEC_TO_MICROSEC,
+  deselectAllTracks,
+  selectAllTracks,
+  selectTracksWithinSelectedSeekbarSection,
   TrackInformation
-} from '@/app/state/trackdetails';
-import { getRandomWindowId } from '@/app/services/random';
+} from '@/app/state/trackdetails/trackdetails';
+import {
+  getRandomWindowId
+} from '@/app/services/random';
 import { WindowManipulationMode } from '../shared/window';
-import { changeHistory, WorkspaceChange } from '@/app/services/changehistory';
+import {
+  changeHistory,
+  WorkspaceChange
+} from '@/app/services/changehistory';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -166,7 +173,7 @@ export function Editor() {
         offsetInMicros,
         startOffsetInMicros,
         endOffsetInMicros
-      }
+      };
     }
 
     return {
@@ -208,6 +215,7 @@ export function Editor() {
                 trackNumber: intIndex,
                 offsetInMicros: timeOffset,
                 scheduledKey: Symbol(),
+                id: -1,
                 startOffsetInMicros: 0,
                 playbackRate: 1,
                 endOffsetInMicros: (data.duration as number) * SEC_TO_MICROSEC,
@@ -620,6 +628,7 @@ export function Editor() {
         offsetInMicros,
         scheduledKey: track.trackDetail.scheduledKey,
         endOffsetInMicros,
+        id: track.trackDetail.id,
         playbackRate: 1,
         startOffsetInMicros,
         selected: track.trackDetail.selected
@@ -709,6 +718,7 @@ export function Editor() {
       trackDetail: {
         ...currentTrack.trackDetail,
         offsetInMicros,
+        id: -1,
         trackNumber,
         scheduledKey: Symbol(),
       }
@@ -957,84 +967,92 @@ export function Editor() {
           </ResizingWindowPanel>
           <ResizingHandle />
           <ResizingWindowPanel
-            className="workspace flex flex-row max-w-full overflow-hidden min-w-screen"
+            className="workspace flex flex-col max-w-full overflow-hidden min-w-screen"
             ref={verticalScrollPageRef}
             data-cursor={mode}
           >
-            <div className="track-element flex flex-col min-h-28">
-              <Toolkit onModeSelect={setCurrentMode} activeMode={currentMode} />
-              <div ref={ref} className="track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
-                {
-                  Array.from({length: totalTracks}, (_, index: number) => (
-                    <div 
-                      key={index}
-                      className="track-info bg-darker box-border border border-solid border-darker-2 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
-                      style={{height: height + 'px'}}
-                    >
-                      <TrackInfo id={index} />
-                    </div>
-                  ))
-                }
-              </div>
+            <div className="timeframe-header">
+              <Toolkit
+                onModeSelect={setCurrentMode}
+                activeMode={currentMode}
+              />
             </div>
-            <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
-              <div className="workspace relative bg-primary overflow-hidden h-full">
-                <Seekbar
-                  mode={currentMode}
-                  totalLines={totalLines}
-                  h={height}
-                  w={width}
-                  scrollRef={seekbarRef}
-                  seekerRef={seekerRef}
-                  lineDist={lineDist}
-                  timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
-                  onTimeSelection={onSelectingTime}
-                />
-                <div
-                  className={css(
-                    "tracks relative overflow-scroll max-h-full",
-                    { 'custom-scroll': isChrome }
-                  )}
-                  style={{maxHeight: 'calc(100% - 62px)'}}
-                  ref={scrollPageRef}
-                  onDragOver={(e) => e.preventDefault()}
-                  onScroll={onScroll}
-                >
-                  {
-                    currentMode === ModeType.RegionSelect && 
-                      <RegionSelect
-                        w={width}
-                        trackHeight={height}
-                        h={totalHeight}
-                        lineDist={lineDist}
-                        unitTime={timeUnitPerLineDistInSeconds}
-                        onRegionSelect={selectTracksEnveloped}
-                      />
-                  }
-                  {
-                    currentMode === ModeType.Slicer && 
-                      <Slicer
-                        w={width}
-                        trackHeight={height}
-                        h={totalHeight}
-                        lineDist={lineDist}
-                        unitTime={timeUnitPerLineDistInSeconds}
-                        onSliceSelect={sliceIntersectingTracks}
-                      />
-                  }
+            <div className="flex flex-row max-w-full overflow-hidden min-w-screen">
+              <div className="track-element flex flex-col min-h-28">
+                <div className="min-h-[62px] max-h-[62px] min-w-full bg-darker border-t border border-darker-2"></div>
+                <div ref={ref} className="track-list custom-list pb-2 relative overflow-hidden h-full max-h-full">
                   {
                     Array.from({length: totalTracks}, (_, index: number) => (
-                      <Tracks 
-                        lineDist={lineDist}
-                        id={index}
+                      <div 
                         key={index}
-                        w={width}
-                        selectedContent={selectedRegion}
-                        timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
-                        h={height}
-                      />
+                        className="track-info bg-darker box-border border border-solid border-darker-2 rounded-l-md text-center content-center items-center min-w-44 max-w-44"
+                        style={{height: height + 'px'}}
+                      >
+                        <TrackInfo id={index} />
+                      </div>
                     ))
                   }
+                </div>
+              </div>
+              <div className="track-info rounded-r-md text-center min-w-[0%] max-w-full">
+                <div className="workspace relative bg-primary overflow-hidden h-full">
+                  <Seekbar
+                    mode={currentMode}
+                    totalLines={totalLines}
+                    h={height}
+                    w={width}
+                    scrollRef={seekbarRef}
+                    seekerRef={seekerRef}
+                    lineDist={lineDist}
+                    timeUnitPerLineDistInSeconds={timeUnitPerLineDistInSeconds}
+                    onTimeSelection={onSelectingTime}
+                  />
+                  <div
+                    className={css(
+                      "tracks relative overflow-scroll max-h-full",
+                      { 'custom-scroll': isChrome }
+                    )}
+                    style={{maxHeight: 'calc(100% - 62px)'}}
+                    ref={scrollPageRef}
+                    onDragOver={(e) => e.preventDefault()}
+                    onScroll={onScroll}
+                  >
+                    {
+                      currentMode === ModeType.RegionSelect && 
+                        <RegionSelect
+                          w={width}
+                          trackHeight={height}
+                          h={totalHeight}
+                          lineDist={lineDist}
+                          unitTime={timeUnitPerLineDistInSeconds}
+                          onRegionSelect={selectTracksEnveloped}
+                        />
+                    }
+                    {
+                      currentMode === ModeType.Slicer && 
+                        <Slicer
+                          w={width}
+                          trackHeight={height}
+                          h={totalHeight}
+                          lineDist={lineDist}
+                          unitTime={timeUnitPerLineDistInSeconds}
+                          onSliceSelect={sliceIntersectingTracks}
+                        />
+                    }
+                    {
+                      Array.from({length: totalTracks}, (_, index: number) => (
+                        <Tracks 
+                          lineDist={lineDist}
+                          id={index}
+                          key={index}
+                          w={width}
+                          selectedContent={selectedRegion}
+                          timeUnitPerLineDistanceSecs={timeUnitPerLineDistInSeconds}
+                          h={height}
+                        />
+                      ))
+                    }
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { RootState } from "@/app/state/store";
-import { SEC_TO_MICROSEC, Status } from "@/app/state/trackdetails";
+import { SEC_TO_MICROSEC, Status } from "@/app/state/trackdetails/trackdetails";
 import { useSelector } from "react-redux";
 
 export function WaveformSeeker(props: React.PropsWithoutRef<{

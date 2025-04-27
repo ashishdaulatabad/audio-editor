@@ -2,8 +2,6 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch } from "./store";
 import { removeRandomWindowId } from "../services/random";
 
-export interface Windowable {}
-
 type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
 
 export enum HorizontalAlignment {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { audioManager } from '@/app/services/audiotrackmanager';
 import { RootState } from '@/app/state/store';
-import { Status, togglePlay } from '@/app/state/trackdetails';
+import { Status, togglePlay } from '@/app/state/trackdetails/trackdetails';
 import { Pause } from '@/assets/pause';
 import { Play } from '@/assets/play';
 import { VolumeLevels } from './volumelevels';
@@ -13,7 +13,11 @@ import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from '@/assets/mixer';
 import { animationBatcher } from '@/app/services/animationbatch';
-import { SimpleDropdown } from '../shared/dropdown';
+
+export enum TimeframeMode {
+  Time,
+  Beat
+}
 
 export function Timer() {
   const [timer, setTimer] = React.useState('00:00');
@@ -50,6 +54,8 @@ export function Timer() {
 export function Player() {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+  // States
   const [masterVol, setMasterVol] = React.useState(1);
   const dispatch = useDispatch();
 
@@ -83,42 +89,13 @@ export function Player() {
     )
   }
 
-  const themeOptions: {
-    label: string,
-    value: string
-  }[] = [
-    {
-      label: 'Default',
-      value: 'default'
-    },
-    {
-      label: 'Blue',
-      value: 'blueacc'
-    },
-    {
-      label: 'Red',
-      value: 'redacc'
-    },
-    {
-      label: 'Magenta',
-      value: 'magentaacc'
-    },
-    {
-      label: 'Green',
-      value: 'greenacc'
-    },
-  ];
-
-  function onThemeSelect(e: any) {
-    document.body.setAttribute('data-theme', e.value);
-  }
-
   /**
    * @description Exporting into audio file.
    * @todo: This.
    */
   async function exportIntoAudioFile() {
     const data = await audioManager.simulateIntoOfflineAudio(tracks);
+
     const details = {
       audioName: 'new.mp3',
       colorAnnotation: randomColor(),
@@ -126,6 +103,7 @@ export function Player() {
       mixerNumber: 0,
       effects: []
     };
+
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
     dispatch(addIntoAudioBank({
       ...details,
@@ -137,14 +115,6 @@ export function Player() {
     <div className="flex justify-center items-center flex-row min-h-[8dvh] bg-darker shadow-lg">
       <nav>
         <ul className="list-none flex flex-row">
-          <li className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none cursor-pointer">
-            <SimpleDropdown
-              placeholder="Select Theme"
-              label={(item) => <>{item.label}</>}
-              list={themeOptions}
-              onSelect={onThemeSelect}
-            ></SimpleDropdown>
-          </li>
           <li
             onClick={exportIntoAudioFile}
             className="inline-block hover:bg-slate-600 p-3 rounded-sm text-xl select-none"
@@ -152,7 +122,13 @@ export function Player() {
         </ul>
       </nav>
       <div className="volume px-6 text-center text-xs" title="Master Volume">
-        <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
+        <Knob
+          r={12}
+          onKnobChange={onMainVolChange}
+          pd={8}
+          scrollDelta={0.01}
+          value={masterVol}
+        />
         <div>{Math.round(masterVol * 100)}</div>
       </div>
       <Timer />
