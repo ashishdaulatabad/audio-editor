@@ -17,12 +17,15 @@ interface TrackProps {
 
 export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const trackData = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
+  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const timeUnitLine = SEC_TO_MICROSEC * timeUnit
   const selectedStart = (((props.selectedContent?.startTimeMicros || 0) / timeUnitLine) * lineDist);
   const selectedEnd = (((props.selectedContent?.endTimeMicros || 0) / timeUnitLine) * lineDist);
 
+  
 
   return (
     <div 

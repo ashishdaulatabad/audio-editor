@@ -7,18 +7,16 @@ import { SlicerSelection } from '@/app/components/editor/slicer';
 import { AudioTransformation } from '@/app/services/interfaces';
 import { TimeSectionSelection } from '@/app/components/editor/seekbar';
 import { animationBatcher } from '@/app/services/animationbatch';
-import { compareValues, cloneValues } from '@/app/services/noderegistry';
+import { cloneValues } from '@/app/services/noderegistry';
 
 import {
   ChangeDetails,
   changeHistory,
-  ChangeType,
   createSnapshot,
-  Snapshot,
   WorkspaceChange
 } from '@/app/services/changehistory';
 import { TimeframeMode } from '@/app/components/player/player';
-import { deleteTrackId, getRandomTrackId } from '@/app/services/random';
+import { getRandomTrackId } from '@/app/services/random';
 import { undoSnapshotChange } from './tracksnapshots';
 
 /**
@@ -747,7 +745,7 @@ export const trackDetailsSlice = createSlice({
     }>) {
       const { updatedChanges, redo } = action.payload;
 
-      undoSnapshotChange(state.trackDetails, updatedChanges, state.trackUniqueIds, redo);
+      undoSnapshotChange(state.trackDetails, updatedChanges, redo);
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
       const maxTime = getMaxTime(state.trackDetails);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;

@@ -1,7 +1,6 @@
 import { ChangeDetails, ChangeType, Snapshot } from "@/app/services/changehistory";
 import { AudioTrackChangeDetails, AudioTrackDetails } from "./trackdetails";
 import { audioManager } from "@/app/services/audiotrackmanager";
-import { deleteTrackId } from "@/app/services/random";
 import { compareValues } from "@/app/services/noderegistry";
 
 
@@ -10,7 +9,6 @@ import { compareValues } from "@/app/services/noderegistry";
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
-  trackIdSet: Array<number>,
   redo = false
 ) {
   // Reverse order: changes are inserted in order, splicing

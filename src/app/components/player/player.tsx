@@ -13,7 +13,6 @@ import { addWindowToAction, VerticalAlignment } from '@/app/state/windowstore';
 import { MixerMaster } from '../mixer/mixer';
 import { Mixer } from '@/assets/mixer';
 import { animationBatcher } from '@/app/services/animationbatch';
-import { SimpleDropdown } from '../shared/dropdown/dropdown';
 
 export enum TimeframeMode {
   Time,
@@ -55,6 +54,8 @@ export function Timer() {
 export function Player() {
   const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
   const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+  // States
   const [masterVol, setMasterVol] = React.useState(1);
   const dispatch = useDispatch();
 
@@ -94,6 +95,7 @@ export function Player() {
    */
   async function exportIntoAudioFile() {
     const data = await audioManager.simulateIntoOfflineAudio(tracks);
+
     const details = {
       audioName: 'new.mp3',
       colorAnnotation: randomColor(),
@@ -101,6 +103,7 @@ export function Player() {
       mixerNumber: 0,
       effects: []
     };
+
     const newAudioId = audioManager.registerAudioInAudioBank(details, data);
     dispatch(addIntoAudioBank({
       ...details,
@@ -119,7 +122,13 @@ export function Player() {
         </ul>
       </nav>
       <div className="volume px-6 text-center text-xs" title="Master Volume">
-        <Knob r={12} onKnobChange={onMainVolChange} pd={8} scrollDelta={0.01} value={masterVol} />
+        <Knob
+          r={12}
+          onKnobChange={onMainVolChange}
+          pd={8}
+          scrollDelta={0.01}
+          value={masterVol}
+        />
         <div>{Math.round(masterVol * 100)}</div>
       </div>
       <Timer />

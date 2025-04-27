@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AudioNonScheduledDetails } from './trackdetails';
+import { AudioNonScheduledDetails } from '@/app/state/trackdetails/trackdetails';
 
 /**
  * @description Stores currently selected audio track to schedule.
