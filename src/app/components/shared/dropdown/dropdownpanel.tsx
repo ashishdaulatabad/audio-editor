@@ -10,6 +10,7 @@ export type DropdownPanelContextInfo<Item> = {
     onSelect: (item: ListItem<Item>) => void
   }) => void
   hideDropdownPanel: () => void
+  isPanelOpen: () => boolean
 }
 
 export type ListItem<Type> = {
@@ -44,9 +45,12 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
       onSelect
     } = info;
 
-    if (content === itemList) {
+    if (content === itemList || visible) {
       hideDropdownPanel();
-      return;      
+    }
+
+    if (content === itemList) {
+      return;
     }
 
     setLeft(x);
@@ -62,6 +66,10 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
     });
   }
 
+  function isPanelOpen() {
+    return visible;
+  }
+
   function hideDropdownPanel() {
     setAction(() => null);
     setItemList([]);
@@ -73,7 +81,7 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
 
   return (
     <>
-      <DropdownPanelContext.Provider value={{showDropdownPanel, hideDropdownPanel}}>
+      <DropdownPanelContext.Provider value={{showDropdownPanel, hideDropdownPanel, isPanelOpen}}>
         {props.children}
       </DropdownPanelContext.Provider>
       {visible && 

@@ -3,17 +3,11 @@ import { AudioTrackChangeDetails, AudioTrackDetails } from "./trackdetails";
 import { audioManager } from "@/app/services/audiotrackmanager";
 import { compareValues } from "@/app/services/noderegistry";
 
-
-// Todo: Revisit and change based on scheduledKeys instead of trackNumber and audioIndex,
-// unless they are removed or added.
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
   redo = false
 ) {
-  // Reverse order: changes are inserted in order, splicing
-  // should keep all indexes intact.
-  // Another way is to do filter.
   const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
   const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
 

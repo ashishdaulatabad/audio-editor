@@ -123,6 +123,8 @@ export function Editor() {
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
 
+  const widthToTime = (width: number) => Math.round((width / lineDist) * timeUnitPerLineMicros);
+
   // Context
   const {
     hideContextMenu,
@@ -338,7 +340,7 @@ export function Editor() {
   }
 
   /**
-   * Setting drag type
+   * @description Setting drag type
    * 
    * 1. If the cursor is just at the start or end of the track, then let user
    * change the start point of the track
@@ -351,27 +353,29 @@ export function Editor() {
       const element = event.target as HTMLElement;
       const fnArray = [isAudioTrack, isTrack, isWindowHeader];
 
-      // Improvement: Perform until workspace is encountered instead of nullcheck
       const {
         index,
         expectedNode
       } = traverseParentUntilOneCondition(element, fnArray);
 
+      if (index === -1) {
+        return;
+      }
+
+      event.preventDefault();
+
       switch (index) {
         case 0: {
-          event.preventDefault();
           setTrackDraggingMode(event, expectedNode);
           break;
         }
 
         case 1: {
-          event.preventDefault();
           addCurrentTrack(event, expectedNode);
           break;
         }
 
         case 2: {
-          event.preventDefault();
           setupDraggingWindow(event, expectedNode);
           break;
         }
@@ -665,10 +669,6 @@ export function Editor() {
         break;
       }
     }
-  }
-
-  function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    
   }
 
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {

@@ -42,7 +42,8 @@ export function SimpleDropdown<Item extends Object>(
 
   const { 
     showDropdownPanel,
-    hideDropdownPanel
+    hideDropdownPanel,
+    isPanelOpen
   } = React.useContext(DropdownPanelContext) as DropdownPanelContextInfo<Item>;
 
   function prepareDropdownPanel() {
@@ -78,7 +79,7 @@ export function SimpleDropdown<Item extends Object>(
     <div
       ref={ref}
       className={css(
-        "list p-3 min-w-36 border border-solid border-white/20 relative text-center content-center items-center",
+        "list p-3 min-w-36 border select-none border-solid cursor-pointer border-white/20 relative text-center content-center items-center",
       )}
     >
       <div className="label flex text-center content-center justify-between" onClick={prepareDropdownPanel}>
