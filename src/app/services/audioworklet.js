@@ -31,5 +31,4 @@ class Processor extends AudioWorkletProcessor {
   }
 }
 
-
 registerProcessor('transformation', Processor)

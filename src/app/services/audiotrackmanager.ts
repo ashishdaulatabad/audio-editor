@@ -238,7 +238,6 @@ class AudioTrackManager {
     return this.audioBank[symbol].audioDetails.mixerNumber;
   }
 
-
   setMixerValue(symbol: symbol, mixerValue: number) {
     this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
     this.audioBank[symbol].panner.disconnect();

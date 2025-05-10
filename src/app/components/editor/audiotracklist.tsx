@@ -1,8 +1,12 @@
 import React from 'react';
 import { RootState } from '@/app/state/store';
-import { useDispatch, useSelector } from 'react-redux';
 import { createAudioData } from '../../services/utils';
 import { AudioTrackFile } from './audiotrackfile';
+
+import {
+  useDispatch,
+  useSelector
+} from 'react-redux';
 import {
   addIntoAudioBank,
   AudioDetails,
