@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { RootState } from '@/app/state/store';
 import { Status, togglePlay } from '@/app/state/trackdetails/trackdetails';
 import { Pause } from '@/assets/pause';

@@ -1,36 +1,18 @@
-import { TimeSectionSelection } from '../components/editor/seekbar';
-import { AudioDetails } from '../state/audiostate';
-import { clamp } from '../utils';
-import { audioService } from './audioservice';
-import { Maybe } from './interfaces';
-import { Mixer } from './mixer';
-import { addToAudioNodeRegistryList, deregisterFromAudioNodeRegistryList } from './noderegistry';
+import { TimeSectionSelection } from '@/app/components/editor/seekbar';
+import { AudioDetails } from '@/app/state/audiostate';
+import { clamp } from '../../utils';
+import { audioService } from '@/app/services/audioservice';
+import { Maybe } from '@/app/services/interfaces';
+import { Mixer } from '@/app/services/mixer';
+import {
+  addToAudioNodeRegistryList,
+  deregisterFromAudioNodeRegistryList
+} from '@/app/services/noderegistry';
 import {
   AudioTrackDetails,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
-
-/**
- * @description Type of Multiselected DOM elements that are selected.
- */
-export type SelectedAudioTrackDetails = AudioTrackDetails & {
-  domElement: HTMLElement
-  initialPosition: number
-  initialWidth: number
-  initialScrollLeft: number
-}
-
-export type TransformedAudioTrackDetails = SelectedAudioTrackDetails & {
-  finalPosition: number
-  finalScrollLeft: number
-  finalWidth: number
-}
-
-export type SelectedTrackInfo = {
-  trackNumbers: number[]
-  audioIndexes: number[]
-  scheduledKeys: symbol[]
-}
+import { MultiSelectTracker, SelectedTrackInfo, TransformedAudioTrackDetails } from './multiselect';
 
 export type AudioBank = {
   [audioId: symbol]: {
@@ -83,9 +65,11 @@ class AudioTrackManager {
   audioBank: AudioBank = {};
 
   /// Store objects
-  multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
   scheduledNodes: ScheduledNodesInformation = {};
   offlineScheduledNodes: ScheduledNodesInformation = {};
+
+  // Classes
+  private multiSelectTracker: MultiSelectTracker;
 
   audioCanvas: {
     [k: symbol]: OffscreenCanvas
@@ -95,6 +79,7 @@ class AudioTrackManager {
     public totalTrackSize: number,
     public totalMixers: number
   ) {
+    this.multiSelectTracker = new MultiSelectTracker();
     this.mixer = new Mixer(totalMixers);
   }
 
@@ -247,14 +232,14 @@ class AudioTrackManager {
   }
 
   clearSelection() {
-    this.multiSelectedDOMElements = [];
+    this.multiSelectTracker.clearSelection();
   }
 
   /**
    * @description Check if at least one of the DOM elements is multi-selected
    */
   isMultiSelected() {
-    return this.multiSelectedDOMElements.length > 0;
+    return this.multiSelectTracker.isMultiSelected();
   }
 
   /**
@@ -267,24 +252,7 @@ class AudioTrackManager {
     track: AudioTrackDetails,
     domElement: HTMLElement
   ) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === track.trackDetail.scheduledKey
-    ));
-
-    if (existingElementIndex === -1) {
-      this.multiSelectedDOMElements.push({
-        ...track,
-        domElement,
-        initialPosition: domElement.offsetLeft,
-        initialWidth: domElement.offsetWidth,
-        initialScrollLeft: domElement.scrollLeft,
-      });
-    } else {
-      this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
-      this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
-      this.multiSelectedDOMElements[existingElementIndex].initialWidth = domElement.offsetWidth;
-      this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
-    }
+    this.multiSelectTracker.addIntoSelectedAudioTracks(track, domElement);
   }
 
   /**
@@ -296,22 +264,14 @@ class AudioTrackManager {
   deleteFromSelectedAudioTracks(
     scheduledTrackId: symbol,
   ) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === scheduledTrackId
-    ));
-
-    if (existingElementIndex > -1) {
-      this.multiSelectedDOMElements.splice(existingElementIndex, 1);
-    }
+    this.multiSelectTracker.deleteFromSelectedAudioTracks(scheduledTrackId);
   }
 
   /**
    * @description Cleanup Selection: Remove elements not attached to DOM element
    */
   cleanupSelectedDOMElements() {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(dom => (
-      dom.domElement.isConnected
-    ));
+    this.multiSelectTracker.cleanupSelectedDOMElements();
   }
 
   /**
@@ -323,9 +283,7 @@ class AudioTrackManager {
   deleteAudioFromSelectedAudioTracks(
     audioId: symbol,
   ) {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(element => (
-      element.audioId === audioId
-    ));
+    this.multiSelectTracker.deleteAudioFromSelectedAudioTracks(audioId);
   }
 
   /**
@@ -335,20 +293,7 @@ class AudioTrackManager {
    * @returns void
    */
   applyTransformationToMultipleSelectedTracks(diffX: number) {
-    let diffOffsetToNegate = 0;
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const newLeft = selectedTrack.initialPosition + diffX;
-
-      if (newLeft < 0) {
-        diffOffsetToNegate = Math.max(diffOffsetToNegate, -newLeft);
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initPosition = selectedTrack.initialPosition;
-      selectedTrack.domElement.style.left = (initPosition + diffX + diffOffsetToNegate) + 'px'
-    }
+    this.multiSelectTracker.applyTransformationToMultipleSelectedTracks(diffX);
   }
 
   /**
@@ -357,61 +302,7 @@ class AudioTrackManager {
    * @returns void
    */
   applyResizingStartToMultipleSelectedTracks(diffX: number) {
-    // Making sure one of the width does not move to zero
-    let minShrinkValue = 0;
-    let minShrinkSet = false;
-    // Making sure one of the width does not exceed while expanding inward.
-    let minExpandValue = 0
-    let minExpandSet = false;
-
-    // Rewriting this loop.
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const trackWidth = selectedTrack.initialWidth;
-      const trackScrollLeft = selectedTrack.initialScrollLeft;
-      const trackPosition = selectedTrack.initialPosition;
-
-      if (!minShrinkSet) {
-        minShrinkValue = trackWidth;
-        minShrinkSet = true;
-      } else if (minShrinkValue > trackWidth) {
-        minShrinkValue = trackWidth;
-      }
-
-      if (!minExpandSet) {
-        minExpandValue = Math.min(trackPosition, trackScrollLeft);
-        minExpandSet = true;
-      } else if (minExpandValue > trackScrollLeft) {
-        minExpandValue = Math.min(trackScrollLeft, trackPosition);
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initPosition = selectedTrack.initialPosition;
-      const initScrollLeft = selectedTrack.initialScrollLeft;
-      const initWidth = selectedTrack.initialWidth;
-
-      Object.assign(
-        selectedTrack.domElement.style,
-        {
-          width: clamp(
-            initWidth - diffX,
-            initWidth - minShrinkValue,
-            initWidth + minExpandValue,
-          ) + 'px',
-          left: clamp(
-            initPosition + diffX,
-            initPosition - minExpandValue,
-            initPosition + minShrinkValue,
-          ) + 'px'
-        }
-      );
-
-      selectedTrack.domElement.scrollLeft = clamp(
-        initScrollLeft + diffX,
-        initScrollLeft - minExpandValue,
-        initScrollLeft + minShrinkValue,
-      );
-    }
+    this.multiSelectTracker.applyResizingStartToMultipleSelectedTracks(diffX);
   }
 
   /**
@@ -420,44 +311,7 @@ class AudioTrackManager {
    * @returns void
    */
   applyResizingEndToMultipleSelectedTracks(diffX: number) {
-    let minExpandValue = 0
-    let minExpandSet = false;
-
-    let minShrinkValue = 0
-    let minShrinkSet = false;
-
-    // Rewriting this loop.
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const trackWidth = selectedTrack.initialWidth;
-      const trackScrollLeft = selectedTrack.initialScrollLeft;
-      const totalWidth = selectedTrack.domElement.scrollWidth;
-
-      const expandableDist = totalWidth - 2 * trackScrollLeft - trackWidth;
-
-      if (!minExpandSet) {
-        minExpandValue = expandableDist;
-        minExpandSet = true;
-      } else if (minExpandValue > expandableDist) {
-        minExpandValue = expandableDist;
-      }
-
-      if (!minShrinkSet) {
-        minShrinkValue = trackWidth;
-        minShrinkSet = true;
-      } else if (minShrinkValue > trackWidth) {
-        minShrinkValue = trackWidth;
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initWidth = selectedTrack.initialWidth;
-
-      selectedTrack.domElement.style.width = clamp(
-        initWidth + diffX,
-        initWidth - minShrinkValue,
-        initWidth + minExpandValue,
-      ) + 'px'
-    }
+    this.multiSelectTracker.applyResizingEndToMultipleSelectedTracks(diffX);
   }
 
   /**
@@ -465,22 +319,7 @@ class AudioTrackManager {
    * This is managed here instead of letting react handling it.
    */
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
-    const newElements: SelectedTrackInfo = {
-      trackNumbers: [],
-      audioIndexes: [],
-      scheduledKeys: []
-    };
-    
-    this.multiSelectedDOMElements.forEach(element => {
-      const trackNumber = parseInt(element.domElement.getAttribute('data-trackid') as string);
-      const audioIndex = parseInt(element.domElement.getAttribute('data-audioid') as string);
-
-      newElements.trackNumbers.push(trackNumber);
-      newElements.audioIndexes.push(audioIndex);
-      newElements.scheduledKeys.push(element.trackDetail.scheduledKey);
-    });
-
-    return newElements;
+    return this.multiSelectTracker.getMultiSelectedTrackInformation();
   }
 
   /**
@@ -488,28 +327,7 @@ class AudioTrackManager {
    * @returns 
    */
   getNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
-    const newElements: TransformedAudioTrackDetails[] = [];
-    
-    this.multiSelectedDOMElements.forEach(element => {
-      const scrollLeft = element.domElement.scrollLeft;
-      const width = element.domElement.offsetWidth;
-      const finalPosition = element.domElement.offsetLeft;
-
-      newElements.push({
-        ...element,
-        finalPosition,
-        finalScrollLeft: scrollLeft,
-        finalWidth: width
-      });
-
-      /// Probably make a separate method to 
-      /// set all from initial to final values.
-      element.initialPosition = finalPosition;
-      element.initialScrollLeft = scrollLeft;
-      element.initialWidth = width;
-    });
-
-    return newElements;
+    return this.multiSelectTracker.getNewPositionForMultipleSelectedTracks();
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
@@ -624,7 +442,7 @@ class AudioTrackManager {
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       this.scheduledNodes[symbolKey].buffer.stop(0);
       this.scheduledNodes[symbolKey].buffer.disconnect();
-      this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter((element) => (
+      this.multiSelectTracker.multiSelectedDOMElements = this.multiSelectTracker.multiSelectedDOMElements.filter((element) => (
         element.trackDetail.scheduledKey !== symbolKey
       ));
       delete this.scheduledNodes[symbolKey];
@@ -892,7 +710,7 @@ class AudioTrackManager {
     this.paused = false;
   }
 
-  getTimeData(leftArray: Uint8Array, rightArray: Uint8Array) {
+  getTimeData(leftArray: Uint8Array<ArrayBuffer>, rightArray: Uint8Array<ArrayBuffer>) {
     const left = (this.leftAnalyserNode as AnalyserNode);
     const right = (this.rightAnalyserNode as AnalyserNode);
 
@@ -900,7 +718,7 @@ class AudioTrackManager {
     right.getByteTimeDomainData(rightArray);
   }
 
-  getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
+  getTimeDataFromMixer(mixer: number, leftArray: Uint8Array<ArrayBuffer>, rightArray: Uint8Array<ArrayBuffer>) {
     const {
       left,
       right

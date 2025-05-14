@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppDispatch } from "./store";
 import { removeRandomWindowId } from "../services/random";
+import { cloneValues } from '../services/noderegistry';
 
 type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
 
@@ -139,14 +140,15 @@ const windowManagerSlice = createSlice({
         const window = state.contents[key];
 
         if (window.propsUniqueIdentifier === action.payload) {
-          const { windowId } = state.contents[action.payload];
-          delete state.contents[action.payload];
+          // console.log(state.contents, action.payload, state.contents[action.payload]);
+          const { windowId } = window;
+          delete state.contents[key];
           removeRandomWindowId(windowId);
 
-          const index = state.ordering.indexOf(action.payload);
+          const index = state.ordering.indexOf(window.windowSymbol);
 
           if (index > -1) {
-            state.ordering.splice(index, -1);
+            state.ordering.splice(index, 1);
           }
           return;
         }

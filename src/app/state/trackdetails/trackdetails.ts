@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AudioDetails } from '../audiostate';
 import { audioService } from '@/app/services/audioservice';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { RegionSelection } from '@/app/components/editor/regionselect';
 import { SlicerSelection } from '@/app/components/editor/slicer';
 import { AudioTransformation } from '@/app/services/interfaces';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { svgxmlns } from '@/app/utils';
 import { Seeker } from './seeker';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/state/store';
 import { ModeType } from './toolkit';

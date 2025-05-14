@@ -1,5 +1,5 @@
 import React from 'react';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import {
   applyChangesToModifiedAudio,
   SEC_TO_MICROSEC

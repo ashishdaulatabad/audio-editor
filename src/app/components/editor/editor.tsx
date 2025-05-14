@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addIntoAudioBank } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
 import { selectAudio } from '@/app/state/selectedaudiostate';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { Player } from '../player/player';
 import { AudioWaveformEditor } from '../waveform/waveform';
 import { WindowManager } from '../shared/windowmanager';
@@ -690,7 +690,7 @@ export function Editor() {
         const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
         const audioTrack = trackDetails[trackNumber][audioIntIndex];
 
-        audioManager.useManager().removeTrackFromScheduledNodes(audioTrack);
+        audioManager.removeTrackFromScheduledNodes(audioTrack);
         dispatch(removeWindowWithUniqueIdentifier(audioTrack.trackDetail.scheduledKey));
         dispatch(deleteAudioFromTrack({
           trackNumber,

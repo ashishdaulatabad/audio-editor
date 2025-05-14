@@ -1,5 +1,5 @@
 import React from 'react';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { addIntoAudioBank, AudioDetails } from '@/app/state/audiostate';
 import { Waveform } from '@/assets/wave';
 import { Canvas } from '../shared/customcanvas';
@@ -254,7 +254,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       onMouseUp={unsetGrab}
       onMouseLeave={unsetGrab}
       className={css(
-        "track-audio text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
+        "track-audio shadow-sm shadow-black text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
         mode === AudioTrackManipulationMode.ResizeEnd ? 'cursor-e-resize' : 
           (mode === AudioTrackManipulationMode.ResizeStart ? 'cursor-w-resize' : 
             (grab ? 'cursor-grabbing' : 'cursor-grab')),
@@ -307,7 +307,7 @@ export function renderAudioWaveform(
   const buffer = audioManager.getAudioBuffer(data.audioId) as AudioBuffer;
  
   context.strokeStyle = '#111';
-  context.fillStyle = data.colorAnnotation + 'DD';
+  context.fillStyle = data.colorAnnotation;
   context.beginPath();
   context.clearRect(0, 0, width, height);
   context.fillRect(0, 0, width, height);
