@@ -1,10 +1,8 @@
 import React from 'react';
 import { MixerInput } from './mixerinput';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 
-export interface MixerProps {
-
-}
+export interface MixerProps {}
 
 export function MixerMaster(props: React.PropsWithoutRef<MixerProps>) {
   const totalMixers = audioManager.totalMixers;

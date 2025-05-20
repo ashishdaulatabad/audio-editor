@@ -1,6 +1,6 @@
 import React from 'react';
 import { audioService } from '@/app/services/audioservice';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { animationBatcher } from '@/app/services/animationbatch';
 
 export enum Orientation {

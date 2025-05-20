@@ -16,8 +16,13 @@ interface SliderSettings {
 }
 
 export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
+  // States
   const [value, setValue] = React.useState(props.value ?? 0);
+  const initMappedValue = props.functionMapper ? props.functionMapper(props.value ?? 0) : props.value ?? 0;
+
+  const [mappedValue, setMappedValue] = React.useState(initMappedValue);
   const [hold, setHold] = React.useState(false);
+  // Refs
   const ref = React.useRef<HTMLDivElement | null>(null);
 
   function releaseKnob() {
@@ -36,6 +41,7 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
     setValue(newValue);
 
     const mapper = props.functionMapper ? props.functionMapper(newValue) : newValue;
+    setMappedValue(mapper);
     props.onSliderChange(mapper);
   }
 
@@ -45,6 +51,7 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
       const normalizedValue = clamp((props.h + (props.headh / 2) - y) / props.h, 0, 1);
       setValue(normalizedValue);
       const mapper = props.functionMapper ? props.functionMapper(normalizedValue) : normalizedValue;
+      setMappedValue(mapper);
       props.onSliderChange(mapper)
     }
   }

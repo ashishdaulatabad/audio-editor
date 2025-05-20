@@ -6,7 +6,10 @@ export type CanvasRedrawInformation = {
 self.addEventListener(
   'message',
   function(event: MessageEvent<CanvasRedrawInformation>) {
-    const { buffer, canvas: offcanvas } = event.data;
+    const {
+      buffer,
+      canvas: offcanvas
+    } = event.data;
     const width = offcanvas.width, height = offcanvas.height;
 
     const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;

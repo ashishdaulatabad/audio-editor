@@ -1,7 +1,7 @@
 import React from 'react';
 import { Knob } from '../knob';
 import { Slider } from '../slider';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { Orientation, VolumeLevels } from '../player/volumelevels';
 
 export function MixerInput(props: React.PropsWithoutRef<{

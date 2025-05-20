@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AppDispatch } from "./store";
-import { removeRandomWindowId } from "../services/random";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AppDispatch } from './store';
+import { removeRandomWindowId } from '../services/random';
 
 type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
 
@@ -139,14 +139,14 @@ const windowManagerSlice = createSlice({
         const window = state.contents[key];
 
         if (window.propsUniqueIdentifier === action.payload) {
-          const { windowId } = state.contents[action.payload];
-          delete state.contents[action.payload];
+          const { windowId } = window;
+          delete state.contents[key];
           removeRandomWindowId(windowId);
 
-          const index = state.ordering.indexOf(action.payload);
+          const index = state.ordering.indexOf(window.windowSymbol);
 
           if (index > -1) {
-            state.ordering.splice(index, -1);
+            state.ordering.splice(index, 1);
           }
           return;
         }
@@ -181,11 +181,7 @@ const windowManagerSlice = createSlice({
         windowSymbol: symbol
       }>
     ) {
-      const {
-        x,
-        y,
-        windowSymbol
-      } = action.payload;
+      const { x, y, windowSymbol } = action.payload;
 
       if (Object.hasOwn(state.contents, windowSymbol)) {
         state.contents[windowSymbol].x = x
@@ -211,10 +207,7 @@ const { addWindow } = windowManagerSlice.actions;
  * @param dispatch dispatch
  * @param details 
  */
-export function addWindowToAction<TProps>(
-  dispatch: AppDispatch,
-  details: WindowView<TProps>
-) {
+export function addWindowToAction<TProps>(dispatch: AppDispatch, details: WindowView<TProps>) {
   dispatch(addWindow(details));
 }
 

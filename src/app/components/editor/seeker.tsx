@@ -1,5 +1,5 @@
 import React from "react";
-import { audioManager } from "@/app/services/audiotrackmanager";
+import { audioManager } from "@/app/services/audio/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status } from "@/app/state/trackdetails/trackdetails";
 import { useSelector } from "react-redux";

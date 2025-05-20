@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { ContextMenuContext } from '@/app/providers/contextmenu';
 import { DialogContext } from '@/app/providers/dialog';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { deleteColor } from '@/app/services/random';
 import { RootState } from '@/app/state/store';
 import { FaTrash } from 'react-icons/fa';
@@ -74,7 +74,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       }
     );
     // Also todo: Remove knob changes related to this track.
-    /// Also clear all possible history values that contains this audio ID
+    // Also clear all possible history values that contains this audio ID
 
     const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
       [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]

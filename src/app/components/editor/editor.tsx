@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addIntoAudioBank } from '@/app/state/audiostate';
 import { RootState } from '@/app/state/store';
 import { selectAudio } from '@/app/state/selectedaudiostate';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { Player } from '../player/player';
 import { AudioWaveformEditor } from '../waveform/waveform';
 import { WindowManager } from '../shared/windowmanager';
@@ -122,6 +122,8 @@ export function Editor() {
   const seekerRef = React.useRef<HTMLDivElement | null>(null);
   const scrollPageRef = React.createRef<HTMLDivElement>();
   const verticalScrollPageRef = React.createRef<HTMLDivElement>();
+
+  const widthToTime = (width: number) => Math.round((width / lineDist) * timeUnitPerLineMicros);
 
   // Context
   const {
@@ -338,7 +340,7 @@ export function Editor() {
   }
 
   /**
-   * Setting drag type
+   * @description Setting drag type
    * 
    * 1. If the cursor is just at the start or end of the track, then let user
    * change the start point of the track
@@ -351,27 +353,29 @@ export function Editor() {
       const element = event.target as HTMLElement;
       const fnArray = [isAudioTrack, isTrack, isWindowHeader];
 
-      // Improvement: Perform until workspace is encountered instead of nullcheck
       const {
         index,
         expectedNode
       } = traverseParentUntilOneCondition(element, fnArray);
 
+      if (index === -1) {
+        return;
+      }
+
+      event.preventDefault();
+
       switch (index) {
         case 0: {
-          event.preventDefault();
           setTrackDraggingMode(event, expectedNode);
           break;
         }
 
         case 1: {
-          event.preventDefault();
           addCurrentTrack(event, expectedNode);
           break;
         }
 
         case 2: {
-          event.preventDefault();
           setupDraggingWindow(event, expectedNode);
           break;
         }
@@ -667,10 +671,6 @@ export function Editor() {
     }
   }
 
-  function attemptFilling(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
-    
-  }
-
   function deleteAudio(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     event.preventDefault();
 
@@ -690,7 +690,7 @@ export function Editor() {
         const audioIntIndex = audioIndex ? parseInt(audioIndex) : 0;
         const audioTrack = trackDetails[trackNumber][audioIntIndex];
 
-        audioManager.useManager().removeTrackFromScheduledNodes(audioTrack);
+        audioManager.removeTrackFromScheduledNodes(audioTrack);
         dispatch(removeWindowWithUniqueIdentifier(audioTrack.trackDetail.scheduledKey));
         dispatch(deleteAudioFromTrack({
           trackNumber,
