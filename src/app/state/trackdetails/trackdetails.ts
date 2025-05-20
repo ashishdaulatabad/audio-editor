@@ -17,7 +17,7 @@ import {
 } from '@/app/services/changehistory';
 import { TimeframeMode } from '@/app/components/player/player';
 import { getRandomTrackId } from '@/app/services/random';
-import { undoSnapshotChange } from './tracksnapshots';
+import { AudioTrackChangeDetails, undoSnapshotChange } from './tracksnapshots';
 import { ScheduledTrackAutomation } from './trackautomation';
 import { getMaxTimeOverall } from './trackutils';
 
@@ -460,10 +460,6 @@ function removeAudioFromAllScheduledTrack(
   }
 
   return trackDetails;
-}
-
-export type AudioTrackChangeDetails = AudioTrackDetails & {
-  trackNumber: number
 }
 
 export const trackDetailsSlice = createSlice({
