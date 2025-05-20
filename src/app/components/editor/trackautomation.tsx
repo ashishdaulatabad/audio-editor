@@ -7,9 +7,11 @@ import { Waveform } from '@/assets/wave';
 import { css } from '@/app/services/utils';
 import { ScheduledTrackAutomation } from '@/app/state/trackdetails/trackautomation';
 import { audioManager } from '@/app/services/audio/audiotrackmanager';
+import { svgxmlns } from '@/app/utils';
 
 export interface TrackAutomationProps {
   index: number
+  height: number
   trackId: number
   lineDist: number
   timeUnitPerLineDistanceSecs: number
@@ -32,6 +34,13 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const width = (duration / timeUnit) * props.lineDist;
   const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
+
+  const startPoint = automation.points[0];
+
+  const timeData = automation.points.slice(1).reduce((previousValue, currentValue) => {
+    const offset = (currentValue.time / timeUnit) * props.lineDist;
+    return previousValue + `L ${offset} ${currentValue.value * props.height}`
+  }, `M 0 ${startPoint.value / props.height}`);
 
   const {
     hideContextMenu,
@@ -160,7 +169,11 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
             {/* {track.audioName} */}
           </span>
         </div>
-        
+        <div>
+          <svg xmlns={svgxmlns}>
+            <path d={timeData} fill={automation.colorAnnotation}></path>
+          </svg>
+        </div>
       </div>
     </>
   );

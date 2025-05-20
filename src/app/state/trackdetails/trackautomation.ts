@@ -1,4 +1,3 @@
-
 export interface TrackAutomationPoint {
   time: number
   value: number

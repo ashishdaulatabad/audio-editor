@@ -333,7 +333,7 @@ class AudioTrackManager {
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
     // To do: Make 500000 global variable??
     if (timeSelection) {
-      if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 500000) return;
+      if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 100000) return;
     }
 
     this.timeframeSelectionDetails = timeSelection;

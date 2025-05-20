@@ -18,6 +18,8 @@ import {
 import { TimeframeMode } from '@/app/components/player/player';
 import { getRandomTrackId } from '@/app/services/random';
 import { undoSnapshotChange } from './tracksnapshots';
+import { ScheduledTrackAutomation } from './trackautomation';
+import { getMaxTimeOverall } from './trackutils';
 
 /**
  * @description Information of the track, like start offset, end offset and selection.
@@ -62,9 +64,11 @@ export type AudioNonScheduledDetails = AudioDetails & {
   trackDetail: TrackInformation
 }
 
-export type AudioTrackDetails = AudioDetails & {
+export type ScheduledAudioTrack = AudioDetails & {
   trackDetail: ScheduledInformation & TrackInformation
 }
+
+export type AudioTrackDetails = ScheduledAudioTrack;
 
 /// Setting extra time buffer to 2 minutes.
 const initialState: {
@@ -73,6 +77,7 @@ const initialState: {
   timeframeMode: TimeframeMode
   timePerUnitLineInSeconds: number
   trackDetails: AudioTrackDetails[][]
+  trackAutomation: ScheduledTrackAutomation[][]
   trackUniqueIds: Array<number>
 } = {
   status: Status.Pause,
@@ -80,38 +85,15 @@ const initialState: {
   timeframeMode: TimeframeMode.Time,
   timePerUnitLineInSeconds: 5,
   trackDetails: Array.from({length: 30}, () => []),
+  trackAutomation: Array.from({length: 30}, () => []),
   trackUniqueIds: new Array<number>(),
 };
 
-/**
- * @description Get max time the track should run.
- * @param trackDetails Track Details
- * @returns Max Time in microseconds.
- */
-function getMaxTime(trackDetails: AudioTrackDetails[][]): number {
-  return trackDetails.reduce((maxTime: number, currentArray) => {
-    const maxTimeInCurrentTrack = currentArray.reduce((maxTime: number, currentTrack) => {
-      // Should always exist in microseconds
-      const startTimeOfTrack = currentTrack.trackDetail.startOffsetInMicros;
-      const endTimeOfTrack = currentTrack.trackDetail.endOffsetInMicros;
-
-      const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
-      const endTime = currentTrack.trackDetail.offsetInMicros + trackTotalTime;
-      return Math.max(maxTime, endTime);
-    }, 0)
-
-    return Math.max(maxTime, maxTimeInCurrentTrack);
-  }, 0);
-}
-
-function isWithinRegionAndNotSelected(
-  track: Omit<AudioTrackDetails, 'mixerNumber'>,
-  pointStartSec: number,
-  pointEndSec: number
-) {
+function isWithinRegionAndNotSelected(track: AudioTrackDetails, pointStartSec: number, pointEndSec: number) {
   const startTime = track.trackDetail.offsetInMicros / SEC_TO_MICROSEC;
   const startOffset = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
   const endOffset = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
+
   const endTime = startTime + (endOffset - startOffset);
 
   // Probably need a better boolean checks, but this works for now.
@@ -465,8 +447,6 @@ function setMultipleOffsets(
     ));
   });
 
-  // Todo: Sort them after moving all these tracks.
-
   return trackDetails;
 }
 
@@ -545,7 +525,7 @@ export const trackDetailsSlice = createSlice({
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteSingleAudioTrack);
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
       // Now find the next longest track among all the tracks exists with offset
-      const maxTime = getMaxTime(state.trackDetails);
+      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
 
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
@@ -604,8 +584,8 @@ export const trackDetailsSlice = createSlice({
     ) {
       state.trackDetails = processTrackHistory(state.trackDetails, action.payload, bulkDeleteTracks);
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
-
-      const maxTime = getMaxTime(state.trackDetails);
+  
+      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
@@ -671,7 +651,7 @@ export const trackDetailsSlice = createSlice({
         state.maxTimeMicros = endTime + twoMinuteInMicros;
         audioManager.setLoopEnd(endTime);
       } else {
-        const maxTime = getMaxTime(state.trackDetails);
+        const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
         state.maxTimeMicros = maxTime + twoMinuteInMicros;
         audioManager.setLoopEnd(maxTime);
       }
@@ -713,8 +693,9 @@ export const trackDetailsSlice = createSlice({
         allEndOffsetsInMicros: number[]
       }>)
     {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, setMultipleOffsets)
-      const maxTime = getMaxTime(state.trackDetails);
+      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, setMultipleOffsets);
+
+      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
@@ -723,18 +704,15 @@ export const trackDetailsSlice = createSlice({
       audioId: symbol,
       noSnapshot: true
     }>){
-      const {
-        audioId,
-        noSnapshot
-      } = action.payload;
-      if (!noSnapshot) {
-        state.trackDetails = processTrackHistory(state.trackDetails, audioId, removeAudioFromAllScheduledTrack);
-      } else {
-        state.trackDetails = removeAudioFromAllScheduledTrack(state.trackDetails, audioId);
-      }
+      const { audioId, noSnapshot } = action.payload;
+
+      state.trackDetails = !noSnapshot ?
+        processTrackHistory(state.trackDetails, audioId, removeAudioFromAllScheduledTrack) :
+        removeAudioFromAllScheduledTrack(state.trackDetails, audioId);
+
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
 
-      const maxTime = getMaxTime(state.trackDetails);
+      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     },
@@ -747,7 +725,8 @@ export const trackDetailsSlice = createSlice({
 
       undoSnapshotChange(state.trackDetails, updatedChanges, redo);
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
-      const maxTime = getMaxTime(state.trackDetails);
+
+      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     }

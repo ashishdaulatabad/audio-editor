@@ -147,7 +147,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       const { offsetX } = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
 
-      if (Math.abs(endTimeSecs - startRegionSelection) > 0.5) {
+      if (Math.abs(endTimeSecs - startRegionSelection) > 0.1) {
         setEndRegionSelection(endTimeSecs);
         const startPoint = Math.min(startRegionSelection, endTimeSecs);
         const endPoint = Math.max(startRegionSelection, endTimeSecs);

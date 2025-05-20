@@ -34,7 +34,7 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
         trackData.map((track, index: number) => (
           <TrackAudio
             index={index}
-            lineDist={props.lineDist}
+            lineDist={lineDist}
             trackId={props.id}
             timeUnitPerLineDistanceSecs={timeUnit}
             audioDetails={track}
@@ -56,12 +56,12 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
               patternContentUnits="userSpaceOnUse"
             >
               <path d={`M0 0 L0 ${props.h}`} stroke="#333" strokeWidth="2" />
-              <path d={`M${props.lineDist / 4} 0 L${props.lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
-              <path d={`M${props.lineDist / 2} 0 L${props.lineDist / 2} ${props.h}`} stroke="#333" strokeWidth="1" />
-              <path d={`M${3 * props.lineDist / 4} 0 L${3 * props.lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
+              <path d={`M${lineDist / 4} 0 L${lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
+              <path d={`M${lineDist / 2} 0 L${lineDist / 2} ${props.h}`} stroke="#333" strokeWidth="1" />
+              <path d={`M${3 * lineDist / 4} 0 L${3 * lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
               <path d={`M0 0 L0 ${props.h}`} stroke="#333" strokeWidth="4" />
-              <path d={`M0 0 L${props.lineDist} 0`} stroke="#333" strokeWidth="1" />
-              <path d={`M0 ${props.h} L${props.lineDist} ${props.h}`} stroke="#344556" strokeWidth="1" />
+              <path d={`M0 0 L${lineDist} 0`} stroke="#333" strokeWidth="1" />
+              <path d={`M0 ${props.h} L${lineDist} ${props.h}`} stroke="#344556" strokeWidth="1" />
             </pattern>
           </defs>
           <rect x="0" y="0" width={props.w} height={props.h} fill="url(#repeatingLines)" />
