@@ -15,10 +15,93 @@ export type ParameterChange = {
   value: number
 }
 
+const automationRegistry: {
+  [k: symbol]: {
+    node: AudioNode
+    type: string
+    audioParam: AudioParam
+  }
+} = {};
 
 const registry: {
   [k: symbol]: AudioNode
 } = {};
+
+type AudioNodeTypes = {
+  new (context: BaseAudioContext, options?: AudioNodeOptions): AudioNode
+  prototype: AudioNode
+}
+
+const paramDictionary: Map<AudioNodeTypes, string[]> = new Map<AudioNodeTypes, string[]>([
+  [GainNode, ['gain']],
+  [StereoPannerNode, ['pan']],
+  [BiquadFilterNode, ['gain', 'frequency', 'detune', 'Q']]
+]);
+
+export function createAutomation(node: AudioNode, type: string) {
+  const sym = Symbol();
+
+  if (node instanceof GainNode) {
+    // Get gain param
+    if (type === 'gain') {
+      automationRegistry[sym] = {
+        node,
+        type: 'gain',
+        audioParam: node.gain
+      }
+
+      return sym;
+    }
+
+    return undefined;
+  }
+
+  if (node instanceof StereoPannerNode) {
+    switch (type) {
+      case 'pan': {
+        automationRegistry[sym] = {
+          node,
+          type,
+          audioParam: node.pan
+        }
+
+        return sym;
+      }
+
+      default: {
+        return undefined;
+      }
+    }
+  }
+
+  if (node instanceof BiquadFilterNode) {
+    switch (type) {
+      case 'gain': {
+        automationRegistry[sym] = {
+          node,
+          type,
+          audioParam: node.gain
+        }
+        break;
+      }
+
+      case 'Q': {
+        automationRegistry[sym] = {
+          node,
+          type,
+          audioParam: node.Q
+        };
+        break;
+      }
+
+      default: {
+        return undefined;
+      }
+    }
+
+    return sym;
+  }
+}
 
 /**
  * @description Registers and returns a identifer, for trackable

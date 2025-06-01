@@ -1,5 +1,5 @@
 import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { compareValues } from '@/app/services/noderegistry';
+import { compareValues } from '@/app/services/audio/noderegistry';
 
 import { AudioTrackDetails } from './trackdetails';
 import { ScheduledTrackAutomation } from './trackautomation';
@@ -11,17 +11,6 @@ import {
 
 export type AudioTrackChangeDetails = AudioTrackDetails & {
   trackNumber: number
-}
-
-export type TrackAutomationChangeDetails = ScheduledTrackAutomation & {
-  trackNumber: number
-}
-
-export function undoAutomationSnapshotChange(
-  snapshotChange: ScheduledTrackAutomation[][],
-  changeDetails: ChangeDetails<TrackAutomationChangeDetails>[]
-) {
-
 }
 
 export function undoSnapshotChange(

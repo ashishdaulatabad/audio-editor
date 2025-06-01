@@ -1,6 +1,6 @@
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
-import { addToAudioNodeRegistryList } from './noderegistry';
+import { addToAudioNodeRegistryList } from './audio/noderegistry';
 
 export class Mixer {
   masterGainNode: Maybe<GainNode> = null;

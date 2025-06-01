@@ -1,8 +1,6 @@
 import { RootState } from '@/app/state/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Checkbox } from '../checkbox';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
 
 /**
  * @description Props for displaying track information
