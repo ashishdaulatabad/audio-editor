@@ -1,6 +1,6 @@
 import { AudioDetails } from '../state/audiostate';
 import { audioService } from './audioservice';
-import { audioManager } from './audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { randomColor } from './random';
 import { Maybe } from './interfaces';
 

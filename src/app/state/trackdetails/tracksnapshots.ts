@@ -1,19 +1,23 @@
-import { ChangeDetails, ChangeType, Snapshot } from "@/app/services/changehistory";
-import { AudioTrackChangeDetails, AudioTrackDetails } from "./trackdetails";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { compareValues } from "@/app/services/noderegistry";
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
+import { compareValues } from '@/app/services/audio/noderegistry';
 
+import { AudioTrackDetails } from './trackdetails';
+import { ScheduledTrackAutomation } from './trackautomation';
+import {
+  ChangeDetails,
+  ChangeType,
+  Snapshot
+} from '@/app/services/changehistory';
 
-// Todo: Revisit and change based on scheduledKeys instead of trackNumber and audioIndex,
-// unless they are removed or added.
+export type AudioTrackChangeDetails = AudioTrackDetails & {
+  trackNumber: number
+}
+
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
   redo = false
 ) {
-  // Reverse order: changes are inserted in order, splicing
-  // should keep all indexes intact.
-  // Another way is to do filter.
   const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
   const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
 
@@ -21,37 +25,38 @@ export function undoSnapshotChange(
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
-        const {
-          trackNumber,
-          audioId,
-          trackDetail
-        } = changeDetail.data;
+        const { trackNumber, audioId, trackDetail } = changeDetail.data;
 
-        // Undo state: Remove
-        if (!redo) {
-          const index = trackDetails[trackNumber].findIndex(trk => (
-            trk.trackDetail.scheduledKey === trackDetail.scheduledKey
-          ));
-
-          if (index > -1) {
-            const currentTrack = trackDetails[trackNumber][index];
-            audioManager.removeTrackFromScheduledNodes(currentTrack);
-            trackDetails[trackNumber].splice(index, 1);
-          } else {
-            console.error('Not consistent');
-          }
-        } else {
-          const newData = {
-            ...changeDetail.data,
-            trackDetail: {
-              ...changeDetail.data.trackDetail,
-              id: -1
+        // Sorted for labelling.
+        switch (redo) {
+          // This is an undo operation.
+          case false:
+            const index = trackDetails[trackNumber].findIndex(trk => (
+              trk.trackDetail.scheduledKey === trackDetail.scheduledKey
+            ));
+  
+            if (index > -1) {
+              const currentTrack = trackDetails[trackNumber][index];
+              audioManager.removeTrackFromScheduledNodes(currentTrack);
+              trackDetails[trackNumber].splice(index, 1);
+            } else {
+              console.error('Not consistent');
             }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
+            break;
+          
+          // This is a redo operation.
+          default:
+            const newData = {
+              ...changeDetail.data,
+              trackDetail: {
+                ...changeDetail.data.trackDetail,
+                id: -1
+              }
+            };
+            tracksToAdd[trackNumber].push(newData);
+            audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
+            break;
         }
-
         break;
       };
 
@@ -63,28 +68,31 @@ export function undoSnapshotChange(
           ...rest
         } = changeDetail.data;
 
-        if (!redo) {
-          const newData = {
-            ...rest,
-            trackDetail: {
-              ...rest.trackDetail,
-              id: -1,
-            }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail)
-        } else {
-          const index = trackDetails[trackNumber].findIndex(trk => (
-            trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
-          ));
+        switch (redo) {
+          case false: 
+            const newData = {
+              ...rest,
+              trackDetail: {
+                ...rest.trackDetail,
+                id: -1,
+              }
+            };
+            tracksToAdd[trackNumber].push(newData);
+            audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail);
+            break;
 
-          if (index > -1) {
-            const currentTrack = trackDetails[trackNumber][index];
-            audioManager.removeTrackFromScheduledNodes(currentTrack);
-            trackDetails[trackNumber].splice(index, 1);
-          } else {
-            console.error('Not consistent');
-          }
+          default:
+            const index = trackDetails[trackNumber].findIndex(trk => (
+              trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
+            ));
+            if (index > -1) {
+              const currentTrack = trackDetails[trackNumber][index];
+              audioManager.removeTrackFromScheduledNodes(currentTrack);
+              trackDetails[trackNumber].splice(index, 1);
+            } else {
+              console.error('Not consistent');
+            }
+            break;   
         }
 
         break;

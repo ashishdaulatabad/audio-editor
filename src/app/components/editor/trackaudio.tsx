@@ -1,7 +1,6 @@
 import React from 'react';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { addIntoAudioBank, AudioDetails } from '@/app/state/audiostate';
-import { AudioTrackDetails, deleteAudioFromTrack, SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
 import { Waveform } from '@/assets/wave';
 import { Canvas } from '../shared/customcanvas';
 import { css } from '@/app/services/utils';
@@ -14,6 +13,12 @@ import { FaRepeat } from 'react-icons/fa6';
 import { addWindowToAction } from '@/app/state/windowstore';
 import { AudioWaveformEditor } from '../waveform/waveform';
 import { clamp } from '@/app/utils';
+
+import {
+  AudioTrackDetails,
+  deleteAudioFromTrack,
+  SEC_TO_MICROSEC
+} from '@/app/state/trackdetails/trackdetails';
 
 /**
  * @description Mode for detecting current manipulation mode via user mouse.
@@ -249,7 +254,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       onMouseUp={unsetGrab}
       onMouseLeave={unsetGrab}
       className={css(
-        "track-audio text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
+        "track-audio shadow-sm shadow-black text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
         mode === AudioTrackManipulationMode.ResizeEnd ? 'cursor-e-resize' : 
           (mode === AudioTrackManipulationMode.ResizeStart ? 'cursor-w-resize' : 
             (grab ? 'cursor-grabbing' : 'cursor-grab')),
@@ -262,7 +267,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       >
         <span
           ref={spanRef}
-          className="text-md relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
+          className="text-sm relative text-left text-white select-none max-w-full block overflow-hidden text-ellipsis text-nowrap"
           style={{left: (divRef.current?.scrollLeft ?? 0) + 'px'}}
         >
           <span onClick={contextMenu} className="wave-icon cursor-pointer">
@@ -301,8 +306,8 @@ export function renderAudioWaveform(
   const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   const buffer = audioManager.getAudioBuffer(data.audioId) as AudioBuffer;
  
-  context.strokeStyle = '#ccc';
-  context.fillStyle = '#fff0';
+  context.strokeStyle = '#111';
+  context.fillStyle = data.colorAnnotation;
   context.beginPath();
   context.clearRect(0, 0, width, height);
   context.fillRect(0, 0, width, height);
@@ -312,15 +317,22 @@ export function renderAudioWaveform(
   const proportionalIncrement = Math.ceil((128 * width) / 800);
 
   const mul = clamp(proportionalIncrement, 1, 128);
-  const channelData = buffer.getChannelData(0);
 
-  let x = 0;
-  const incr = (width / channelData.length) * mul;
+  const heightPerChannel = height / buffer.numberOfChannels;
 
-  for (let index = 0; index < channelData.length; index += mul) {
-    const normalizedValue = ((channelData[index] + 1) / 2.0) * height;
-    context.lineTo(x, normalizedValue);
-    x += incr;
+  // Assuming that total channels are two.
+  for (let channel = 0, vertical = 0; channel < buffer.numberOfChannels; ++channel, vertical += heightPerChannel) {
+    const channelData = buffer.getChannelData(channel);
+    context.moveTo(0, (1 / 2.0) * heightPerChannel + vertical)
+
+    let x = 0;
+    const incr = (width / channelData.length) * mul;
+
+    for (let index = 0; index < channelData.length; index += mul) {
+      const normalizedValue = ((channelData[index] + 1) / 2.0) * heightPerChannel + vertical;
+      context.lineTo(x, normalizedValue);
+      x += incr;
+    }
   }
 
   context.stroke();

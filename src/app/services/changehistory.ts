@@ -1,7 +1,7 @@
 import {
   AudioTrackDetails
 } from '@/app/state/trackdetails/trackdetails';
-import { cloneValues } from './noderegistry';
+import { cloneValues } from './audio/noderegistry';
 import { compareSnapshots } from '@/app/state/trackdetails/tracksnapshots';
 
 /**
@@ -71,15 +71,6 @@ class ChangeHistory {
   pointer = -1;
 
   constructor() {}
-
-  /**
-   * @description Add to change history
-   * @todo Remove previous changes if past history exceeds the current history
-   * @param change change scanned by the change history service.
-   */
-  private _markHistory<ChangeProperties>(change: Change<ChangeProperties>) {
-    this.stack.push(change);
-  }
 
   peekHistory() {
     if (this.stack.length == 0) {

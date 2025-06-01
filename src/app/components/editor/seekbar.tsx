@@ -1,7 +1,7 @@
 import React from 'react';
 import { svgxmlns } from '@/app/utils';
 import { Seeker } from './seeker';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/state/store';
 import { ModeType } from './toolkit';
@@ -147,7 +147,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       const { offsetX } = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
 
-      if (Math.abs(endTimeSecs - startRegionSelection) > 0.5) {
+      if (Math.abs(endTimeSecs - startRegionSelection) > 0.1) {
         setEndRegionSelection(endTimeSecs);
         const startPoint = Math.min(startRegionSelection, endTimeSecs);
         const endPoint = Math.max(startRegionSelection, endTimeSecs);
