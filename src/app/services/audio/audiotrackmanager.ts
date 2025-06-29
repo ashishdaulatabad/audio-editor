@@ -720,10 +720,11 @@ class AudioTrackManager {
             (movedAudioTracks as AudioTrackDetails[])[audioTrackIndex] :
             audio;
 
-          delete this.scheduledNodes[symbolKey];
-          this._scheduleInternal(trackToSchedule.audioId, trackToSchedule.trackDetail);
           node.buffer.stop(0);
           node.buffer.disconnect();
+          delete this.scheduledNodes[symbolKey];
+
+          this._scheduleInternal(trackToSchedule.audioId, trackToSchedule.trackDetail);
         } else {
           this._scheduleInternal(audio.audioId, audio.trackDetail);
         }
@@ -732,9 +733,7 @@ class AudioTrackManager {
     } 
   }
 
-  rescheduleAudioFromScheduledNodes(
-    audioKey: symbol
-  ) {
+  rescheduleAudioFromScheduledNodes(audioKey: symbol) {
     for (const key of Object.getOwnPropertySymbols(this.scheduledNodes)) {
       const node = this.scheduledNodes[key];
 
@@ -754,9 +753,23 @@ class AudioTrackManager {
       const node = this.scheduledNodes[scheduledKey];
       node.buffer.stop(0);
       node.buffer.disconnect();
-      delete this.scheduledNodes[node.audioId];
+      delete this.scheduledNodes[scheduledKey];
       this._scheduleInternal(node.audioId, trackDetail);
     }
+  }
+
+  rescheduleTrack(
+    scheduledKey: symbol,
+    trackDetails: AudioTrackDetails
+  ) {
+    if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
+      const node = this.scheduledNodes[scheduledKey];
+      node.buffer.stop(0);
+      node.buffer.disconnect();
+      delete this.scheduledNodes[scheduledKey];
+    }
+
+    this._scheduleInternal(trackDetails.audioId, trackDetails.trackDetail);
   }
 
   rescheduleMovedTrackFromScheduledNodes(

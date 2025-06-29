@@ -116,7 +116,8 @@ export function undoSnapshotChange(
             }
           } = currentTrack;
 
-          audioManager.rescheduleTrackFromScheduledNodes(scheduledKey, rest.trackDetail);
+          // 
+          audioManager.rescheduleTrack(scheduledKey, rest);
           trackDetails[trackNumber][index] = rest;
         } else {
           console.error('Not consistent');

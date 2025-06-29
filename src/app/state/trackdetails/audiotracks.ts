@@ -174,7 +174,7 @@ export function sliceAudioTracksAtPoint(
     endTrack,
     pointOfSliceSecs
   }= slicerSelection;
-  const slicesToReschedule = [];
+  const slicesToReschedule: AudioTrackDetails[] = [];
   
   for (let trackIndex = startTrack; trackIndex <= endTrack; ++trackIndex) {
     let audioTracks = trackDetails[trackIndex];
@@ -200,7 +200,7 @@ export function sliceAudioTracksAtPoint(
             ...audio.trackDetail,
             endOffsetInMicros: oldStartOffset + firstEndDuration
           }
-        }
+        };
 
         // Creating a new track
         const secondHalf: AudioTrackDetails = {
