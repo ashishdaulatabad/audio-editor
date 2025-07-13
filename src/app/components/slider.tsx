@@ -17,13 +17,15 @@ interface SliderSettings {
 
 export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
   // States
-  const [value, setValue] = React.useState(props.value ?? 0);
-  const initMappedValue = props.functionMapper ? props.functionMapper(props.value ?? 0) : props.value ?? 0;
+  const initMappedValue = props.functionMapper ? 
+    props.functionMapper(props.value ?? 0) :
+    props.value ?? 0;
 
+  const [value, setValue] = React.useState(props.value ?? 0);
   const [mappedValue, setMappedValue] = React.useState(initMappedValue);
   const [hold, setHold] = React.useState(false);
   // Refs
-  const ref = React.useRef<HTMLDivElement | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
 
   function releaseKnob() {
     setHold(false);
@@ -36,11 +38,17 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
   function onScroll(event: WheelEvent) {
     event.preventDefault();
     const { deltaY } = event;
-    const newValue = clamp(value + (deltaY !== 0 ? (-deltaY / Math.abs(deltaY)) : 0) * props.scrollDelta, 0, 1);
+
+    // TODO: Simplify this.
+    const direction = (deltaY !== 0 ? (-deltaY / Math.abs(deltaY)) : 0);
+    const newValue = clamp(value + direction * props.scrollDelta, 0, 1);
 
     setValue(newValue);
 
-    const mapper = props.functionMapper ? props.functionMapper(newValue) : newValue;
+    const mapper = props.functionMapper ?
+      props.functionMapper(newValue) :
+      newValue;
+
     setMappedValue(mapper);
     props.onSliderChange(mapper);
   }
@@ -48,9 +56,19 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
   function moveKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
     if (hold && event.buttons === 1) {
       const y = event.nativeEvent.offsetY;
-      const normalizedValue = clamp((props.h + (props.headh / 2) - y) / props.h, 0, 1);
+      
+      const normalizedValue = clamp(
+        (props.h + (props.headh / 2) - y) / props.h, 
+        0, 
+        1
+      );
+
       setValue(normalizedValue);
-      const mapper = props.functionMapper ? props.functionMapper(normalizedValue) : normalizedValue;
+
+      const mapper = props.functionMapper ?
+        props.functionMapper(normalizedValue) :
+        normalizedValue;
+
       setMappedValue(mapper);
       props.onSliderChange(mapper)
     }

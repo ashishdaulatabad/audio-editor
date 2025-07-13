@@ -13,7 +13,9 @@ export function Seeker(props: {
   left: number
   onLoopEnd: () => void
 }) {
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+  const status = useSelector((state: RootState) => (
+    state.trackDetailsReducer.status
+  ));
 
   const {
     lineDist,

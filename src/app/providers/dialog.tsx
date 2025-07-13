@@ -20,7 +20,7 @@ export const DialogContext = React.createContext<DialogExportInformation>({} as 
 
 export const DialogBoxProvider = (props: React.PropsWithChildren) => {
   const [visible, setVisible] = React.useState(false);
-  const [dialogInformation, setDialogInformation] = React.useState<DialogInformation>({} as DialogInformation);
+  const [dialogInfo, setDialogInfo] = React.useState({} as DialogInformation);
 
   function isDialogOpen() {
     return visible;
@@ -28,11 +28,11 @@ export const DialogBoxProvider = (props: React.PropsWithChildren) => {
 
   const showDialog = (dialog: DialogInformation) => {
     setVisible(true);
-    setDialogInformation(dialog);
+    setDialogInfo(dialog);
   }
 
   const hideDialog = () => {
-    setDialogInformation({} as DialogInformation);
+    setDialogInfo({} as DialogInformation);
     setVisible(false);
   }
 
@@ -41,7 +41,7 @@ export const DialogBoxProvider = (props: React.PropsWithChildren) => {
       <DialogContext.Provider value={{ showDialog, hideDialog, isDialogOpen }}>
         {props.children}
       </DialogContext.Provider>
-      {visible && <DialogBox {...dialogInformation} /> }
+      {visible && <DialogBox {...dialogInfo} /> }
     </>
   )
 }

@@ -81,7 +81,9 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
 
   return (
     <>
-      <DropdownPanelContext.Provider value={{showDropdownPanel, hideDropdownPanel, isPanelOpen}}>
+      <DropdownPanelContext.Provider 
+        value={{showDropdownPanel, hideDropdownPanel, isPanelOpen}}
+      >
         {props.children}
       </DropdownPanelContext.Provider>
       {visible && 

@@ -11,7 +11,7 @@ enum AudioTransformation {
 }
 
 interface InputAudioTransformationDetails {
-  type: AudioTransformation,
+  transformationType: AudioTransformation,
   buffer: Array<Float32Array>,
 }
 
@@ -19,14 +19,17 @@ self.addEventListener(
   'message',
   function(event: MessageEvent<InputAudioTransformationDetails>) {
     handleTransformation(event.data);
-    // @ts-expect-error
-    self.postMessage(event.data, [event.data.buffer[0].buffer, event.data.buffer[1].buffer]);
+    self.postMessage(
+      event.data, 
+      // @ts-expect-error
+      [event.data.buffer[0].buffer, event.data.buffer[1].buffer]
+    );
   });
 
 function handleTransformation(data: InputAudioTransformationDetails) {
-  const { type, buffer } = data;
+  const { transformationType, buffer } = data;
 
-  switch (type) {
+  switch (transformationType) {
     case AudioTransformation.Reverse: {
       reverseAudio(buffer);
       break;

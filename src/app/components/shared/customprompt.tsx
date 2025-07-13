@@ -1,30 +1,32 @@
 import React from 'react';
-import { PromptInputInformation, PromptInputType } from '@/app/providers/customprompt';
+import { PromptInputInfo, PromptInputType } from '@/app/providers/customprompt';
 
 export type PromptInputProps = {
-  promptInputs: PromptInputInformation[]
+  promptInputs: PromptInputInfo[]
   x: number,
   y: number
 };
 
 export function PromptInput(props: React.PropsWithoutRef<{
-  promptInput: PromptInputInformation,
+  promptInput: PromptInputInfo,
   promptValue: string,
   onChange: (e: string) => void
 }>) {
   const { promptInput: inp } = props;
 
-  switch (inp.type) {
+  switch (inp.inputType) {
     case PromptInputType.Number: {
       return (
         <>
-          <label className="mx-3 text-xl">{inp.placeholder}</label>
+          <label className="mx-3 text-xl">{inp.textPlaceholder}</label>
           <input
             type="number"
             value={props.promptValue ?? ''}
-            placeholder={inp.placeholder}
+            placeholder={inp.textPlaceholder}
             className="prompt-input m-2 p-2 text-xl outline-none"
-            onInput={(e) => props.onChange((e.target as HTMLInputElement).value)}
+            onInput={(e) => {
+              props.onChange((e.target as HTMLInputElement).value)
+            }}
           />
         </>
       )
@@ -33,13 +35,16 @@ export function PromptInput(props: React.PropsWithoutRef<{
     case PromptInputType.Text: {
       return (
         <>
-          <label className="mx-3 text-xl">{inp.placeholder}</label>
+          <label className="mx-3 text-xl">{inp.textPlaceholder}</label>
           <input
             type="text"
             value={props.promptValue ?? ''}
-            placeholder={inp.placeholder}
+            placeholder={inp.textPlaceholder}
             className="prompt-input m-2 p-2"
-            onInput={(e) => props.onChange((e.target as HTMLInputElement).value)}
+            onInput={(e) => {
+              const target = e.target as HTMLInputElement;
+              props.onChange(target.value);
+            }}
           />
         </>
       )

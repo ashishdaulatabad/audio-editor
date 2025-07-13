@@ -32,8 +32,14 @@ interface AudioTrackFileProps {
 
 export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>) {
   const index = props.index;
-  const file = useSelector((state: RootState) => state.audioReducer.audioBankList[index]);
-  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+
+  const file = useSelector((state: RootState) => (
+    state.audioReducer.audioBankList[index]
+  ));
+  const tracks = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails
+  ));
+
   const dispatch = useDispatch();
 
   function selectActiveAudioForScheduling() {
@@ -73,12 +79,19 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
         return item.data.audioId === file.audioId
       }
     );
-    // Also todo: Remove knob changes related to this track.
-    // Also clear all possible history values that contains this audio ID
 
-    const allTrackAudioIds = tracks.reduce((prev: symbol[], curr: AudioTrackDetails[]) => (
-      [...prev, ...curr.filter(a => a.audioId === file.audioId).map(a => a.trackDetail.scheduledKey)]
-    ), new Array<symbol>());
+    // TODO: Remove knob changes related to this track.
+    // Also clear all possible history values that contains this audio ID
+    const allTrackAudioIds = tracks.reduce(
+      (prev: symbol[], curr: AudioTrackDetails[]) => (
+        [
+          ...prev, ...curr
+            .filter(a => a.audioId === file.audioId)
+            .map(a => a.trackDetail.scheduledKey)
+        ]
+      ), 
+      new Array<symbol>()
+    );
 
     // Cleanup opened window with same audio ids.
     dispatch(batchRemoveWindowWithUniqueIdentifier(allTrackAudioIds));

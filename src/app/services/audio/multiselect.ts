@@ -59,10 +59,11 @@ export class MultiSelectTracker {
         initialScrollLeft: domElement.scrollLeft,
       });
     } else {
-      this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
-      this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
-      this.multiSelectedDOMElements[existingElementIndex].initialWidth = domElement.offsetWidth;
-      this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
+      const existingElement = this.multiSelectedDOMElements[existingElementIndex];
+      existingElement.domElement = domElement;
+      existingElement.initialPosition = domElement.offsetLeft;
+      existingElement.initialWidth = domElement.offsetWidth;
+      existingElement.initialScrollLeft = domElement.scrollLeft;
     }
   }
 
@@ -72,9 +73,7 @@ export class MultiSelectTracker {
    * @param domElement DOM element associated with the selection
    * @returns void
    */
-  deleteFromSelectedAudioTracks(
-    scheduledTrackId: symbol,
-  ) {
+  deleteFromSelectedAudioTracks(scheduledTrackId: symbol) {
     const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
       element.trackDetail.scheduledKey === scheduledTrackId
     ));
@@ -99,9 +98,7 @@ export class MultiSelectTracker {
    * @param domElement DOM element associated with the selection
    * @returns void
    */
-  deleteAudioFromSelectedAudioTracks(
-    audioId: symbol,
-  ) {
+  deleteAudioFromSelectedAudioTracks(audioId: symbol) {
     this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(element => (
       element.audioId === audioId
     ));
@@ -126,7 +123,9 @@ export class MultiSelectTracker {
 
     for (const selectedTrack of this.multiSelectedDOMElements) {
       const initPosition = selectedTrack.initialPosition;
-      selectedTrack.domElement.style.left = (initPosition + diffX + diffOffsetToNegate) + 'px'
+
+      const left = (initPosition + diffX + diffOffsetToNegate);
+      selectedTrack.domElement.style.left = left + 'px'
     }
   }
 
@@ -249,10 +248,15 @@ export class MultiSelectTracker {
       audioIndexes: [],
       scheduledKeys: []
     };
-    
+
     this.multiSelectedDOMElements.forEach(element => {
-      const trackNumber = parseInt(element.domElement.getAttribute('data-trackid') as string);
-      const audioIndex = parseInt(element.domElement.getAttribute('data-audioid') as string);
+      // Track and audio ID will always exist.
+      const trackNumber = parseInt(
+        element.domElement.getAttribute('data-trackid') as string
+      );
+      const audioIndex = parseInt(
+        element.domElement.getAttribute('data-audioid') as string
+      );
 
       newElements.trackNumbers.push(trackNumber);
       newElements.audioIndexes.push(audioIndex);

@@ -98,10 +98,16 @@ export function createAudioSample(
     const duration = offsetEndTimeSecs - offsetStartTimeSecs;
     const totalBufferSize = Math.round(buffer.sampleRate * duration);
 
-    const offlineAudioContext = new OfflineAudioContext(buffer.numberOfChannels, totalBufferSize, buffer.sampleRate);
+    const offlineAudioContext = new OfflineAudioContext(
+      buffer.numberOfChannels,
+      totalBufferSize, 
+      buffer.sampleRate
+    );
 
-    offlineAudioContext.audioWorklet.addModule(new URL('./audioworklet.js', import.meta.url)).then(() => {
-      // To do: Assign certain details to perform before rendering the audio.
+    const url = new URL('./audioworklet.js', import.meta.url);
+
+    offlineAudioContext.audioWorklet.addModule(url).then(() => {
+      // TODO: Assign certain details to perform before rendering the audio.
       // const workletNode = new AudioWorkletNode(offlineAudioContext, 'transformation');
       const bufferSourceNode = new AudioBufferSourceNode(offlineAudioContext);
       bufferSourceNode.buffer = buffer;
@@ -126,19 +132,25 @@ export function createAudioSample(
  * @param audioInput Input audio track
  * @returns 
  */
-export function renderAudio(
-  buffer: AudioBuffer,
-  options?: Array<any>
-) {
+export function renderAudio(buffer: AudioBuffer, options?: Array<any>) {
   return new Promise<AudioBuffer>((resolve, reject) => {
-    const offlineAudioContext = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+    const offlineAudioContext = new OfflineAudioContext(
+      buffer.numberOfChannels,
+      buffer.length,
+      buffer.sampleRate
+    );
 
-    offlineAudioContext.audioWorklet.addModule(new URL('./audioworklet.js', import.meta.url)).then(() => {
+    const url = new URL('./audioworklet.js', import.meta.url);
+
+    offlineAudioContext.audioWorklet.addModule(url).then(() => {
       // To do: Assign certain details to perform before rendering the audio.
       const workletNode = new AudioWorkletNode(offlineAudioContext, 'transformation');
       const bufferSourceNode = offlineAudioContext.createBufferSource();
+
       bufferSourceNode.buffer = buffer;
-      bufferSourceNode.connect(workletNode).connect(offlineAudioContext.destination);
+      bufferSourceNode
+        .connect(workletNode)
+        .connect(offlineAudioContext.destination);
       
       /// Acknowledged that the message is processed successfully.
       workletNode.port.onmessage = function (event: MessageEvent<any>) {
@@ -151,9 +163,7 @@ export function renderAudio(
       }
 
       if (options) {
-        workletNode.port.postMessage({
-          settings: options
-        });
+        workletNode.port.postMessage({ settings: options });
       }
     
       offlineAudioContext.oncomplete = function (ev: OfflineAudioCompletionEvent) {

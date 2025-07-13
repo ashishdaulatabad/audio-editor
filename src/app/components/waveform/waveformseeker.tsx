@@ -4,6 +4,7 @@ import { RootState } from "@/app/state/store";
 import { SEC_TO_MICROSEC, Status } from "@/app/state/trackdetails/trackdetails";
 import { useSelector } from "react-redux";
 
+// TODO: Add unitTimePerLineDistance
 export function WaveformSeeker(props: React.PropsWithoutRef<{
   trackNumber: number
   audioId: number
@@ -13,21 +14,37 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
 }>) {
   const seekbarRef = React.createRef<HTMLDivElement>();
   const { trackNumber, audioId } = props;
-  const track = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[trackNumber][audioId]);
-  const status = useSelector((store: RootState) => store.trackDetailsReducer.status);
-  const startOffsetSecs = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
-  const endOffsetSecs = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
-  const trackOffsetSecs = track.trackDetail.offsetInMicros / SEC_TO_MICROSEC;
+
+  const track = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails[trackNumber][audioId]
+  ));
+  const status = useSelector((store: RootState) => (
+    store.trackDetailsReducer.status
+  ));
+
+  const {
+    trackDetail: {
+      startOffsetInMicros,
+      endOffsetInMicros,
+      offsetInMicros
+    }
+  } = track;
+
+  const startOffsetSecs = startOffsetInMicros / SEC_TO_MICROSEC;
+  const endOffsetSecs = endOffsetInMicros / SEC_TO_MICROSEC;
+  const trackOffsetSecs = offsetInMicros / SEC_TO_MICROSEC;
 
   React.useEffect(() => {
     let value = 0;
+
     if (status === Status.Play) {
       value = requestAnimationFrame(animateSeekbar);
     }
 
     function animateSeekbar() {
       const effectiveOffset = audioManager.getTimestamp() - trackOffsetSecs;
-      const show = effectiveOffset >= 0 && effectiveOffset <= endOffsetSecs - startOffsetSecs;
+      const show = effectiveOffset >= 0 && 
+        effectiveOffset <= endOffsetSecs - startOffsetSecs;
 
       if (seekbarRef.current) {
         if (show) {

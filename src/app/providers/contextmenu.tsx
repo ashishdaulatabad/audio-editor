@@ -31,13 +31,13 @@ export type ContextMenuInfo = {
   isContextOpen: () => boolean
 };
 
-export const ContextMenuContext = React.createContext<ContextMenuInfo>({} as ContextMenuInfo);
+export const ContextMenuContext = React.createContext({} as ContextMenuInfo);
 
 export const ContextMenuProvider = (props: React.PropsWithChildren) => {
   const [visible, setVisible] = React.useState(false);
   const [items, setItems] = React.useState<ContextItem[]>([]);
-  const [x, setX] = React.useState<number>(0);
-  const [y, setY] = React.useState<number>(0);
+  const [x, setX] = React.useState(0);
+  const [y, setY] = React.useState(0);
 
   function isContextOpen() {
     return visible;
@@ -51,17 +51,18 @@ export const ContextMenuProvider = (props: React.PropsWithChildren) => {
   }
 
   const hideContextMenu = () => {
-    // Important, can keep references of audio buffers, and that is no goo.
     setItems([]);
     setVisible(false);
   }
 
   return (
     <>
-      <ContextMenuContext.Provider value={{ showContextMenu, hideContextMenu, isContextOpen }}>
+      <ContextMenuContext.Provider 
+        value={{ showContextMenu, hideContextMenu, isContextOpen }}
+      >
         {props.children}
       </ContextMenuContext.Provider>
-      {visible && <ContextMenu items={items} x={x} y={y} /> }
+      {visible && <ContextMenu items={items} x={x} y={y} />}
     </>
   )
 }

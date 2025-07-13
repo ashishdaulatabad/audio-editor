@@ -2,7 +2,6 @@ import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { compareValues } from '@/app/services/audio/noderegistry';
 
 import { AudioTrackDetails } from './trackdetails';
-import { ScheduledTrackAutomation } from './trackautomation';
 import {
   ChangeDetails,
   ChangeType,
@@ -18,8 +17,10 @@ export function undoSnapshotChange(
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
   redo = false
 ) {
-  const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
-  const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
+  const tracksToAdd: AudioTrackDetails[][] = 
+    Array.from({ length: trackDetails.length }, () => []);
+  const audioTracksToRemove: number[][] = 
+    Array.from({ length: trackDetails.length }, () => []);
 
   for (const changeDetail of changeDetails) {
     switch (changeDetail.changeType) {
@@ -134,13 +135,15 @@ export function undoSnapshotChange(
     trackDetails[trackNumber] = trackDetails[trackNumber]
       .filter((_, index) => audioIndexes.indexOf(index) === -1)
       .concat(track)
-      .sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
+      .sort((a, b) => (
+        a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+      ));
   });
 }
 
 /**
- * @description Compare snapshot with previous snapshot, used with change history
- * for storing changes between action..
+ * @description Compare snapshot with previous snapshot, used with change 
+ * history for storing changes between action..
  * @param snapshot captured snapshot,
  * @param trackDetails 
  */
@@ -159,7 +162,9 @@ export function compareSnapshots(
     const visitedScheduledTracks = currentTrack
       .map(track => track.trackDetail.scheduledKey)
       .concat(previousTrack.map(track => track.trackDetail.scheduledKey))
-      .filter((trackKey, index, trackArray) => trackArray.indexOf(trackKey) === index);
+      .filter((trackKey, index, trackArray) => (
+        trackArray.indexOf(trackKey) === index
+      ));
 
     // Check if two keys are same.
     for (const key of visitedScheduledTracks) {
@@ -173,7 +178,12 @@ export function compareSnapshots(
       if (currentScheduledTrackIndex > -1 && previousScheduledTrackIndex > -1) {
         // Perform action if both are not equal.
         // Add updated values to the track
-        if (!compareValues(currentTrack[currentScheduledTrackIndex], previousTrack[previousScheduledTrackIndex])) {
+        if (
+          !compareValues(
+            currentTrack[currentScheduledTrackIndex], 
+            previousTrack[previousScheduledTrackIndex]
+          )
+        ) {
           changedDetails.push({
             changeType: ChangeType.Updated,
             data: {

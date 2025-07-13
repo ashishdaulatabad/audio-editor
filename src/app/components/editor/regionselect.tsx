@@ -5,21 +5,9 @@ import React from "react";
  * @description Region Selection performed by the user.
  */
 export interface RegionSelection {
-  /**
-   * @description Starting range of the track.
-   */
   trackStart: number
-  /**
-   * @description Ending range of the track.
-   */
   trackEnd: number
-  /**
-   * @description Starting point of selection, in seconds.
-   */
   pointStartSec: number
-  /**
-   * @descrption Ending point of selection, in seconds.
-   */
   pointEndSec: number
 }
 
@@ -39,6 +27,8 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
   const [endX, setEndX] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
   const [hold, setHold] = React.useState(false);
+
+  const { lineDist, trackHeight, unitTime } = props;
 
   function setDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setHold(true);
@@ -76,26 +66,27 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
     }
   }
 
-  function leaveRegionSelect(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function leaveRegionSelect(
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) {
     setHold(false);
     setStartX(0);
     setStartY(0);
     setEndX(0);
     setEndY(0);
 
-    /// Get timer
     const startTimePoint = Math.min(startX, event.nativeEvent.offsetX);
     const endTimePoint = Math.max(startX, event.nativeEvent.offsetX);
 
-    const pointStartSec = (startTimePoint / props.lineDist) * props.unitTime;
-    const pointEndSec = (endTimePoint / props.lineDist) * props.unitTime;
+    const pointStartSec = (startTimePoint / lineDist) * unitTime;
+    const pointEndSec = (endTimePoint / lineDist) * unitTime;
 
-    /// Get tracks
     const startTrackPoint = Math.min(startY, event.nativeEvent.offsetY);
     const endTrackPoint = Math.max(startY, event.nativeEvent.offsetY);
 
-    const trackStart = Math.floor(startTrackPoint / props.trackHeight);
-    const trackEnd = Math.floor(endTrackPoint / props.trackHeight);
+    const trackStart = Math.floor(startTrackPoint / trackHeight);
+    const trackEnd = Math.floor(endTrackPoint / trackHeight);
+
     props.onRegionSelectDone && props.onRegionSelectDone({
       trackStart,
       trackEnd,

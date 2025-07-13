@@ -4,9 +4,6 @@ export enum AudioRendering {
   PitchShift
 }
 
-/**
- * Audio Transformation Details.
- */
 export enum AudioTransformation {
   Reverse,
   ReversePolarity,
@@ -15,21 +12,12 @@ export enum AudioTransformation {
   ForceReset
 }
 
-/**
- * Transformation store.
- */
 export interface AudioTransformationDetails {
-  /**
-   * @description Type of transformation.
-   */
-  type: AudioTransformation,
-  /**
-   * @description Value used for transformation.
-   */
+  transformationType: AudioTransformation,
   value: number
 }
 
 export interface InputAudioTransformationDetails {
-  type: AudioTransformation,
+  transformationType: AudioTransformation,
   buffer: Array<Float32Array>,
 }

@@ -15,8 +15,12 @@ import {
 export function AudioTrackList() {
   // Selectors
   // const [search, setSearch] = React.useState('');
-  const files = useSelector((state: RootState) => state.audioReducer.audioBankList);
-  const selected = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
+  const files = useSelector((state: RootState) => (
+    state.audioReducer.audioBankList
+  ));
+  const selected = useSelector((state: RootState) => (
+    state.selectedAudioSliceReducer.value
+  ));
  
   const dispatch = useDispatch();
 

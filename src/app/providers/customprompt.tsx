@@ -1,62 +1,45 @@
 import React from 'react';
 import { CustomPrompt } from '../components/shared/customprompt';
 
-/**
- * @description Prompt Input Type
- */
 export enum PromptInputType {
   Number,
   Text,
   Range
 }
 
-/**
- * @description Information Related to Floating Prompt.
- */
-export type PromptInputInformation = {
-  /**
-   * @description Set placeholder
-   */
-  placeholder: string,
-  /**
-   * @description Input Type (see `PromptInputType`)
-   */
-  type: PromptInputType,
-  /**
-   * @description If set, needs user input.
-   */
+export type PromptInputInfo = {
+  textPlaceholder: string,
+  inputType: PromptInputType,
   required: boolean
-  /**
-   * @description Default value.
-   */
   default?: string
 }
 
 export type PromptMenuInfo = {
-  showPrompt: (ci: PromptInputInformation[], x: number, y: number) => void
+  showPrompt: (ci: PromptInputInfo[], x: number, y: number) => void
   hidePrompt: () => void,
   isPromptOpen: () => boolean
 };
 
-export const PromptMenuContext = React.createContext<PromptMenuInfo>({} as PromptMenuInfo);
+export const PromptMenuContext = React.createContext({} as PromptMenuInfo);
 
 export const PromptMenuProvider = (props: React.PropsWithChildren) => {
   const [visible, setVisible] = React.useState(false);
-  const [items, setItems] = React.useState<PromptInputInformation[]>([]);
-  const [x, setX] = React.useState<number>(0);
-  const [y, setY] = React.useState<number>(0);
+  const [items, setItems] = React.useState<PromptInputInfo[]>([]);
+  const [x, setX] = React.useState(0);
+  const [y, setY] = React.useState(0);
 
   function isPromptOpen() {
     return visible;
   }
 
-  function showPrompt(promptDetails: PromptInputInformation[], x: number, y: number) {
+  function showPrompt(promptDetails: PromptInputInfo[], x: number, y: number) {
     setItems(promptDetails);
     setX(x);
     setY(y);
     setVisible(true);
   }
 
+  // TODO: Implement this.
   function onPromptAccepted(values: string[]) {
     setItems([]);
     setVisible(false);
@@ -77,7 +60,7 @@ export const PromptMenuProvider = (props: React.PropsWithChildren) => {
       >
         {props.children}
       </PromptMenuContext.Provider>
-      {visible && <CustomPrompt promptInputs={items} x={x} y={y} /> }
+      {visible && <CustomPrompt promptInputs={items} x={x} y={y} />}
     </>
   )
 }

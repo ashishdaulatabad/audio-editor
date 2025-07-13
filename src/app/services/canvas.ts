@@ -12,7 +12,13 @@ self.addEventListener(
     } = event.data;
     const width = offcanvas.width, height = offcanvas.height;
 
-    const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+    const context = offcanvas.getContext('2d');
+
+    if (!context) {
+      console.error('Failed to get 2D context from OffscreenCanvas');
+      return;
+    }
+
     const channelCount = buffer.length;
   
     context.strokeStyle = '#ccc';

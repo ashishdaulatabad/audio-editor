@@ -39,7 +39,8 @@ export function Window(props: React.PropsWithChildren<{
 }>) {
   /// States
   const [hold, setHold] = React.useState(false);
-  const [windowManipulationMode, setWindowManipulationMode] = React.useState(WindowManipulationMode.None);
+  const [windowManipulationMode, setWindowManipulationMode] = 
+    React.useState(WindowManipulationMode.None);
   const windowRef = React.useRef<HTMLDivElement | null>(null);
 
   function onWindowClick() {
@@ -61,7 +62,12 @@ export function Window(props: React.PropsWithChildren<{
     } = event.nativeEvent;
 
     if (windowRef.current) {
-      const { left, top, width, height } = windowRef.current.getBoundingClientRect();
+      const {
+        left,
+        top,
+        width,
+        height
+      } = windowRef.current.getBoundingClientRect();
 
       if (left + width - clientX <= 10) {
         setWindowManipulationMode(WindowManipulationMode.ResizeXRight)

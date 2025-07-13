@@ -4,8 +4,8 @@ import { audioService } from '@/app/services/audioservice';
 import { Maybe } from '@/app/services/interfaces';
 import { Mixer } from '@/app/services/mixer';
 import {
-  addToAudioNodeRegistryList,
-  deregisterFromAudioNodeRegistryList,
+  registerAudioNode,
+  deregisterAudioNode,
   getAudioNode
 } from '@/app/services/audio/noderegistry';
 import {
@@ -37,6 +37,11 @@ export type SubType<T, K extends string> = T extends Object ? (
   K extends `${infer F}.${infer R}` ? SubType<Idx<T, F>, R> : Idx<T, K>
 ) : never;
 
+const REGION_SELECT_TIMELIMIT_MICROSEC = 100000;
+const DEFAULT_MIN_TIME_LOOP_SEC = 5;
+const DEFAULT_SAMPLE_RATE = 48000;
+const DEFAULT_CHANNELS = 2;
+
 /**
  * @description Schedule Node Information related to the tracks.
  */
@@ -58,7 +63,7 @@ class AudioTrackManager {
   scheduled = false;
   startTimestamp = 0;
   runningTimestamp = 0;
-  loopEnd = 5;
+  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
   timeframeSelectionDetails: Maybe<TimeSectionSelection> = null;
   mixer: Mixer
 
@@ -93,17 +98,21 @@ class AudioTrackManager {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
 
-    const gainNodes = Array.from({ length: this.totalTrackSize }, () => {
-      const gainNode = audioContext.createGain();
-      gainNode.connect(masterGainNode as GainNode);
-      return gainNode;
-    });
+    const gainNodes = Array.from(
+      { length: this.totalTrackSize }, 
+      () => {
+        const gainNode = audioContext.createGain();
+        gainNode.connect(masterGainNode as GainNode);
+        return gainNode;
+      });
 
-    const pannerNodes = Array.from({ length: this.totalTrackSize }, (_, index: number) => {
-      const pannerNode = audioContext.createStereoPanner()
-      pannerNode.connect(gainNodes[index]);
-      return pannerNode;
-    });
+    const pannerNodes = Array.from(
+      { length: this.totalTrackSize }, 
+      (_, index: number) => {
+        const pannerNode = audioContext.createStereoPanner()
+        pannerNode.connect(gainNodes[index]);
+        return pannerNode;
+      });
 
     return [gainNodes, pannerNodes, masterGainNode];
   }
@@ -130,15 +139,20 @@ class AudioTrackManager {
 
   /**
    * @description Simulates all the connections into offline.
+   * TODO: Allow user to specify the sample rate, and channels.
    * @param scheduledTracks all the scheduled tracks currently done.
    * @returns rendered raw audio data.
    */
   async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
-    const channels = 2;
-    const bufferLength = Math.ceil(48000 * this.loopEnd);
-    const sampleRate = 48000;
+    const channels = DEFAULT_CHANNELS;
+    const bufferLength = Math.ceil(DEFAULT_SAMPLE_RATE * this.loopEnd);
+    const sampleRate = DEFAULT_SAMPLE_RATE;
 
-    const offlineAudioContext = new OfflineAudioContext(channels, bufferLength, sampleRate);
+    const offlineAudioContext = new OfflineAudioContext(
+      channels,
+      bufferLength,
+      sampleRate
+    );
     const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
 
     masterGainNode.connect(offlineAudioContext.destination);
@@ -169,8 +183,8 @@ class AudioTrackManager {
 
     const gain = context.createGain();
     const panner = context.createStereoPanner();
-    const gainRegister = addToAudioNodeRegistryList(gain);
-    const pannerRegister = addToAudioNodeRegistryList(panner);
+    const gainRegister = registerAudioNode(gain);
+    const pannerRegister = registerAudioNode(panner);
 
     this.audioBank[audioBankSymbol] = {
       audioDetails,
@@ -206,8 +220,8 @@ class AudioTrackManager {
         pannerRegister
       } = this.audioBank[sym];
 
-      deregisterFromAudioNodeRegistryList(gainRegister);
-      deregisterFromAudioNodeRegistryList(pannerRegister);
+      deregisterAudioNode(gainRegister);
+      deregisterAudioNode(pannerRegister);
 
       delete this.audioBank[sym];
       return true;
@@ -267,9 +281,7 @@ class AudioTrackManager {
    * @param domElement DOM element associated with the selection
    * @returns void
    */
-  deleteFromSelectedAudioTracks(
-    scheduledTrackId: symbol,
-  ) {
+  deleteFromSelectedAudioTracks(scheduledTrackId: symbol) {
     this.multiSelectTracker.deleteFromSelectedAudioTracks(scheduledTrackId);
   }
 
@@ -286,9 +298,7 @@ class AudioTrackManager {
    * @param domElement DOM element associated with the selection
    * @returns void
    */
-  deleteAudioFromSelectedAudioTracks(
-    audioId: symbol,
-  ) {
+  deleteAudioFromSelectedAudioTracks(audioId: symbol) {
     this.multiSelectTracker.deleteAudioFromSelectedAudioTracks(audioId);
   }
 
@@ -337,16 +347,20 @@ class AudioTrackManager {
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
-    // To do: Make 500000 global variable??
     if (timeSelection) {
-      if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 100000) return;
+      const {endTimeMicros, startTimeMicros} = timeSelection;
+      
+      if (endTimeMicros - startTimeMicros < REGION_SELECT_TIMELIMIT_MICROSEC) {
+        return
+      };
     }
 
     this.timeframeSelectionDetails = timeSelection;
   }
 
   /**
-   * @description Safety function to initialize audiocontext before using audiomanager
+   * @description Safety function to initialize audiocontext before using 
+   * audiomanager
    * @returns Self; the Audio Manager.
    */
   useManager() {
@@ -381,8 +395,12 @@ class AudioTrackManager {
     this.unregisterAudioFromAudioBank(audioId);
   }
 
+  // TODO: When moved to Tempo, allow dynamic min loop end time.
   setLoopEnd(valueMicros: number) {
-    this.loopEnd = Math.max(5, valueMicros / SEC_TO_MICROSEC);
+    this.loopEnd = Math.max(
+      DEFAULT_MIN_TIME_LOOP_SEC, 
+      valueMicros / SEC_TO_MICROSEC
+    );
   }
 
   setGainNodeForMaster(vol: number) {
@@ -534,9 +552,15 @@ class AudioTrackManager {
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       this.scheduledNodes[symbolKey].buffer.stop(0);
       this.scheduledNodes[symbolKey].buffer.disconnect();
-      this.multiSelectTracker.multiSelectedDOMElements = this.multiSelectTracker.multiSelectedDOMElements.filter((element) => (
+
+      let multiSelectedDomElements = this
+        .multiSelectTracker
+        .multiSelectedDOMElements;
+
+      multiSelectedDomElements = multiSelectedDomElements.filter((element) => (
         element.trackDetail.scheduledKey !== symbolKey
       ));
+
       delete this.scheduledNodes[symbolKey];
     }
   }
@@ -758,10 +782,7 @@ class AudioTrackManager {
     }
   }
 
-  rescheduleTrack(
-    scheduledKey: symbol,
-    trackDetails: AudioTrackDetails
-  ) {
+  rescheduleTrack(scheduledKey: symbol, trackDetails: AudioTrackDetails) {
     if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
       const node = this.scheduledNodes[scheduledKey];
       node.buffer.stop(0);
@@ -812,15 +833,22 @@ class AudioTrackManager {
     this.paused = false;
   }
 
-  getTimeData(leftArray: Uint8Array<ArrayBuffer>, rightArray: Uint8Array<ArrayBuffer>) {
+  getTimeData(
+    stereoLeftBuffer: Uint8Array<ArrayBuffer>, 
+    stereoRightBuffer: Uint8Array<ArrayBuffer>
+  ) {
     const left = (this.leftAnalyserNode as AnalyserNode);
     const right = (this.rightAnalyserNode as AnalyserNode);
 
-    left.getByteTimeDomainData(leftArray);
-    right.getByteTimeDomainData(rightArray);
+    left.getByteTimeDomainData(stereoLeftBuffer);
+    right.getByteTimeDomainData(stereoRightBuffer);
   }
 
-  getTimeDataFromMixer(mixer: number, leftArray: Uint8Array<ArrayBuffer>, rightArray: Uint8Array<ArrayBuffer>) {
+  getTimeDataFromMixer(
+    mixer: number,
+    stereoLeftBuffer: Uint8Array<ArrayBuffer>, 
+    stereoRightBuffer: Uint8Array<ArrayBuffer>
+  ) {
     const {
       left,
       right
@@ -831,8 +859,8 @@ class AudioTrackManager {
         right: AnalyserNode
       };
 
-    left.getByteTimeDomainData(leftArray);
-    right.getByteTimeDomainData(rightArray);
+    left.getByteTimeDomainData(stereoLeftBuffer);
+    right.getByteTimeDomainData(stereoRightBuffer);
   }
 
   private _updateTimestampOnSelectedTimeframe() {

@@ -16,8 +16,12 @@ interface TrackProps {
 }
 
 export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
-  const trackData = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
-  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+  const trackData = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails[props.id]
+  ));
+  const mode = useSelector((state: RootState) => (
+    state.trackDetailsReducer.timeframeMode
+  ));
 
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistanceSecs;

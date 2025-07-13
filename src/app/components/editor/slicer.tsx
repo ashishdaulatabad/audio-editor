@@ -68,14 +68,11 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     const pointOfSliceSecs = (startX / props.lineDist) * props.unitTime;
     const trackFirst = Math.round(startY / props.trackHeight);
     const trackSecond = Math.round(endY / props.trackHeight);
-    const startTrack = Math.min(trackFirst, trackSecond), endTrack = Math.max(trackFirst, trackSecond) - 1;
+    const startTrack = Math.min(trackFirst, trackSecond);
+    const endTrack = Math.max(trackFirst, trackSecond) - 1;
 
     if (startTrack <= endTrack) {
-      props.onSliceSelect({
-        pointOfSliceSecs,
-        startTrack,
-        endTrack
-      });
+      props.onSliceSelect({ pointOfSliceSecs, startTrack, endTrack });
     }
 
     setStartX(0);

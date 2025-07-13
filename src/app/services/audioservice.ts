@@ -1,10 +1,10 @@
 export class GlobalAudioService {
-    // @ts-expect-error Needs user interaction
-    audioContext: AudioContext;
-    paused = true;
-    initialized = false;
+  // @ts-expect-error Needs user interaction
+  audioContext: AudioContext;
+  paused = true;
+  initialized = false;
 
-    constructor() {}
+  constructor() {}
 
   useAudioContext() {
     if (!this.audioContext) {

@@ -2,7 +2,6 @@
  * Registry for an audio node that is easily retrievable
  * and modifiable.
  */
-
 export enum NodeType {
   Gain,
   StereoPan,
@@ -108,7 +107,7 @@ export function createAutomation(node: AudioNode, type: string) {
  * changes in user interface.
  * @param AudioNode node needed to register.
  */
-export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
+export function registerAudioNode(audioNode: AudioNode): symbol {
   const sym = Symbol();
   registry[sym] = audioNode;
 
@@ -120,7 +119,7 @@ export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
  * @todo Clear history related to this node.
  * @param sym identifier for the AudioNode.
  */
-export function deregisterFromAudioNodeRegistryList(sym: symbol) {
+export function deregisterAudioNode(sym: symbol) {
   delete registry[sym];
 }
 
@@ -197,11 +196,13 @@ export function compareValues(left: any, right: any): boolean {
       return leftObjectAttributes.length === rightObjectAttributes.length && 
         leftSymbols.length === rightSymbols.length &&
         leftObjectAttributes.every(leftKey => (
-          right.hasOwnProperty(leftKey) && compareValues(left[leftKey], right[leftKey]
-        ))) &&
+          right.hasOwnProperty(leftKey) && 
+            compareValues(left[leftKey], right[leftKey])
+        )) &&
         leftSymbols.every(leftKey => (
-          Object.hasOwn(right, leftKey) && compareValues(left[leftKey], right[leftKey]
-        )));
+          Object.hasOwn(right, leftKey) && 
+            compareValues(left[leftKey], right[leftKey])
+        ));
     }
 
     default: {

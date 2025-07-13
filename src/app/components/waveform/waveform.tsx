@@ -53,8 +53,8 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const track = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[trackNumber][audioId]
   ));
-  const ref = React.createRef<HTMLCanvasElement>();
-  const divRef = React.createRef<HTMLDivElement>();
+  const ref = React.useRef<HTMLCanvasElement>(null);
+  const divRef = React.useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
 
   // States

@@ -11,13 +11,7 @@ import { SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
  * @description Timeframe selected by the user.
  */
 export interface TimeSectionSelection {
-  /**
-   * @description Start timeframe in microseconds.
-   */
   startTimeMicros: number
-  /**
-   * @description End timeframe in microseconds.
-   */
   endTimeMicros: number
 }
 
@@ -63,24 +57,31 @@ interface SeekbarProps {
   onTimeSelection: (timeSection: TimeSectionSelection | null) => void
 }
 
+// Distance threshold between two label, if lower, 
+// then label is multiplied by certain factor.
+const TIME_LABEL_DISTANCE_THRESHOLD = 50;
+
 export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
   // Redux States
-  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
+  const tracks = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails
+  ));
   // Component states
-  const [isUserSelectingRegion, setIsUserSelectingRegion] = React.useState(false);
+  const [isUserSelecting, setIsUserSelecting] = React.useState(false);
   const [startRegionSelection, setStartRegionSelection] = React.useState(0);
   const [endRegionSelection, setEndRegionSelection] = React.useState(0);
   const [left, setLeft] = React.useState(0);
-  // Declared variables
+
   const {
     lineDist,
     timeUnitPerLineDistInSeconds: timeUnit,
     seekerRef
   } = props;
-  const labelMultiplier = Math.ceil(50 / lineDist);
 
-  function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (!isUserSelectingRegion && props.mode === ModeType.DefaultSelector) {
+  const labelMultiplier = Math.ceil(TIME_LABEL_DISTANCE_THRESHOLD / lineDist);
+
+  function seekToPoint(event: React.MouseEvent<HTMLDivElement>) {
+    if (!isUserSelecting && props.mode === ModeType.DefaultSelector) {
       const { offsetX } = event.nativeEvent;
       const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
 
@@ -94,7 +95,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     audioManager.useManager().rescheduleAllTracks(tracks);
   }
 
-  function handleMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function handleMouseDown(event: React.MouseEvent<HTMLDivElement>) {
     if (
       // Region select between ranges iff current cursor is Region Select.
       (props.mode === ModeType.RegionSelect && event.buttons === 1) ||
@@ -107,7 +108,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
       setStartRegionSelection(currentTimeSecs);
       setEndRegionSelection(currentTimeSecs);
-      setIsUserSelectingRegion(true);
+      setIsUserSelecting(true);
 
       props.onTimeSelection({
         startTimeMicros: currentTimeSecs * SEC_TO_MICROSEC,
@@ -116,13 +117,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     }
   }
 
-  /**
-   * @description Handle Mouse event after moving some offset.
-   * @param event event details
-   * @returns void
-   */
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (isUserSelectingRegion && event.buttons > 0) {
+  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    if (isUserSelecting && event.buttons > 0) {
       const { offsetX } = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
       setEndRegionSelection(endTimeSecs);
@@ -137,13 +133,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     }
   }
 
-  /**
-   * @description Handle mouse release event.
-   * @param event Event details.
-   * @returns void
-   */
-  function handleMouseRelease(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (isUserSelectingRegion) {
+  function handleMouseRelease(event: React.MouseEvent<HTMLDivElement>) {
+    if (isUserSelecting) {
       const { offsetX } = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
 
@@ -159,20 +150,21 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       } else {
         setStartRegionSelection(0);
         setEndRegionSelection(0);
-        setIsUserSelectingRegion(false);
+        setIsUserSelecting(false);
 
         props.onTimeSelection(null);
       }
     }
-    setIsUserSelectingRegion(false);
+    setIsUserSelecting(false);
   }
 
 
   const timeData = Array.from(
     { length: Math.floor(props.totalLines / labelMultiplier) },
     (_, index: number) => {
-      const currMinute = Math.floor((timeUnit * labelMultiplier * (index + 1)) / 60);
-      const currSecond = (timeUnit * labelMultiplier * (index + 1)) % 60;
+      const time = (timeUnit * labelMultiplier * (index + 1));
+      const currMinute = Math.floor(time / 60);
+      const currSecond = Math.floor(time) % 60;
 
       return (
         <text

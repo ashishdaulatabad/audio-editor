@@ -67,10 +67,9 @@ export function createSnapshot<Type>(state: Type): Snapshot<Type> {
  */
 class ChangeHistory {
   stack: Array<Change<any>> = [];
-  maxStackSize = 150;
   pointer = -1;
 
-  constructor() {}
+  constructor(private maxStackSize = 150) {}
 
   peekHistory() {
     if (this.stack.length == 0) {
@@ -151,7 +150,9 @@ class ChangeHistory {
       if (changeType === stackChange.workspaceChange) {
         const { updatedValues } = stackChange;
 
-        stackChange.updatedValues = updatedValues.filter(item => !identifierFn(item));
+        stackChange.updatedValues = updatedValues.filter(item => (
+          !identifierFn(item)
+        ));
 
         if (stackChange.updatedValues.length === 0) {       
           if (index <= this.pointer) {
@@ -165,7 +166,7 @@ class ChangeHistory {
     this.pointer -= subtractPointerBy;
   }
 
-  rollbackChange<Type>(redo: boolean = false) {
+  rollbackChange(redo: boolean = false) {
     if (this.pointer < 0 && !redo) return undefined;
     if (this.pointer >= this.stack.length && redo) return undefined;
 

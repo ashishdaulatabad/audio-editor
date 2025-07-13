@@ -15,7 +15,11 @@ interface WaveformSeekbarProps {
   timeUnitPerLineDistInSeconds: number
 }
 
-export function setTimeInterval(timeUnit: number, totalLines: number, lineDist: number) {
+export function setTimeInterval(
+  timeUnit: number,
+  totalLines: number, 
+  lineDist: number
+) {
   while (totalLines < 4) {
     timeUnit /= 5;
     lineDist /= 5;
@@ -29,7 +33,7 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
   const { trackNumber, audioId } = props;
   const [leftSeek, setLeftSeek] = React.useState(0);
 
-  const divRef = React.createRef<HTMLDivElement>();
+  const divRef = React.useRef<HTMLDivElement>(null);
 
   let lineDist = props.lineDist;
   let timeUnit = props.timeUnitPerLineDistInSeconds;
@@ -40,16 +44,22 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
 
   const thickLineData = {
     lw: 2,
-    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => (
-      `M${index * lineDist} 15 L${index * lineDist} 30`
-    )).join(''),
+    content: Array.from(
+      {length: Math.ceil(totalLines)},
+      (_, index: number) => (
+        `M${index * lineDist} 15 L${index * lineDist} 30`
+      )).join(''),
   };
+
+  const ld_2 = lineDist / 2;
 
   const thinLineData = {
     lw: 1,
-    content: Array.from({ length: Math.ceil(totalLines) }, (_, index: number) => (
-      `M${index * lineDist + lineDist / 2} 23L${index * lineDist + lineDist / 2} 30`
-    )).join(''),
+    content: Array.from(
+      {length: Math.ceil(totalLines)}, 
+      (_, index: number) => (
+        `M${index * lineDist + ld_2} 23L${index * lineDist + ld_2} 30`
+      )).join(''),
   };
 
   function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -97,8 +107,8 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
   const isPartial = props.isPartial;
   const startOffsetSecs = props.startOffsetInMillis / 1000;
   const endOffsetSecs = props.endOffsetInMillis / 1000;
-  const startLimit = ((props.lineDist / props.timeUnitPerLineDistInSeconds) * startOffsetSecs);
-  const endLimit = ((props.lineDist / props.timeUnitPerLineDistInSeconds) * endOffsetSecs);
+  const startLimit = ((lineDist / timeUnit) * startOffsetSecs);
+  const endLimit = ((lineDist / timeUnit) * endOffsetSecs);
 
   return (
     <div

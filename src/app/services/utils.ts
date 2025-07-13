@@ -53,7 +53,10 @@ export async function createAudioData(
     effects: [],
   };
 
-  const audioId = audioManager.registerAudioInAudioBank(trackDetails, bufferedData);
+  const audioId = audioManager.registerAudioInAudioBank(
+    trackDetails,
+    bufferedData
+  );
 
   return {
     ...trackDetails,
@@ -71,7 +74,14 @@ export async function createAudioData(
 export function traverseParentUntilOneCondition(
   element: HTMLElement,
   whileFns: ((currentTraversedElement: HTMLElement) => boolean)[]
-): { index: number, expectedNode: HTMLElement } | { index: -1, expectedNode: null } {
+): {
+  index: number,
+  expectedNode: HTMLElement
+} | 
+{
+  index: -1,
+  expectedNode: null 
+} {
   let traverse: Maybe<HTMLElement> = element;
 
   do {
@@ -99,7 +109,7 @@ export function traverseParentUntilOneCondition(
  * @returns 
  */
 export function getTrackAudioElement(element: Element) {
-  let traverse: Element | null = element;
+  let traverse: Maybe<Element> = element;
 
   while (
     traverse !== null &&
@@ -112,7 +122,7 @@ export function getTrackAudioElement(element: Element) {
 }
 
 export function getTrackAudioOrTrackElement(element: Element) {
-  let traverse: Element | null = element;
+  let traverse: Maybe<Element> = element;
 
   while (
     traverse !== null &&
@@ -126,7 +136,7 @@ export function getTrackAudioOrTrackElement(element: Element) {
 }
 
 export function getTrackElement(element: Element) {
-  let traverse: Element | null = element;
+  let traverse: Maybe<Element> = element;
 
   while (
     traverse !== null &&

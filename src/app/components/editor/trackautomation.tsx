@@ -30,7 +30,7 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
   const [mode, setMode] = React.useState(AudioTrackManipulationMode.Move);
   const [grab, setIsGrab] = React.useState(false);
 
-  const duration = (automation.endOffsetMicros - automation.startOffsetMicros) / SEC_TO_MICROSEC as number;
+  const duration = (automation.endOffsetMicros - automation.startOffsetMicros) / SEC_TO_MICROSEC;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const width = (duration / timeUnit) * props.lineDist;
   const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;

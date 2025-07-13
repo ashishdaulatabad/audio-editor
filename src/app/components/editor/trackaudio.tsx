@@ -55,8 +55,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   const track = props.audioDetails;
 
   /// Refs
-  const spanRef = React.createRef<HTMLSpanElement>();
-  const divRef = React.createRef<HTMLDivElement>();
+  const spanRef = React.useRef<HTMLSpanElement>(null);
+  const divRef = React.useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
 
   /// States

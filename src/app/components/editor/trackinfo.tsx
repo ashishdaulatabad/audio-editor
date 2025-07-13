@@ -15,7 +15,9 @@ interface TrackInfoProps {
 }
 
 export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {
-  const trackDetail = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
+  const trackDetail = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails[props.id]
+  ));
   const [toggle, setToggle] = React.useState(true);
 
   // function toggleActiveTracks(toggle: boolean) {
