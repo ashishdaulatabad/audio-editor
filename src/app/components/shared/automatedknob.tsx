@@ -5,15 +5,10 @@ import { FaTimes } from 'react-icons/fa';
 
 export type AutomatedKnobProps = {
   r: number
-  // Associated audioparam is only required for mapping values.
   audioParam: AudioParam
-  // On change emitted from knob value
   onChange?: (value: number) => void
-  // On knob release
   onRelease?: (value: number) => void
-  // Min change for scrolling
   scrollDelta?: number
-  // Set Value
   value?: number
 }
 

@@ -25,16 +25,18 @@ export function AudioTrackList() {
   const dispatch = useDispatch();
 
   function selectFile() {
-    const inputElement = document.createElement("input") as HTMLInputElement;
+    const inputElement = document.createElement("input");
     inputElement.type = 'file';
     inputElement.accept = 'audio/*';
 
     inputElement.oninput = () => {
       const file = inputElement.files as FileList;
       createAudioData(files, file[0]).then((data) => {
-        if (data !== null) {
-          dispatch(addIntoAudioBank(data));
+        if (data === null) {
+          return;
         }
+
+        dispatch(addIntoAudioBank(data));
       });
     };
 

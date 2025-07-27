@@ -108,8 +108,8 @@ export function traverseParentUntilOneCondition(
  * @param element 
  * @returns 
  */
-export function getTrackAudioElement(element: Element) {
-  let traverse: Maybe<Element> = element;
+export function getTrackAudioElement(element: HTMLElement) {
+  let traverse: Maybe<HTMLElement> = element;
 
   while (
     traverse !== null &&
@@ -121,8 +121,8 @@ export function getTrackAudioElement(element: Element) {
   return traverse;
 }
 
-export function getTrackAudioOrTrackElement(element: Element) {
-  let traverse: Maybe<Element> = element;
+export function getTrackAudioOrTrackElement(element: HTMLElement) {
+  let traverse: Maybe<HTMLElement> = element;
 
   while (
     traverse !== null &&
@@ -135,8 +135,8 @@ export function getTrackAudioOrTrackElement(element: Element) {
   return traverse;
 }
 
-export function getTrackElement(element: Element) {
-  let traverse: Maybe<Element> = element;
+export function getTrackElement(element: HTMLElement) {
+  let traverse: Maybe<HTMLElement> = element;
 
   while (
     traverse !== null &&

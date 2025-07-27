@@ -3,14 +3,10 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 /**
- * @description Props for displaying track information
- * @todo update:
+ * @TODO:
  * - Allow addition/updation of name of this track.
  */
 interface TrackInfoProps {
-  /**
-   * @description Id of this track.
-   */
   id: number
 }
 

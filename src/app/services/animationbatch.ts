@@ -113,8 +113,8 @@ class AnimationBatcher {
   }
 
   /**
-   * @description Resumes running animation, if already suspended, 
-   * keeps suspended.
+   * @description Resumes running animation, if already resumed, 
+   * does nothing.
    * @param handlerSymbol animation handler.
    */
   resumeAnimation(handlerSymbol: symbol) {

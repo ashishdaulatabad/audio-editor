@@ -46,9 +46,10 @@ export class MultiSelectTracker {
     track: AudioTrackDetails,
     domElement: HTMLElement
   ) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === track.trackDetail.scheduledKey
-    ));
+    const existingElementIndex = this.multiSelectedDOMElements
+      .findIndex(element => (
+        element.trackDetail.scheduledKey === track.trackDetail.scheduledKey
+      ));
 
     if (existingElementIndex === -1) {
       this.multiSelectedDOMElements.push({
@@ -74,9 +75,10 @@ export class MultiSelectTracker {
    * @returns void
    */
   deleteFromSelectedAudioTracks(scheduledTrackId: symbol) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === scheduledTrackId
-    ));
+    const existingElementIndex = this.multiSelectedDOMElements
+      .findIndex(element => (
+        element.trackDetail.scheduledKey === scheduledTrackId
+      ));
 
     if (existingElementIndex > -1) {
       this.multiSelectedDOMElements.splice(existingElementIndex, 1);
@@ -87,9 +89,10 @@ export class MultiSelectTracker {
    * @description Cleanup Selection: Remove elements not attached to DOM element
    */
   cleanupSelectedDOMElements() {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(dom => (
-      dom.domElement.isConnected
-    ));
+    this.multiSelectedDOMElements = this.multiSelectedDOMElements
+      .filter(dom => (
+        dom.domElement.isConnected
+      ));
   }
 
   /**
@@ -99,9 +102,10 @@ export class MultiSelectTracker {
    * @returns void
    */
   deleteAudioFromSelectedAudioTracks(audioId: symbol) {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(element => (
-      element.audioId === audioId
-    ));
+    this.multiSelectedDOMElements = this.multiSelectedDOMElements
+      .filter(element => (
+        element.audioId === audioId
+      ));
   }
 
   /**

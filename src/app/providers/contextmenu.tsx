@@ -43,14 +43,14 @@ export const ContextMenuProvider = (props: React.PropsWithChildren) => {
     return visible;
   }
 
-  const showContextMenu = (contextItems: ContextItem[], x: number, y: number) => {
+  function showContextMenu(contextItems: ContextItem[], x: number, y: number) {
     setItems(contextItems);
     setX(x);
     setY(y);
     setVisible(true);
   }
 
-  const hideContextMenu = () => {
+  function hideContextMenu() {
     setItems([]);
     setVisible(false);
   }

@@ -8,25 +8,10 @@ import { FaChevronDown } from 'react-icons/fa';
 import { css } from '@/app/services/utils';
 
 export type SimpleDropdownProps<Item extends Object> = {
-  /**
-   * @description All list to be displayed on the item
-   */
   list: Item[]
-  /**
-   * @description Label for each item
-   */
   label: (elem: ListItem<Item>) => React.JSX.Element
-  /**
-   * @description Value you want to emit
-   */
   value?: keyof Item
-  /**
-   * @description Placeholder
-   */
   placeholder?: string
-  /**
-   * @description Value emitted by user.
-   */
   onSelect: (value: Item | Item[keyof Item]) => void
 }
 
@@ -34,7 +19,7 @@ export function SimpleDropdown<Item extends Object>(
   props: React.PropsWithoutRef<SimpleDropdownProps<Item>>
 ) {
   // States
-  const [selectedItem, setSelectedItem] = React.useState<ListItem<Item> | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState({} as ListItem<Item>);
   // Refs
   const ref = React.useRef<HTMLDivElement | null>(null);
   // variables
@@ -50,7 +35,7 @@ export function SimpleDropdown<Item extends Object>(
     showDropdownPanel({
       content: props.list,
       label: props.label,
-      onSelect: (item: ListItem<Item>) => {
+      onSelect: (item) => {
         setSelectedItem(item);
         props.onSelect(item.value);
       },

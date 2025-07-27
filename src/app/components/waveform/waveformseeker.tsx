@@ -13,7 +13,7 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
   seekOffset?: number
 }>) {
   const seekbarRef = React.createRef<HTMLDivElement>();
-  const { trackNumber, audioId } = props;
+  const { trackNumber, audioId, lineDist, h } = props;
 
   const track = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[trackNumber][audioId]
@@ -35,30 +35,30 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
   const trackOffsetSecs = offsetInMicros / SEC_TO_MICROSEC;
 
   React.useEffect(() => {
-    let value = 0;
-
-    if (status === Status.Play) {
-      value = requestAnimationFrame(animateSeekbar);
-    }
+    let value = status === Status.Play ?
+      requestAnimationFrame(animateSeekbar) :
+      0;
 
     function animateSeekbar() {
       const effectiveOffset = audioManager.getTimestamp() - trackOffsetSecs;
       const show = effectiveOffset >= 0 && 
         effectiveOffset <= endOffsetSecs - startOffsetSecs;
 
-      if (seekbarRef.current) {
-        if (show) {
-          const left = (props.lineDist / 5) * (effectiveOffset + startOffsetSecs);
-          Object.assign(
-            seekbarRef.current.style,
-            {
-              display: 'block',
-              transform: `translate(${Math.round(left)}px)`,
-            }
-          );
-        } else {
-          seekbarRef.current.style.display = 'none';
-        }
+      if (!seekbarRef.current) {
+        return;
+      }
+
+      if (show) {
+        const left = (lineDist / 5) * (effectiveOffset + startOffsetSecs);
+        Object.assign(
+          seekbarRef.current.style,
+          {
+            display: 'block',
+            transform: `translate(${Math.round(left)}px)`,
+          }
+        );
+      } else {
+        seekbarRef.current.style.display = 'none';
       }
       
       value = requestAnimationFrame(animateSeekbar);
@@ -71,7 +71,7 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
     <div
       ref={seekbarRef}
       className="seekbar-seek z-10 absolute bg-green-500 w-[2px]"
-      style={{height: props.h + 60 + 'px'}}
+      style={{height: h + 60 + 'px'}}
     ></div>
   )
 }

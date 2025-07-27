@@ -46,18 +46,13 @@ export class Mixer {
   }
 
   getGainValue(mixerNumber: number) {
-    if (mixerNumber === 0) {
-      return this.masterGainNode?.gain.value as number;
-    }
-    return this.gainNodes[mixerNumber - 1].gain.value;
+    console.assert(mixerNumber >= 0 && mixerNumber <= this.totalMixerCount);
+    return this.gainNodes[mixerNumber].gain.value;
   }
 
   getPanValue(mixerNumber: number) {
-    if (mixerNumber === 0) {
-      return this.masterPannerNode?.pan.value as number;
-    }
-
-    return this.panNodes[mixerNumber - 1].pan.value;
+    console.assert(mixerNumber >= 0 && mixerNumber <= this.totalMixerCount);
+    return this.panNodes[mixerNumber].pan.value;
   }
 
   /**
@@ -87,6 +82,9 @@ export class Mixer {
         pannerNode.connect(gainNodes[index]);
         return pannerNode;
       });
+
+    gainNodes.unshift(masterGainNode);
+    pannerNodes.unshift(masterPannerNode);
 
     masterPannerNode.connect(masterGainNode);
 
@@ -157,11 +155,7 @@ export class Mixer {
   }
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {
-    if (mixerNumber === 0) {
-      node.connect(this.masterPannerNode as StereoPannerNode);
-    } else {
-      node.connect(this.panNodes[mixerNumber - 1]);
-    }
+    node.connect(this.panNodes[mixerNumber]);
   }
 
   // TODO: make mixer number uniform.
@@ -171,25 +165,21 @@ export class Mixer {
 
   setGainValue(mixerNumber: number, value: number) {
     console.assert(value >= 0 && value <= 2);
+    console.assert(
+      mixerNumber >= 0 && mixerNumber <= this.totalMixerCount, 
+      'Invalid mixer number: ' + mixerNumber
+    );
 
-    if (mixerNumber > 0) {
-      this.gainNodes[mixerNumber - 1].gain.value = value;
-    } else {
-      if (this.masterGainNode) {
-        this.masterGainNode.gain.value = value;
-      }
-    }
+    this.gainNodes[mixerNumber].gain.value = value;
   }
 
   setPanValue(mixerNumber: number, value: number) {
     console.assert(value >= -1 && value <= 1);
+    console.assert(
+      mixerNumber >= 0 && mixerNumber <= this.totalMixerCount, 
+      'Invalid mixer number: ' + mixerNumber
+    );
 
-    if (mixerNumber > 0) {
-      this.panNodes[mixerNumber - 1].pan.value = value;
-    } else {
-      if (this.masterPannerNode) {
-        this.masterPannerNode.pan.value = value;
-      }
-    }
+    this.gainNodes[mixerNumber].gain.value = value;
   }
 };

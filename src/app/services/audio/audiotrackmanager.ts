@@ -255,19 +255,10 @@ class AudioTrackManager {
     this.multiSelectTracker.clearSelection();
   }
 
-  /**
-   * @description Check if at least one of the DOM elements is multi-selected
-   */
   isMultiSelected() {
     return this.multiSelectTracker.isMultiSelected();
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
   addIntoSelectedAudioTracks(
     track: AudioTrackDetails,
     domElement: HTMLElement
@@ -275,73 +266,34 @@ class AudioTrackManager {
     this.multiSelectTracker.addIntoSelectedAudioTracks(track, domElement);
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
   deleteFromSelectedAudioTracks(scheduledTrackId: symbol) {
     this.multiSelectTracker.deleteFromSelectedAudioTracks(scheduledTrackId);
   }
 
-  /**
-   * @description Cleanup Selection: Remove elements not attached to DOM element
-   */
   cleanupSelectedDOMElements() {
     this.multiSelectTracker.cleanupSelectedDOMElements();
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
   deleteAudioFromSelectedAudioTracks(audioId: symbol) {
     this.multiSelectTracker.deleteAudioFromSelectedAudioTracks(audioId);
   }
 
-  /**
-   * Apply move transformation to these selected DOM elements
-   * 
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyTransformationToMultipleSelectedTracks(diffX: number) {
     this.multiSelectTracker.applyTransformationToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Apply move transformation to these selected DOM elements
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyResizingStartToMultipleSelectedTracks(diffX: number) {
     this.multiSelectTracker.applyResizingStartToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Apply move transformation to these selected DOM elements
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyResizingEndToMultipleSelectedTracks(diffX: number) {
     this.multiSelectTracker.applyResizingEndToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Retrieves positions of the selected tracks.
-   * This is managed here instead of letting react handling it.
-   */
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
     return this.multiSelectTracker.getMultiSelectedTrackInformation();
   }
 
-  /**
-   * @description Retrieves all the positions of the current tracks.
-   * @returns 
-   */
   getNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
     return this.multiSelectTracker.getNewPositionForMultipleSelectedTracks();
   }
@@ -590,7 +542,10 @@ class AudioTrackManager {
     }
   }
 
-  scheduleSingleTrack(audioId: symbol, trackDetails: SubType<AudioTrackDetails, 'trackDetail'>) {
+  scheduleSingleTrack(
+    audioId: symbol,
+    trackDetails: SubType<AudioTrackDetails, 'trackDetail'>
+  ) {
     this._scheduleInternal(audioId, trackDetails);
   }
 

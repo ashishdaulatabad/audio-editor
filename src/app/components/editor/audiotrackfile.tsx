@@ -30,7 +30,9 @@ interface AudioTrackFileProps {
   selected: boolean
 }
 
-export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>) {
+export function AudioTrackFile(
+  props: React.PropsWithoutRef<AudioTrackFileProps>
+) {
   const index = props.index;
 
   const file = useSelector((state: RootState) => (
@@ -48,7 +50,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
       trackDetail: {
         startOffsetInMicros: 0,
         playbackRate: 1,
-        endOffsetInMicros: (file.duration as number * SEC_TO_MICROSEC),
+        endOffsetInMicros: file.duration * SEC_TO_MICROSEC,
         selected: false,
       }
     }));
@@ -113,7 +115,7 @@ export function AudioTrackFile(props: React.PropsWithoutRef<AudioTrackFileProps>
     hideContextMenu();
   }
 
-  function openContextMenu(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function openContextMenu(event: React.MouseEvent<HTMLDivElement>) {
     event.preventDefault();
 
     showContextMenu([{

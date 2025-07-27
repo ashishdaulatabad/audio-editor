@@ -16,7 +16,7 @@ export type DialogExportInformation = {
   isDialogOpen: () => boolean
 }
 
-export const DialogContext = React.createContext<DialogExportInformation>({} as DialogExportInformation);
+export const DialogContext = React.createContext({} as DialogExportInformation);
 
 export const DialogBoxProvider = (props: React.PropsWithChildren) => {
   const [visible, setVisible] = React.useState(false);

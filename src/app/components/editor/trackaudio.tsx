@@ -67,6 +67,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   // Track should exist
   const duration = track.duration as number;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
+  const lineDist = props.lineDist;
   const width = (duration / timeUnit) * props.lineDist;
   const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
 
@@ -94,11 +95,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         audioManager.deleteFromSelectedAudioTracks(track.trackDetail.scheduledKey);
       }
     }
-  }, [track.trackDetail, track.trackDetail.selected, props.lineDist]);
+  }, [track.trackDetail, track.trackDetail.selected, lineDist]);
 
 
   function calculateLeft(track: AudioTrackDetails) {
-    return (track.trackDetail.offsetInMicros / timeUnitMicros) * props.lineDist;
+    return (track.trackDetail.offsetInMicros / timeUnitMicros) * lineDist;
   }
 
   function setGrab(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -123,19 +124,17 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
         pointerPosition = event.nativeEvent.offsetX - divRef.current.scrollLeft;
       }
     }
-
-    if (pointerPosition <= 5) {
-      if (mode !== AudioTrackManipulationMode.ResizeStart) {
-        setMode(AudioTrackManipulationMode.ResizeStart);
-      }
-    } else if (divRef.current && pointerPosition >= divRef.current.clientWidth - 5) {
-      if (mode !== AudioTrackManipulationMode.ResizeEnd) {
-        setMode(AudioTrackManipulationMode.ResizeEnd);
-      }
-    } else {
-      if (mode !== AudioTrackManipulationMode.Move) {
-        setMode(AudioTrackManipulationMode.Move);
-      }
+    const manipulationMode = 
+      // Cursor at the start of the trackAudio DOM Element
+      pointerPosition <= 5 ?
+      AudioTrackManipulationMode.ResizeStart :
+      // Cursor at the end of the trackAudio DOM Element
+      divRef.current && pointerPosition >= divRef.current.clientWidth - 5 ?
+      AudioTrackManipulationMode.ResizeEnd :
+      AudioTrackManipulationMode.Move;
+    
+    if (mode !== manipulationMode) {
+      setMode(manipulationMode);
     }
   }
 
@@ -149,8 +148,8 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     const timeUnitMicros = timeUnit * SEC_TO_MICROSEC;
 
     // Start defines the invisible scroll, end defines the width of the current track.
-    const leftScrollAmount = (startOffsetMicros / timeUnitMicros) * props.lineDist;
-    const endPointOfWidth = (endOffsetMicros / timeUnitMicros) * props.lineDist;
+    const leftScrollAmount = (startOffsetMicros / timeUnitMicros) * lineDist;
+    const endPointOfWidth = (endOffsetMicros / timeUnitMicros) * lineDist;
     const totalWidth = endPointOfWidth - leftScrollAmount;
 
     divElement.style.width = totalWidth + 'px';
@@ -241,6 +240,10 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     }
   }
 
+  const cursorStyle = mode === AudioTrackManipulationMode.ResizeEnd ? 'cursor-e-resize' : 
+    mode === AudioTrackManipulationMode.ResizeStart ? 'cursor-w-resize' : 
+    grab ? 'cursor-grabbing' : 'cursor-grab';
+
   return (
     <div
       title={`Track: ${track.audioName}`}
@@ -255,9 +258,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       onMouseLeave={unsetGrab}
       className={css(
         "track-audio shadow-sm shadow-black text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
-        mode === AudioTrackManipulationMode.ResizeEnd ? 'cursor-e-resize' : 
-          (mode === AudioTrackManipulationMode.ResizeStart ? 'cursor-w-resize' : 
-            (grab ? 'cursor-grabbing' : 'cursor-grab')),
+        cursorStyle,
       )}
       style={{left: calculateLeft(track)}}
     >
@@ -303,7 +304,13 @@ export function renderAudioWaveform(
   const width = Math.max((time / unitTime) * lineDist, 800);
   const height = 200;
   let offcanvas = new OffscreenCanvas(width, height);
-  const context = offcanvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
+  const context = offcanvas.getContext('2d');
+
+  if (!context) {
+    console.error('There was an error while rendering Context');
+    return offcanvas;
+  }
+
   const buffer = audioManager.getAudioBuffer(data.audioId) as AudioBuffer;
  
   context.strokeStyle = '#111';
@@ -321,7 +328,11 @@ export function renderAudioWaveform(
   const heightPerChannel = height / buffer.numberOfChannels;
 
   // Assuming that total channels are two.
-  for (let channel = 0, vertical = 0; channel < buffer.numberOfChannels; ++channel, vertical += heightPerChannel) {
+  for (
+    let channel = 0, vertical = 0; 
+    channel < buffer.numberOfChannels; 
+    ++channel, vertical += heightPerChannel
+  ) {
     const channelData = buffer.getChannelData(channel);
     context.moveTo(0, (1 / 2.0) * heightPerChannel + vertical)
 
@@ -329,7 +340,9 @@ export function renderAudioWaveform(
     const incr = (width / channelData.length) * mul;
 
     for (let index = 0; index < channelData.length; index += mul) {
-      const normalizedValue = ((channelData[index] + 1) / 2.0) * heightPerChannel + vertical;
+      const normalizedValue = 
+        ((channelData[index] + 1) / 2.0) * heightPerChannel + vertical;
+    
       context.lineTo(x, normalizedValue);
       x += incr;
     }

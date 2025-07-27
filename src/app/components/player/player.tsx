@@ -34,7 +34,7 @@ export function Timer() {
       setTimer(`${(minutes < 10 ? '0' : '') + minutes}:${(seconds < 10 ? '0' : '') + seconds}`);
     }
 
-    animationBatcher.setAnimationFrame(intervalId, 60);
+    animationBatcher.setAnimationFrameRate(intervalId, 60);
 
     return () => {
       animationBatcher.removeAnimationHandler(intervalId);

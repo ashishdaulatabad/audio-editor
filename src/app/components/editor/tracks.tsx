@@ -26,8 +26,11 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const lineDist = props.lineDist;
   const timeUnit = props.timeUnitPerLineDistanceSecs;
   const timeUnitLine = SEC_TO_MICROSEC * timeUnit
-  const selectedStart = (((props.selectedContent?.startTimeMicros || 0) / timeUnitLine) * lineDist);
-  const selectedEnd = (((props.selectedContent?.endTimeMicros || 0) / timeUnitLine) * lineDist);
+
+  const startTime = (props.selectedContent?.startTimeMicros || 0);
+  const endTime = (props.selectedContent?.endTimeMicros || 0);
+  const selectedStart = ((startTime / timeUnitLine) * lineDist);
+  const selectedEnd = ((endTime / timeUnitLine) * lineDist);
 
   return (
     <div 

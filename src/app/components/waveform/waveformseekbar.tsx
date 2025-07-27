@@ -29,17 +29,22 @@ export function setTimeInterval(
   return [timeUnit, totalLines, lineDist];
 }
 
-export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProps>) {
+export function WaveformSeekbar(
+  props: React.PropsWithoutRef<WaveformSeekbarProps>
+) {
   const { trackNumber, audioId } = props;
   const [leftSeek, setLeftSeek] = React.useState(0);
 
   const divRef = React.useRef<HTMLDivElement>(null);
 
-  let lineDist = props.lineDist;
-  let timeUnit = props.timeUnitPerLineDistInSeconds;
-  let totalLines = props.totalLines;
+  let { lineDist, timeUnitPerLineDistInSeconds: timeUnit, totalLines } = props;
 
-  [timeUnit, totalLines, lineDist] = setTimeInterval(timeUnit, totalLines, lineDist);
+  [timeUnit, totalLines, lineDist] = setTimeInterval(
+    timeUnit,
+    totalLines,
+    lineDist
+  );
+
   const showMillis = timeUnit - Math.floor(timeUnit) !== 0;
 
   const thickLineData = {
@@ -62,9 +67,8 @@ export function WaveformSeekbar(props: React.PropsWithoutRef<WaveformSeekbarProp
       )).join(''),
   };
 
-  function seekToPoint(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    const { offsetX } = event.nativeEvent;
-    setLeftSeek(offsetX);
+  function seekToPoint(event: React.MouseEvent<HTMLDivElement>) {
+    setLeftSeek(event.nativeEvent.offsetX);
   }
 
   const labelMultiplier = Math.ceil((showMillis ? 80 : 50) / lineDist);
