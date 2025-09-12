@@ -1,21 +1,9 @@
 import { svgxmlns } from "@/app/utils";
 import React from "react";
 
-/**
- * @description Slicer information
- */
 export interface SlicerSelection {
-  /**
-   * @description Starting track for the slicer
-   */
   startTrack: number
-  /**
-   * @description Ending track of slicer.
-   */
   endTrack: number
-  /**
-   * @description Exact point of time where a track is sliced
-   */
   pointOfSliceSecs: number
 }
 
@@ -56,26 +44,25 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startY, setStartY] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
 
-  function setupDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  const { unitTime, trackHeight, lineDist } = props;
+
+  function setupDrag(event: React.MouseEvent<HTMLDivElement>) {
     setStartX(event.nativeEvent.offsetX);
-    const multiplier = event.nativeEvent.offsetY / props.trackHeight;
-    const level = Math.round(multiplier) * props.trackHeight;
+    const multiplier = event.nativeEvent.offsetY / trackHeight;
+    const level = Math.round(multiplier) * trackHeight;
     setStartY(level);
     setEndY(level);
   }
 
   function leaveSlicer() {
-    const pointOfSliceSecs = (startX / props.lineDist) * props.unitTime;
-    const trackFirst = Math.round(startY / props.trackHeight);
-    const trackSecond = Math.round(endY / props.trackHeight);
-    const startTrack = Math.min(trackFirst, trackSecond), endTrack = Math.max(trackFirst, trackSecond) - 1;
+    const pointOfSliceSecs = (startX / lineDist) * unitTime;
+    const trackFirst = Math.round(startY / trackHeight);
+    const trackSecond = Math.round(endY / trackHeight);
+    const startTrack = Math.min(trackFirst, trackSecond);
+    const endTrack = Math.max(trackFirst, trackSecond) - 1;
 
     if (startTrack <= endTrack) {
-      props.onSliceSelect({
-        pointOfSliceSecs,
-        startTrack,
-        endTrack
-      });
+      props.onSliceSelect({ pointOfSliceSecs, startTrack, endTrack });
     }
 
     setStartX(0);
@@ -83,27 +70,29 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(0);
   }
 
-  function dragSlicer(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function dragSlicer(event: React.MouseEvent<HTMLDivElement>) {
     if (event.buttons === 1) {
-      const multiplier = event.nativeEvent.offsetY / props.trackHeight;
-      const level = Math.round(multiplier) * props.trackHeight;
+      const multiplier = event.nativeEvent.offsetY / trackHeight;
+      const level = Math.round(multiplier) * trackHeight;
       setEndY(level);
     }
   }
 
   return (
-    <>  
-      <div
-        className="absolute w-full h-full z-[11]"
-        onMouseDown={setupDrag}
-        onMouseLeave={leaveSlicer}
-        onMouseUp={leaveSlicer}
-        onMouseMove={dragSlicer}
-      >
-        <svg xmlns={svgxmlns} width={props.w} height={props.h}>
-          <path stroke="#fff" strokeWidth={2} d={`M ${startX} ${startY} L ${startX} ${endY}`}></path>
-        </svg>
-      </div>
-    </>
-  )
+    <div
+      className="absolute w-full h-full z-[11]"
+      onMouseDown={setupDrag}
+      onMouseLeave={leaveSlicer}
+      onMouseUp={leaveSlicer}
+      onMouseMove={dragSlicer}
+    >
+      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
+        <path 
+          stroke="#fff"
+          strokeWidth={2}
+          d={`M ${startX} ${startY} L ${startX} ${endY}`}
+        ></path>
+      </svg>
+    </div>
+  );
 }

@@ -4,11 +4,17 @@ const windowSet: Set<number> = new Set();
 export function randomColor() {
   let value = '';
   do {
-    const r = Math.round(Math.random() * 110) + 80;
-    const g = Math.round(Math.random() * 110) + 80;
-    const b = Math.round(Math.random() * 110) + 80;
+    const r = (Math.round(Math.random() * 110) + 80)
+      .toString(16)
+      .padStart(2, '0');
+    const g = (Math.round(Math.random() * 110) + 80)
+      .toString(16)
+      .padStart(2, '0');
+    const b = (Math.round(Math.random() * 110) + 80)
+      .toString(16)
+      .padStart(2, '0');
 
-    value = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    value = `#${r}${g}${b}`;
   } while (colorSet.has(value));
 
   colorSet.add(value);
@@ -42,7 +48,9 @@ export function deleteTrackId(trackIdSet: Array<number>, id: number): boolean {
 
 export function getRandomWindowId() {
   let value = 0;
-  do {} while (windowSet.has((value = Math.round(Math.random() * Number.MAX_SAFE_INTEGER))));
+  do {
+    value = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+  } while (windowSet.has(value));
 
   windowSet.add(value);
 

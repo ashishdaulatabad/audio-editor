@@ -1,5 +1,5 @@
 import React from 'react';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import {
   applyChangesToModifiedAudio,
   SEC_TO_MICROSEC
@@ -53,8 +53,8 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const track = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[trackNumber][audioId]
   ));
-  const ref = React.createRef<HTMLCanvasElement>();
-  const divRef = React.createRef<HTMLDivElement>();
+  const ref = React.useRef<HTMLCanvasElement>(null);
+  const divRef = React.useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
 
   // States
@@ -113,22 +113,6 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
 
       setTransformationInProgress(false);
     });
-  }
-
-  function transformPolarity() {
-    transform(AudioTransformation.ReversePolarity);
-  }
-
-  function transformReverse() {
-    transform(AudioTransformation.Reverse);
-  }
-
-  function transformSwapStereo() {
-    transform(AudioTransformation.SwapStereo);
-  }
-
-  function normalize() {
-    transform(AudioTransformation.Normalization);
   }
 
   function changeVolume(e: number) {
@@ -208,7 +192,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <Checkbox
                   checked={isPolarityReversed}
                   disabled={transformationInProgress}
-                  onChange={transformPolarity}
+                  onChange={() => transform(AudioTransformation.ReversePolarity)}
                   label="Reverse Polarity"
                 />
               </div>
@@ -216,7 +200,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <Checkbox
                   checked={isAudioReversed}
                   disabled={transformationInProgress}
-                  onChange={transformReverse}
+                  onChange={() => transform(AudioTransformation.Reverse)}
                   label="Reverse"
                 />
               </div>
@@ -226,7 +210,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <Checkbox
                   checked={isNormalized}
                   disabled={transformationInProgress}
-                  onChange={normalize}
+                  onChange={() => transform(AudioTransformation.Normalization)}
                   label="Normalize"
                 />
               </div>
@@ -234,7 +218,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                 <Checkbox
                   checked={isStereoSwapped}
                   disabled={transformationInProgress}
-                  onChange={transformSwapStereo}
+                  onChange={() => transform(AudioTransformation.SwapStereo)}
                   label="Swap Stereo"
                 />
               </div>

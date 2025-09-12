@@ -1,6 +1,6 @@
 import React from 'react';
 import { audioService } from '@/app/services/audioservice';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { animationBatcher } from '@/app/services/animationbatch';
 
 export enum Orientation {
@@ -80,7 +80,7 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
 
     // Returns a handler that manages the animation.
     handler = animationBatcher.addAnimationHandler(animateVolumeLevels);
-    animationBatcher.setAnimationFrame(handler, 30);
+    animationBatcher.setAnimationFrameRate(handler, 30);
 
     return () => {
       handler && animationBatcher.removeAnimationHandler(handler);

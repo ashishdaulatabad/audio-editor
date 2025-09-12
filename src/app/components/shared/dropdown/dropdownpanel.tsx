@@ -10,6 +10,7 @@ export type DropdownPanelContextInfo<Item> = {
     onSelect: (item: ListItem<Item>) => void
   }) => void
   hideDropdownPanel: () => void
+  isPanelOpen: () => boolean
 }
 
 export type ListItem<Type> = {
@@ -17,9 +18,12 @@ export type ListItem<Type> = {
   value: Type
 }
 
-export const DropdownPanelContext = React.createContext<DropdownPanelContextInfo<any> | null>(null);
+export const DropdownPanelContext = 
+  React.createContext<DropdownPanelContextInfo<any> | null>(null);
 
-export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) {
+export function DropdownPanelProvider<Item>(
+  props: React.PropsWithChildren<{}>
+) {
   type LabelType = (item: ListItem<Item>) => React.JSX.Element;
 
   const [itemList, setItemList] = React.useState<any[]>([]);
@@ -36,17 +40,14 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
     label: LabelType
     onSelect: (item: ListItem<Item>) => void
   }) {
-    const {
-      x,
-      y,
-      content,
-      label,
-      onSelect
-    } = info;
+    const {x, y, content, label, onSelect} = info;
+
+    if (content === itemList || visible) {
+      hideDropdownPanel();
+    }
 
     if (content === itemList) {
-      hideDropdownPanel();
-      return;      
+      return;
     }
 
     setLeft(x);
@@ -62,6 +63,10 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
     });
   }
 
+  function isPanelOpen() {
+    return visible;
+  }
+
   function hideDropdownPanel() {
     setAction(() => null);
     setItemList([]);
@@ -73,7 +78,9 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
 
   return (
     <>
-      <DropdownPanelContext.Provider value={{showDropdownPanel, hideDropdownPanel}}>
+      <DropdownPanelContext.Provider 
+        value={{showDropdownPanel, hideDropdownPanel, isPanelOpen}}
+      >
         {props.children}
       </DropdownPanelContext.Provider>
       {visible && 
@@ -96,15 +103,9 @@ export function DropdownPanel<Type>(props: React.PropsWithChildren<{
   onSelect: (_: ListItem<Type>) => void
   Label: (item:ListItem<Type>) => React.JSX.Element
 }>) {
-  const {
-    itemList,
-    left,
-    top,
-    Label 
-  } = props;
-
   // Refs
   const listRef = React.useRef<HTMLUListElement>(null);
+  const {itemList, left, top, Label} = props;
 
   React.useEffect(() => {
     if (listRef.current) {

@@ -12,7 +12,7 @@ export interface ContextMenuProps {
  */
 export function ContextMenu(props: React.PropsWithoutRef<ContextMenuProps>) {
   let left = props.x, top = props.y;
-  const menuRef = React.useRef<HTMLDivElement | null>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (menuRef.current) {

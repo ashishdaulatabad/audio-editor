@@ -1,8 +1,12 @@
 import React from 'react';
 import { RootState } from '@/app/state/store';
-import { useDispatch, useSelector } from 'react-redux';
 import { createAudioData } from '../../services/utils';
 import { AudioTrackFile } from './audiotrackfile';
+
+import {
+  useDispatch,
+  useSelector
+} from 'react-redux';
 import {
   addIntoAudioBank,
   AudioDetails,
@@ -11,22 +15,28 @@ import {
 export function AudioTrackList() {
   // Selectors
   // const [search, setSearch] = React.useState('');
-  const files = useSelector((state: RootState) => state.audioReducer.audioBankList);
-  const selected = useSelector((state: RootState) => state.selectedAudioSliceReducer.value);
+  const files = useSelector((state: RootState) => (
+    state.audioReducer.audioBankList
+  ));
+  const selected = useSelector((state: RootState) => (
+    state.selectedAudioSliceReducer.value
+  ));
  
   const dispatch = useDispatch();
 
   function selectFile() {
-    const inputElement = document.createElement("input") as HTMLInputElement;
+    const inputElement = document.createElement("input");
     inputElement.type = 'file';
     inputElement.accept = 'audio/*';
 
     inputElement.oninput = () => {
       const file = inputElement.files as FileList;
       createAudioData(files, file[0]).then((data) => {
-        if (data !== null) {
-          dispatch(addIntoAudioBank(data));
+        if (data === null) {
+          return;
         }
+
+        dispatch(addIntoAudioBank(data));
       });
     };
 

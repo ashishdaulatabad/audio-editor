@@ -11,36 +11,36 @@ import {
   focusWindow,
   removeWindow,
   setWindowPosition
-} from '../../state/windowstore';
+} from '@/app/state/windowstore';
 
-/**
- * @description Window Manager Tab that handles opened windows.
- */
-function WindowManagerTab(props: React.PropsWithoutRef<{
+interface WindowManagerTabProps {
   title: string | React.JSX.Element
   index: number
   onClick: (index: number) => void
   onClose: (index: number) => void
-}>) {
+}
+
+/**
+ * @description Window Manager Tab that handles opened windows.
+ */
+function WindowManagerTab(props: React.PropsWithoutRef<WindowManagerTabProps>) {
   return (
-    <>
-      <div 
-        className={css(
-          "px-2 window-header min-w-max min-h-full flex items-center contents-center cursor-pointer border border-solid select-none",
-          props.index === 0 ? 'border-slate-500' : 'border-slate-800'
-        )}
-        onClick={() => props.onClick(props.index)}
+    <div 
+      className={css(
+        "px-2 window-header min-w-max min-h-full flex items-center contents-center cursor-pointer border border-solid select-none",
+        props.index === 0 ? 'border-slate-500' : 'border-slate-800'
+      )}
+      onClick={() => props.onClick(props.index)}
+    >
+      <FaWindowMaximize />
+      <span className="ml-4 py-1">{props.title}</span>
+      <span
+        className="ml-4 py-1 hover:bg-slate-600"
+        onClick={() => props.onClose(props.index)}
       >
-        <FaWindowMaximize />
-        <span className="ml-4 py-1">{props.title}</span>
-        <span
-          className="ml-4 py-1 hover:bg-slate-600"
-          onClick={() => props.onClose(props.index)}
-        >
-          <Exit fill="#CC6545" h={10} w={10} />
-        </span>
-      </div>
-    </>
+        <Exit fill="#CC6545" h={10} w={10} />
+      </span>
+    </div>
   );
 }
 
@@ -50,8 +50,12 @@ function WindowManagerTab(props: React.PropsWithoutRef<{
  * @returns WindowManager JSX
  */
 export function WindowManager() {
-  const windowOrdering = useSelector((state: RootState) => state.windowStoreReducer.ordering);
-  const windowContents = useSelector((state: RootState) => state.windowStoreReducer.contents);
+  const windowOrdering = useSelector((state: RootState) => (
+    state.windowStoreReducer.ordering
+  ));
+  const windowContents = useSelector((state: RootState) => (
+    state.windowStoreReducer.contents
+  ));
 
   const dispatch = useDispatch();
 

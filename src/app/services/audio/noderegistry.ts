@@ -2,7 +2,6 @@
  * Registry for an audio node that is easily retrievable
  * and modifiable.
  */
-
 export enum NodeType {
   Gain,
   StereoPan,
@@ -15,17 +14,85 @@ export type ParameterChange = {
   value: number
 }
 
+const automationRegistry: {
+  [k: symbol]: {
+    node: AudioNode
+    type: string
+    audioParam: AudioParam
+  }
+} = {};
 
 const registry: {
   [k: symbol]: AudioNode
 } = {};
+
+type AudioNodeTypes = {
+  new (context: BaseAudioContext, options?: AudioNodeOptions): AudioNode
+  prototype: AudioNode
+}
+
+const paramDictionary: Map<AudioNodeTypes, string[]> = new Map<AudioNodeTypes, string[]>([
+  [GainNode, ['gain']],
+  [StereoPannerNode, ['pan']],
+  [BiquadFilterNode, ['gain', 'frequency', 'detune', 'Q']]
+]);
+
+export function createAutomation(node: AudioNode, type: string) {
+  const sym = Symbol();
+
+  if (node instanceof GainNode) {
+    // Get gain param
+    if (type === 'gain') {
+      automationRegistry[sym] = {node, type: 'gain', audioParam: node.gain};
+
+      return sym;
+    }
+
+    return undefined;
+  }
+
+  if (node instanceof StereoPannerNode) {
+    switch (type) {
+      case 'pan': {
+        automationRegistry[sym] = {
+          node,
+          type,
+          audioParam: node.pan
+        }
+
+        return sym;
+      }
+
+      default: {
+        return undefined;
+      }
+    }
+  }
+
+  if (node instanceof BiquadFilterNode) {
+    switch (type) {
+      case 'gain':
+        automationRegistry[sym] = {node, type, audioParam: node.gain}
+        break;
+
+      case 'Q':
+        automationRegistry[sym] = {node, type, audioParam: node.Q};
+        break;
+
+      default:
+        return undefined;
+    }
+
+    return sym;
+  }
+}
 
 /**
  * @description Registers and returns a identifer, for trackable
  * changes in user interface.
  * @param AudioNode node needed to register.
  */
-export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
+export function registerAudioNode(audioNode: AudioNode): symbol {
   const sym = Symbol();
   registry[sym] = audioNode;
 
@@ -37,7 +104,7 @@ export function addToAudioNodeRegistryList(audioNode: AudioNode): symbol {
  * @todo Clear history related to this node.
  * @param sym identifier for the AudioNode.
  */
-export function deregisterFromAudioNodeRegistryList(sym: symbol) {
+export function deregisterAudioNode(sym: symbol) {
   delete registry[sym];
 }
 
@@ -114,11 +181,13 @@ export function compareValues(left: any, right: any): boolean {
       return leftObjectAttributes.length === rightObjectAttributes.length && 
         leftSymbols.length === rightSymbols.length &&
         leftObjectAttributes.every(leftKey => (
-          right.hasOwnProperty(leftKey) && compareValues(left[leftKey], right[leftKey]
-        ))) &&
+          right.hasOwnProperty(leftKey) && 
+            compareValues(left[leftKey], right[leftKey])
+        )) &&
         leftSymbols.every(leftKey => (
-          Object.hasOwn(right, leftKey) && compareValues(left[leftKey], right[leftKey]
-        )));
+          Object.hasOwn(right, leftKey) && 
+            compareValues(left[leftKey], right[leftKey])
+        ));
     }
 
     default: {
@@ -128,20 +197,16 @@ export function compareValues(left: any, right: any): boolean {
 }
 
 export function cloneValues(value: any): any {
-  if (value === null) {
-    return null;
-  }
-  if (value === undefined) {
-    return undefined;
+  if (value === null || value === undefined) {
+    return value;
   }
 
   switch (typeof value) {
     case 'number':
     case 'boolean':
     case 'string':
-    case 'symbol': {
+    case 'symbol':
       return value;
-    };
 
     // Not to be confused with the class.
     case 'object': {

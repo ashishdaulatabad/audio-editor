@@ -37,10 +37,14 @@ export function Window(props: React.PropsWithChildren<{
   header?: React.JSX.Element 
   windowSymbol: symbol
 }>) {
-  /// States
+  // States
   const [hold, setHold] = React.useState(false);
-  const [windowManipulationMode, setWindowManipulationMode] = React.useState(WindowManipulationMode.None);
-  const windowRef = React.useRef<HTMLDivElement | null>(null);
+  const [
+    windowManipulationMode,
+    setWindowManipulationMode
+  ] = React.useState(WindowManipulationMode.None);
+
+  const windowRef = React.useRef<HTMLDivElement>(null);
 
   function onWindowClick() {
     props.onClick(props.windowSymbol);
@@ -54,22 +58,30 @@ export function Window(props: React.PropsWithChildren<{
     props.onMinimize?.call(null);
   }
 
-  function onMouseMovedInsideWindow(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    const {
-      clientX,
-      clientY
-    } = event.nativeEvent;
+  function onMouseMovedInsideWindow(event: React.MouseEvent<HTMLDivElement>) {
+    const { clientX, clientY } = event.nativeEvent;
 
     if (windowRef.current) {
-      const { left, top, width, height } = windowRef.current.getBoundingClientRect();
+      const { left, top, width, height } = windowRef
+        .current
+        .getBoundingClientRect();
 
-      if (left + width - clientX <= 10) {
-        setWindowManipulationMode(WindowManipulationMode.ResizeXRight)
-      } else if (clientX - left <= 10) {
-        setWindowManipulationMode(WindowManipulationMode.ResizeXLeft);
-      } else if (top + height - clientY <= 10) {
-        setWindowManipulationMode(WindowManipulationMode.ResizeYDown);
-      }
+      const manipulationMode = left + width - clientX <= 10 ?
+          WindowManipulationMode.ResizeXRight :
+          clientX - left <= 10 ?
+          WindowManipulationMode.ResizeXLeft :
+          top + height - clientY <= 10 ?
+          WindowManipulationMode.ResizeYDown :
+          WindowManipulationMode.None;
+
+      setWindowManipulationMode(manipulationMode);
+      // if (left + width - clientX <= 10) {
+      //   setWindowManipulationMode(WindowManipulationMode.ResizeXRight)
+      // } else if (clientX - left <= 10) {
+      //   setWindowManipulationMode(WindowManipulationMode.ResizeXLeft);
+      // } else if (top + height - clientY <= 10) {
+      //   setWindowManipulationMode(WindowManipulationMode.ResizeYDown);
+      // }
     }
   }
 

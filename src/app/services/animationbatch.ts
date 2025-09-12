@@ -17,6 +17,9 @@ class AnimationBatcher {
   constructor() {}
 
   runAnimations() {
+    if (this.masterHandler !== 0) {
+      return;
+    }
     this.masterHandler = this.run();
   }
 
@@ -31,10 +34,14 @@ class AnimationBatcher {
 
       if (
         animationHandle.currentMode === AnimationState.Running &&
-        (!animationHandle.allowedFrameTime || (animationHandle.allowedFrameTime <= currentTimestamp - animationHandle.previousTimestamp))
+        (
+          !animationHandle.allowedFrameTime || 
+          (animationHandle.allowedFrameTime <= currentTimestamp - animationHandle.previousTimestamp)
+        )
       ) {
         animationHandle.fn();
 
+        // TODO: Optimize this do while loop in one operation.
         if (animationHandle.allowedFrameTime) {
           do {
             animationHandle.previousTimestamp += animationHandle.allowedFrameTime;
@@ -50,6 +57,9 @@ class AnimationBatcher {
   }
 
   stopAnimation() {
+    if (this.masterHandler === 0) {
+      return;
+    }
     cancelAnimationFrame(this.masterHandler);
   }
 
@@ -75,7 +85,7 @@ class AnimationBatcher {
    * @param handlerSymbol Unique identifier to set refresh rate
    * @param frame frame frequency in Hertz.
    */
-  setAnimationFrame(handlerSymbol: symbol, frame: number) {
+  setAnimationFrameRate(handlerSymbol: symbol, frame: number) {
     if (Object.hasOwn(this.handlerStates, handlerSymbol)) {
       this.handlerStates[handlerSymbol].allowedFrameTime = 1000 / frame;
     }
@@ -92,7 +102,8 @@ class AnimationBatcher {
   }
 
   /**
-   * @description Suspend running animation, if already suspended, keeps suspended.
+   * @description Suspend running animation, if already suspended, 
+   * keeps suspended.
    * @param handlerSymbol animation handler.
    */
   suspendAnimation(handlerSymbol: symbol) {
@@ -102,7 +113,8 @@ class AnimationBatcher {
   }
 
   /**
-   * @description Resumes running animation, if already suspended, keeps suspended.
+   * @description Resumes running animation, if already resumed, 
+   * does nothing.
    * @param handlerSymbol animation handler.
    */
   resumeAnimation(handlerSymbol: symbol) {

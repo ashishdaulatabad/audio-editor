@@ -1,90 +1,95 @@
-import { ChangeDetails, ChangeType, Snapshot } from "@/app/services/changehistory";
-import { AudioTrackChangeDetails, AudioTrackDetails } from "./trackdetails";
-import { audioManager } from "@/app/services/audiotrackmanager";
-import { compareValues } from "@/app/services/noderegistry";
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {compareValues} from '@/app/services/audio/noderegistry';
+import {AudioTrackDetails} from './trackdetails';
+import {
+  ChangeDetails,
+  ChangeType,
+  Snapshot
+} from '@/app/services/changehistory';
 
+export type AudioTrackChangeDetails = AudioTrackDetails & {
+  trackNumber: number
+}
 
-// Todo: Revisit and change based on scheduledKeys instead of trackNumber and audioIndex,
-// unless they are removed or added.
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
   redo = false
 ) {
-  // Reverse order: changes are inserted in order, splicing
-  // should keep all indexes intact.
-  // Another way is to do filter.
-  const tracksToAdd: AudioTrackDetails[][] = Array.from({ length: trackDetails.length }, () => []);
-  const audioTracksToRemove: number[][] = Array.from({ length: trackDetails.length }, () => []);
+  const tracksToAdd: AudioTrackDetails[][] = 
+    Array.from({ length: trackDetails.length }, () => []);
+  const audioTracksToRemove: number[][] = 
+    Array.from({ length: trackDetails.length }, () => []);
 
   for (const changeDetail of changeDetails) {
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
-        const {
-          trackNumber,
-          audioId,
-          trackDetail
-        } = changeDetail.data;
+        const {trackNumber, audioId, trackDetail} = changeDetail.data;
 
-        // Undo state: Remove
-        if (!redo) {
-          const index = trackDetails[trackNumber].findIndex(trk => (
-            trk.trackDetail.scheduledKey === trackDetail.scheduledKey
-          ));
-
-          if (index > -1) {
-            const currentTrack = trackDetails[trackNumber][index];
-            audioManager.removeTrackFromScheduledNodes(currentTrack);
-            trackDetails[trackNumber].splice(index, 1);
-          } else {
-            console.error('Not consistent');
-          }
-        } else {
-          const newData = {
-            ...changeDetail.data,
-            trackDetail: {
-              ...changeDetail.data.trackDetail,
-              id: -1
+        // Probably use enum for undo/redo instead of boolean
+        // Redo if false, else Undo
+        switch (redo) {
+          case false:
+            const index = trackDetails[trackNumber].findIndex(trk => (
+              trk.trackDetail.scheduledKey === trackDetail.scheduledKey
+            ));
+  
+            if (index > -1) {
+              const currentTrack = trackDetails[trackNumber][index];
+              audioManager.removeTrackFromScheduledNodes(currentTrack);
+              trackDetails[trackNumber].splice(index, 1);
+            } else {
+              console.error('Not consistent');
             }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
+            break;
+          
+          // This is a redo operation.
+          default:
+            const newData = {
+              ...changeDetail.data,
+              trackDetail: {
+                ...changeDetail.data.trackDetail,
+                id: -1
+              }
+            };
+            tracksToAdd[trackNumber].push(newData);
+            audioManager.scheduleSingleTrack(audioId, newData.trackDetail);
+            break;
         }
-
         break;
       };
 
       // Add them back
       case ChangeType.Removed: {
-        const {
-          trackNumber,
-          // audioIndex,
-          ...rest
-        } = changeDetail.data;
+        const {trackNumber, ...rest} = changeDetail.data;
 
-        if (!redo) {
-          const newData = {
-            ...rest,
-            trackDetail: {
-              ...rest.trackDetail,
-              id: -1,
+        switch (redo) {
+          case false: 
+            const newData = {
+              ...rest,
+              trackDetail: {
+                ...rest.trackDetail,
+                id: -1,
+              }
+            };
+            tracksToAdd[trackNumber].push(newData);
+            audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail);
+            break;
+
+          default:
+            const index = trackDetails[trackNumber].findIndex(trk => (
+              trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
+            ));
+
+            if (index > -1) {
+              const currentTrack = trackDetails[trackNumber][index];
+              audioManager.removeTrackFromScheduledNodes(currentTrack);
+              trackDetails[trackNumber].splice(index, 1);
+            } else {
+              console.error('Not consistent');
             }
-          };
-          tracksToAdd[trackNumber].push(newData);
-          audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail)
-        } else {
-          const index = trackDetails[trackNumber].findIndex(trk => (
-            trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
-          ));
-
-          if (index > -1) {
-            const currentTrack = trackDetails[trackNumber][index];
-            audioManager.removeTrackFromScheduledNodes(currentTrack);
-            trackDetails[trackNumber].splice(index, 1);
-          } else {
-            console.error('Not consistent');
-          }
+            break;   
         }
 
         break;
@@ -92,7 +97,7 @@ export function undoSnapshotChange(
 
       // Change to previous
       case ChangeType.Updated: {
-        const { trackNumber, ...rest } = !redo ? 
+        const {trackNumber, ...rest} = !redo ? 
           changeDetail.data.previous :
           changeDetail.data.current;
         
@@ -108,7 +113,8 @@ export function undoSnapshotChange(
             }
           } = currentTrack;
 
-          audioManager.rescheduleTrackFromScheduledNodes(scheduledKey, rest.trackDetail);
+          // 
+          audioManager.rescheduleTrack(scheduledKey, rest);
           trackDetails[trackNumber][index] = rest;
         } else {
           console.error('Not consistent');
@@ -125,13 +131,15 @@ export function undoSnapshotChange(
     trackDetails[trackNumber] = trackDetails[trackNumber]
       .filter((_, index) => audioIndexes.indexOf(index) === -1)
       .concat(track)
-      .sort((a, b) => a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros);
+      .sort((a, b) => (
+        a.trackDetail.offsetInMicros - b.trackDetail.offsetInMicros
+      ));
   });
 }
 
 /**
- * @description Compare snapshot with previous snapshot, used with change history
- * for storing changes between action..
+ * @description Compare snapshot with previous snapshot, used with change 
+ * history for storing changes between action..
  * @param snapshot captured snapshot,
  * @param trackDetails 
  */
@@ -150,7 +158,9 @@ export function compareSnapshots(
     const visitedScheduledTracks = currentTrack
       .map(track => track.trackDetail.scheduledKey)
       .concat(previousTrack.map(track => track.trackDetail.scheduledKey))
-      .filter((trackKey, index, trackArray) => trackArray.indexOf(trackKey) === index);
+      .filter((trackKey, index, trackArray) => (
+        trackArray.indexOf(trackKey) === index
+      ));
 
     // Check if two keys are same.
     for (const key of visitedScheduledTracks) {
@@ -164,7 +174,12 @@ export function compareSnapshots(
       if (currentScheduledTrackIndex > -1 && previousScheduledTrackIndex > -1) {
         // Perform action if both are not equal.
         // Add updated values to the track
-        if (!compareValues(currentTrack[currentScheduledTrackIndex], previousTrack[previousScheduledTrackIndex])) {
+        if (
+          !compareValues(
+            currentTrack[currentScheduledTrackIndex], 
+            previousTrack[previousScheduledTrackIndex]
+          )
+        ) {
           changedDetails.push({
             changeType: ChangeType.Updated,
             data: {

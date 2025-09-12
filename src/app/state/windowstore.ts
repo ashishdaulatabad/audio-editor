@@ -1,8 +1,9 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AppDispatch } from "./store";
-import { removeRandomWindowId } from "../services/random";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AppDispatch } from './store';
+import { removeRandomWindowId } from '../services/random';
 
-type PropsType<TProps> = Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
+type PropsType<TProps> = 
+  Parameters<(props: React.PropsWithoutRef<TProps>) => React.JSX.Element>[0];
 
 export enum HorizontalAlignment {
   Center,
@@ -83,16 +84,36 @@ export interface WindowView<TProps> {
   windowId: number
 }
 
+type WindowContents<TProps> = {
+  [k: symbol]: WindowView<TProps> 
+};
+
 export type InitialType<TProps> = {
-  contents: {
-    [k: symbol]: WindowView<TProps> 
-  },
+  contents: WindowContents<TProps>,
   ordering: Array<symbol>
 };
 
 const initialState: InitialType<any> = {
   contents: {},
   ordering: []
+}
+
+function removeWindowFromCollection(
+  contents: WindowContents<any>,
+  ordering: Array<symbol>,
+  windowSymbol: symbol
+) {
+  if (Object.hasOwn(contents, windowSymbol)) {
+    const { windowId } = contents[windowSymbol];
+    delete contents[windowSymbol];
+    removeRandomWindowId(windowId);
+
+    const index = ordering.findIndex(w => w === windowSymbol);
+
+    if (index > -1) {
+      ordering.splice(index, 1);
+    }
+  }
 }
 
 const windowManagerSlice = createSlice({
@@ -122,32 +143,14 @@ const windowManagerSlice = createSlice({
       state.ordering.push(action.payload.windowSymbol);
     },
     removeWindow(state, action: PayloadAction<symbol>) {
-      if (Object.hasOwn(state.contents, action.payload)) {
-        const { windowId } = state.contents[action.payload];
-        delete state.contents[action.payload];
-        removeRandomWindowId(windowId);
-
-        const index = state.ordering.findIndex(w => w === action.payload);
-
-        if (index > -1) {
-          state.ordering.splice(index, 1);
-        }
-      }
+      removeWindowFromCollection(state.contents, state.ordering, action.payload);
     },
     removeWindowWithUniqueIdentifier(state, action: PayloadAction<symbol>) {
       for (const key of Object.getOwnPropertySymbols(state.contents)) {
         const window = state.contents[key];
 
         if (window.propsUniqueIdentifier === action.payload) {
-          const { windowId } = state.contents[action.payload];
-          delete state.contents[action.payload];
-          removeRandomWindowId(windowId);
-
-          const index = state.ordering.indexOf(action.payload);
-
-          if (index > -1) {
-            state.ordering.splice(index, -1);
-          }
+          removeWindowFromCollection(state.contents, state.ordering, action.payload);
           return;
         }
       }
@@ -158,7 +161,9 @@ const windowManagerSlice = createSlice({
 
         if (action.payload.indexOf(window.propsUniqueIdentifier) > -1) {
           const windowId = state.contents[key].windowId;
-          state.ordering = state.ordering.filter(sym => action.payload.includes(window.windowSymbol));
+          state.ordering = state.ordering.filter(sym => (
+            action.payload.includes(window.windowSymbol)
+          ));
           delete state.contents[key];
           removeRandomWindowId(windowId);
         }
@@ -181,11 +186,7 @@ const windowManagerSlice = createSlice({
         windowSymbol: symbol
       }>
     ) {
-      const {
-        x,
-        y,
-        windowSymbol
-      } = action.payload;
+      const { x, y, windowSymbol } = action.payload;
 
       if (Object.hasOwn(state.contents, windowSymbol)) {
         state.contents[windowSymbol].x = x
@@ -214,7 +215,7 @@ const { addWindow } = windowManagerSlice.actions;
 export function addWindowToAction<TProps>(
   dispatch: AppDispatch,
   details: WindowView<TProps>
-) {
+): void{
   dispatch(addWindow(details));
 }
 

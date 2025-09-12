@@ -1,23 +1,19 @@
 import { RootState } from '@/app/state/store';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Checkbox } from '../checkbox';
-import { audioManager } from '@/app/services/audiotrackmanager';
 
 /**
- * @description Props for displaying track information
- * @todo update:
+ * @TODO:
  * - Allow addition/updation of name of this track.
  */
 interface TrackInfoProps {
-  /**
-   * @description Id of this track.
-   */
   id: number
 }
 
 export function TrackInfo(props: React.PropsWithoutRef<TrackInfoProps>) {
-  const trackDetail = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails[props.id]);
+  const trackDetail = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails[props.id]
+  ));
   const [toggle, setToggle] = React.useState(true);
 
   // function toggleActiveTracks(toggle: boolean) {

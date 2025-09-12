@@ -1,5 +1,5 @@
 import React from "react";
-import { audioManager } from "@/app/services/audiotrackmanager";
+import { audioManager } from "@/app/services/audio/audiotrackmanager";
 import { RootState } from "@/app/state/store";
 import { Status } from "@/app/state/trackdetails/trackdetails";
 import { useSelector } from "react-redux";
@@ -13,7 +13,9 @@ export function Seeker(props: {
   left: number
   onLoopEnd: () => void
 }) {
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
+  const status = useSelector((state: RootState) => (
+    state.trackDetailsReducer.status
+  ));
 
   const {
     lineDist,

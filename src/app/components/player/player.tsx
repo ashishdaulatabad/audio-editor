@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { audioManager } from '@/app/services/audiotrackmanager';
+import { audioManager } from '@/app/services/audio/audiotrackmanager';
 import { RootState } from '@/app/state/store';
 import { Status, togglePlay } from '@/app/state/trackdetails/trackdetails';
 import { Pause } from '@/assets/pause';
@@ -34,7 +34,7 @@ export function Timer() {
       setTimer(`${(minutes < 10 ? '0' : '') + minutes}:${(seconds < 10 ? '0' : '') + seconds}`);
     }
 
-    animationBatcher.setAnimationFrame(intervalId, 60);
+    animationBatcher.setAnimationFrameRate(intervalId, 60);
 
     return () => {
       animationBatcher.removeAnimationHandler(intervalId);

@@ -1,11 +1,18 @@
 import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
-import { addToAudioNodeRegistryList } from './noderegistry';
+import { registerAudioNode } from './audio/noderegistry';
+
+type StereoAnalyzerNodes = {
+  left: AnalyserNode,
+  right: AnalyserNode
+}
 
 export class Mixer {
+  // TODO: Create all nodes in array, and assign first ref to masterGainNode.
   masterGainNode: Maybe<GainNode> = null;
   masterGainRegistry: symbol = Symbol();
- 
+
+  // TODO: Create all nodes in array, and assign first ref to masterPannerNode.
   masterPannerNode: Maybe<StereoPannerNode> = null;
   masterPannerRegistry: symbol = Symbol();
 
@@ -22,14 +29,8 @@ export class Mixer {
   private mixerViewIdentifier: symbol = Symbol();
   private isInitialized = false;
 
-  masterAnalyserNodes: {
-    left: AnalyserNode,
-    right: AnalyserNode
-  } | null = null;
-  analyserNodes: {
-    left: AnalyserNode,
-    right: AnalyserNode
-  }[] = [];
+  masterAnalyserNodes: StereoAnalyzerNodes | null = null;
+  analyserNodes: Array<StereoAnalyzerNodes> = [];
 
   constructor(
     private totalMixerCount: number
@@ -44,18 +45,13 @@ export class Mixer {
   }
 
   getGainValue(mixerNumber: number) {
-    if (mixerNumber === 0) {
-      return this.masterGainNode?.gain.value as number;
-    }
-    return this.gainNodes[mixerNumber - 1].gain.value;
+    console.assert(mixerNumber >= 0 && mixerNumber <= this.totalMixerCount);
+    return this.gainNodes[mixerNumber].gain.value;
   }
 
   getPanValue(mixerNumber: number) {
-    if (mixerNumber === 0) {
-      return this.masterPannerNode?.pan.value as number;
-    }
-
-    return this.panNodes[mixerNumber - 1].pan.value;
+    console.assert(mixerNumber >= 0 && mixerNumber <= this.totalMixerCount);
+    return this.panNodes[mixerNumber].pan.value;
   }
 
   /**
@@ -64,7 +60,10 @@ export class Mixer {
    * @param register Register to audio node to create a registry.
    * @returns List of all nodes, created based on BaseAudioContext.
    */
-  initialize(context: BaseAudioContext, register: boolean = true): [GainNode[], StereoPannerNode[], GainNode, StereoPannerNode] {
+  initialize(
+    context: BaseAudioContext,
+    register: boolean = true
+  ): [GainNode[], StereoPannerNode[], GainNode, StereoPannerNode] {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
     const masterPannerNode = audioContext.createStereoPanner();
@@ -75,26 +74,31 @@ export class Mixer {
       return gainNode;
     });
 
-    const pannerNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
-      const pannerNode = audioContext.createStereoPanner()
-      pannerNode.connect(gainNodes[index]);
-      return pannerNode;
-    });
+    const pannerNodes = Array.from(
+      { length: this.totalMixerCount },
+      (_, index: number) => {
+        const pannerNode = audioContext.createStereoPanner()
+        pannerNode.connect(gainNodes[index]);
+        return pannerNode;
+      });
+
+    gainNodes.unshift(masterGainNode);
+    pannerNodes.unshift(masterPannerNode);
 
     masterPannerNode.connect(masterGainNode);
 
-    // When register is true, add to Audio Node List for tracking changes performed
-    // during the session.
+    // When register is true, add to Audio Node List for tracking changes 
+    // performed during the session.
     if (register) {
-      this.masterGainRegistry = addToAudioNodeRegistryList(masterGainNode);
-      this.masterPannerRegistry = addToAudioNodeRegistryList(masterPannerNode);
+      this.masterGainRegistry = registerAudioNode(masterGainNode);
+      this.masterPannerRegistry = registerAudioNode(masterPannerNode);
 
       pannerNodes.forEach((panNode) => (
-        this.panNodeIds.push(addToAudioNodeRegistryList(panNode))
+        this.panNodeIds.push(registerAudioNode(panNode))
       ));
 
       gainNodes.forEach((gainNode) => (
-        this.gainNodeIds.push(addToAudioNodeRegistryList(gainNode))
+        this.gainNodeIds.push(registerAudioNode(gainNode))
       ));
     }
 
@@ -106,30 +110,34 @@ export class Mixer {
       const context = audioService.useAudioContext();
       [this.gainNodes, this.panNodes, this.masterGainNode, this.masterPannerNode] = this.initialize(context);
 
-      this.analyserNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
-        const left = context.createAnalyser();
-        const right = context.createAnalyser()
-        return { left, right };
-      });
+      this.analyserNodes = Array.from(
+        { length: this.totalMixerCount }, 
+        (_, index: number) => {
+          const left = context.createAnalyser();
+          const right = context.createAnalyser()
+          return { left, right };
+        });
 
       this.masterAnalyserNodes = {
         left: context.createAnalyser(),
         right: context.createAnalyser()
       };
 
-      this._channelSplitterNodes = Array.from({ length: this.totalMixerCount }, (_, index: number) => {
-        const channelSplitter = context.createChannelSplitter();
-        this.gainNodes[index].connect(channelSplitter);
-        const { left, right } = this.analyserNodes[index];
-        channelSplitter.connect(left, 0);
-        channelSplitter.connect(right, 1);
-        // left.fftSize = 512;
-        // right.fftSize = 512;
-        // left.smoothingTimeConstant = 0.4;
-        // right.smoothingTimeConstant = 0.4;
+      this._channelSplitterNodes = Array.from(
+        { length: this.totalMixerCount }, 
+        (_, index: number) => {
+          const channelSplitter = context.createChannelSplitter();
+          this.gainNodes[index].connect(channelSplitter);
+          const { left, right } = this.analyserNodes[index];
+          channelSplitter.connect(left, 0);
+          channelSplitter.connect(right, 1);
+          // left.fftSize = 512;
+          // right.fftSize = 512;
+          // left.smoothingTimeConstant = 0.4;
+          // right.smoothingTimeConstant = 0.4;
 
-        return channelSplitter;
-      });
+          return channelSplitter;
+        });
 
       const masterSplitterNode = context.createChannelSplitter();
       this.masterGainNode.connect(masterSplitterNode);
@@ -146,11 +154,7 @@ export class Mixer {
   }
 
   connectNodeToMixer(node: AudioNode, mixerNumber: number) {
-    if (mixerNumber === 0) {
-      node.connect(this.masterPannerNode as StereoPannerNode);
-    } else {
-      node.connect(this.panNodes[mixerNumber - 1]);
-    }
+    node.connect(this.panNodes[mixerNumber]);
   }
 
   connectMixerOutputTo(node: AudioNode, mixerNumber: number) {
@@ -159,25 +163,21 @@ export class Mixer {
 
   setGainValue(mixerNumber: number, value: number) {
     console.assert(value >= 0 && value <= 2);
+    console.assert(
+      mixerNumber >= 0 && mixerNumber <= this.totalMixerCount, 
+      'Invalid mixer number: ' + mixerNumber
+    );
 
-    if (mixerNumber > 0) {
-      this.gainNodes[mixerNumber - 1].gain.value = value;
-    } else {
-      if (this.masterGainNode) {
-        this.masterGainNode.gain.value = value;
-      }
-    }
+    this.gainNodes[mixerNumber].gain.value = value;
   }
 
   setPanValue(mixerNumber: number, value: number) {
     console.assert(value >= -1 && value <= 1);
+    console.assert(
+      mixerNumber >= 0 && mixerNumber <= this.totalMixerCount, 
+      'Invalid mixer number: ' + mixerNumber
+    );
 
-    if (mixerNumber > 0) {
-      this.panNodes[mixerNumber - 1].pan.value = value;
-    } else {
-      if (this.masterPannerNode) {
-        this.masterPannerNode.pan.value = value;
-      }
-    }
+    this.gainNodes[mixerNumber].gain.value = value;
   }
 };

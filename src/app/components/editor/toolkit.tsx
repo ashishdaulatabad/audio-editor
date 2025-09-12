@@ -10,22 +10,9 @@ import { TimeframeMode } from '../player/player';
  * @description Mode Type Selection.
  */
 export enum ModeType {
-  /**
-   * @description Multiple Selecting Tracks for editing.
-   */
   RegionSelect,
-  /**
-   * @description Slicer (or cutter) to split tracks in sections.
-   */
   Slicer,
-  /**
-   * @description Default, useful for editing clips.
-   */
   DefaultSelector,
-  /**
-   * @description Add multiple consecutive tracks. 
-   * - [ ] To do: this thing.
-   */
   Fill
 }
 
@@ -54,10 +41,6 @@ export function Toolkit(props: React.PropsWithoutRef<ToolkitProps>) {
     {
       label: 'Magenta',
       value: 'magentaacc'
-    },
-    {
-      label: 'Green',
-      value: 'greenacc'
     },
   ];
 

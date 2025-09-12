@@ -1,8 +1,8 @@
 import {
   AudioTrackDetails
 } from '@/app/state/trackdetails/trackdetails';
-import { cloneValues } from './noderegistry';
-import { compareSnapshots } from '@/app/state/trackdetails/tracksnapshots';
+import {cloneValues} from './audio/noderegistry';
+import {compareSnapshots} from '@/app/state/trackdetails/tracksnapshots';
 
 /**
  * @description Change Type performed
@@ -58,7 +58,7 @@ export type Snapshot<Type> = {
  */
 export function createSnapshot<Type>(state: Type): Snapshot<Type> {
   // A simple object currently.
-  return { state: cloneValues(state) };
+  return {state: cloneValues(state)};
 }
 
 /**
@@ -67,19 +67,9 @@ export function createSnapshot<Type>(state: Type): Snapshot<Type> {
  */
 class ChangeHistory {
   stack: Array<Change<any>> = [];
-  maxStackSize = 150;
   pointer = -1;
 
-  constructor() {}
-
-  /**
-   * @description Add to change history
-   * @todo Remove previous changes if past history exceeds the current history
-   * @param change change scanned by the change history service.
-   */
-  private _markHistory<ChangeProperties>(change: Change<ChangeProperties>) {
-    this.stack.push(change);
-  }
+  constructor(private maxStackSize = 150) {}
 
   peekHistory() {
     if (this.stack.length == 0) {
@@ -160,7 +150,9 @@ class ChangeHistory {
       if (changeType === stackChange.workspaceChange) {
         const { updatedValues } = stackChange;
 
-        stackChange.updatedValues = updatedValues.filter(item => !identifierFn(item));
+        stackChange.updatedValues = updatedValues.filter(item => (
+          !identifierFn(item)
+        ));
 
         if (stackChange.updatedValues.length === 0) {       
           if (index <= this.pointer) {
@@ -174,7 +166,7 @@ class ChangeHistory {
     this.pointer -= subtractPointerBy;
   }
 
-  rollbackChange<Type>(redo: boolean = false) {
+  rollbackChange(redo: boolean = false) {
     if (this.pointer < 0 && !redo) return undefined;
     if (this.pointer >= this.stack.length && redo) return undefined;
 

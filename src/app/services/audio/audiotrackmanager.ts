@@ -1,36 +1,19 @@
-import { TimeSectionSelection } from '../components/editor/seekbar';
-import { AudioDetails } from '../state/audiostate';
-import { clamp } from '../utils';
-import { audioService } from './audioservice';
-import { Maybe } from './interfaces';
-import { Mixer } from './mixer';
-import { addToAudioNodeRegistryList, deregisterFromAudioNodeRegistryList } from './noderegistry';
+import { TimeSectionSelection } from '@/app/components/editor/seekbar';
+import { AudioDetails } from '@/app/state/audiostate';
+import { audioService } from '@/app/services/audioservice';
+import { Maybe } from '@/app/services/interfaces';
+import { Mixer } from '@/app/services/mixer';
+import {
+  registerAudioNode,
+  deregisterAudioNode,
+  getAudioNode
+} from '@/app/services/audio/noderegistry';
 import {
   AudioTrackDetails,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
-
-/**
- * @description Type of Multiselected DOM elements that are selected.
- */
-export type SelectedAudioTrackDetails = AudioTrackDetails & {
-  domElement: HTMLElement
-  initialPosition: number
-  initialWidth: number
-  initialScrollLeft: number
-}
-
-export type TransformedAudioTrackDetails = SelectedAudioTrackDetails & {
-  finalPosition: number
-  finalScrollLeft: number
-  finalWidth: number
-}
-
-export type SelectedTrackInfo = {
-  trackNumbers: number[]
-  audioIndexes: number[]
-  scheduledKeys: symbol[]
-}
+import { MultiSelectTracker, SelectedTrackInfo, TransformedAudioTrackDetails } from './multiselect';
+import { ScheduledTrackAutomation } from '@/app/state/trackdetails/trackautomation';
 
 export type AudioBank = {
   [audioId: symbol]: {
@@ -54,6 +37,11 @@ export type SubType<T, K extends string> = T extends Object ? (
   K extends `${infer F}.${infer R}` ? SubType<Idx<T, F>, R> : Idx<T, K>
 ) : never;
 
+const REGION_SELECT_TIMELIMIT_MICROSEC = 100000;
+const DEFAULT_MIN_TIME_LOOP_SEC = 5;
+const DEFAULT_SAMPLE_RATE = 48000;
+const DEFAULT_CHANNELS = 2;
+
 /**
  * @description Schedule Node Information related to the tracks.
  */
@@ -65,13 +53,17 @@ export type ScheduledNodesInformation = {
   }
 };
 
+type ScheduledAutomation = {
+  [k: symbol]: ScheduledTrackAutomation
+}
+
 class AudioTrackManager {
   isInitialized = false;
   paused = true;
   scheduled = false;
   startTimestamp = 0;
   runningTimestamp = 0;
-  loopEnd = 5;
+  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
   timeframeSelectionDetails: Maybe<TimeSectionSelection> = null;
   mixer: Mixer
 
@@ -83,9 +75,12 @@ class AudioTrackManager {
   audioBank: AudioBank = {};
 
   /// Store objects
-  multiSelectedDOMElements: SelectedAudioTrackDetails[] = [];
   scheduledNodes: ScheduledNodesInformation = {};
+  scheduledAutomation: ScheduledAutomation = {}
   offlineScheduledNodes: ScheduledNodesInformation = {};
+
+  // Classes
+  private multiSelectTracker: MultiSelectTracker;
 
   audioCanvas: {
     [k: symbol]: OffscreenCanvas
@@ -95,6 +90,7 @@ class AudioTrackManager {
     public totalTrackSize: number,
     public totalMixers: number
   ) {
+    this.multiSelectTracker = new MultiSelectTracker();
     this.mixer = new Mixer(totalMixers);
   }
 
@@ -102,17 +98,21 @@ class AudioTrackManager {
     const audioContext = context;
     const masterGainNode = audioContext.createGain();
 
-    const gainNodes = Array.from({ length: this.totalTrackSize }, () => {
-      const gainNode = audioContext.createGain();
-      gainNode.connect(masterGainNode as GainNode);
-      return gainNode;
-    });
+    const gainNodes = Array.from(
+      { length: this.totalTrackSize }, 
+      () => {
+        const gainNode = audioContext.createGain();
+        gainNode.connect(masterGainNode as GainNode);
+        return gainNode;
+      });
 
-    const pannerNodes = Array.from({ length: this.totalTrackSize }, (_, index: number) => {
-      const pannerNode = audioContext.createStereoPanner()
-      pannerNode.connect(gainNodes[index]);
-      return pannerNode;
-    });
+    const pannerNodes = Array.from(
+      { length: this.totalTrackSize }, 
+      (_, index: number) => {
+        const pannerNode = audioContext.createStereoPanner()
+        pannerNode.connect(gainNodes[index]);
+        return pannerNode;
+      });
 
     return [gainNodes, pannerNodes, masterGainNode];
   }
@@ -139,15 +139,20 @@ class AudioTrackManager {
 
   /**
    * @description Simulates all the connections into offline.
+   * TODO: Allow user to specify the sample rate, and channels.
    * @param scheduledTracks all the scheduled tracks currently done.
    * @returns rendered raw audio data.
    */
   async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
-    const channels = 2;
-    const bufferLength = Math.ceil(48000 * this.loopEnd);
-    const sampleRate = 48000;
+    const channels = DEFAULT_CHANNELS;
+    const bufferLength = Math.ceil(DEFAULT_SAMPLE_RATE * this.loopEnd);
+    const sampleRate = DEFAULT_SAMPLE_RATE;
 
-    const offlineAudioContext = new OfflineAudioContext(channels, bufferLength, sampleRate);
+    const offlineAudioContext = new OfflineAudioContext(
+      channels,
+      bufferLength,
+      sampleRate
+    );
     const [gainNodes, pannerNodes, masterGainNode] = this.initialize(offlineAudioContext);
 
     masterGainNode.connect(offlineAudioContext.destination);
@@ -178,8 +183,8 @@ class AudioTrackManager {
 
     const gain = context.createGain();
     const panner = context.createStereoPanner();
-    const gainRegister = addToAudioNodeRegistryList(gain);
-    const pannerRegister = addToAudioNodeRegistryList(panner);
+    const gainRegister = registerAudioNode(gain);
+    const pannerRegister = registerAudioNode(panner);
 
     this.audioBank[audioBankSymbol] = {
       audioDetails,
@@ -210,13 +215,10 @@ class AudioTrackManager {
   unregisterAudioFromAudioBank(sym: symbol): boolean {
     if (Object.hasOwn(this.audioBank, sym)) {
       // Remove all the settings from the bank.
-      const {
-        gainRegister,
-        pannerRegister
-      } = this.audioBank[sym];
+      const {gainRegister, pannerRegister} = this.audioBank[sym];
 
-      deregisterFromAudioNodeRegistryList(gainRegister);
-      deregisterFromAudioNodeRegistryList(pannerRegister);
+      deregisterAudioNode(gainRegister);
+      deregisterAudioNode(pannerRegister);
 
       delete this.audioBank[sym];
       return true;
@@ -238,7 +240,6 @@ class AudioTrackManager {
     return this.audioBank[symbol].audioDetails.mixerNumber;
   }
 
-
   setMixerValue(symbol: symbol, mixerValue: number) {
     this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
     this.audioBank[symbol].panner.disconnect();
@@ -248,283 +249,67 @@ class AudioTrackManager {
   }
 
   clearSelection() {
-    this.multiSelectedDOMElements = [];
+    this.multiSelectTracker.clearSelection();
   }
 
-  /**
-   * @description Check if at least one of the DOM elements is multi-selected
-   */
   isMultiSelected() {
-    return this.multiSelectedDOMElements.length > 0;
+    return this.multiSelectTracker.isMultiSelected();
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
   addIntoSelectedAudioTracks(
     track: AudioTrackDetails,
     domElement: HTMLElement
   ) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === track.trackDetail.scheduledKey
-    ));
-
-    if (existingElementIndex === -1) {
-      this.multiSelectedDOMElements.push({
-        ...track,
-        domElement,
-        initialPosition: domElement.offsetLeft,
-        initialWidth: domElement.offsetWidth,
-        initialScrollLeft: domElement.scrollLeft,
-      });
-    } else {
-      this.multiSelectedDOMElements[existingElementIndex].domElement = domElement;
-      this.multiSelectedDOMElements[existingElementIndex].initialPosition = domElement.offsetLeft;
-      this.multiSelectedDOMElements[existingElementIndex].initialWidth = domElement.offsetWidth;
-      this.multiSelectedDOMElements[existingElementIndex].initialScrollLeft = domElement.scrollLeft;
-    }
+    this.multiSelectTracker.addIntoSelectedAudioTracks(track, domElement);
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
-  deleteFromSelectedAudioTracks(
-    scheduledTrackId: symbol,
-  ) {
-    const existingElementIndex = this.multiSelectedDOMElements.findIndex(element => (
-      element.trackDetail.scheduledKey === scheduledTrackId
-    ));
-
-    if (existingElementIndex > -1) {
-      this.multiSelectedDOMElements.splice(existingElementIndex, 1);
-    }
+  deleteFromSelectedAudioTracks(scheduledTrackId: symbol) {
+    this.multiSelectTracker.deleteFromSelectedAudioTracks(scheduledTrackId);
   }
 
-  /**
-   * @description Cleanup Selection: Remove elements not attached to DOM element
-   */
   cleanupSelectedDOMElements() {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(dom => (
-      dom.domElement.isConnected
-    ));
+    this.multiSelectTracker.cleanupSelectedDOMElements();
   }
 
-  /**
-   * @description Set element as Multi-selected.
-   * @param track Track to add into selected elements
-   * @param domElement DOM element associated with the selection
-   * @returns void
-   */
-  deleteAudioFromSelectedAudioTracks(
-    audioId: symbol,
-  ) {
-    this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter(element => (
-      element.audioId === audioId
-    ));
+  deleteAudioFromSelectedAudioTracks(audioId: symbol) {
+    this.multiSelectTracker.deleteAudioFromSelectedAudioTracks(audioId);
   }
 
-  /**
-   * Apply move transformation to these selected DOM elements
-   * 
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyTransformationToMultipleSelectedTracks(diffX: number) {
-    let diffOffsetToNegate = 0;
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const newLeft = selectedTrack.initialPosition + diffX;
-
-      if (newLeft < 0) {
-        diffOffsetToNegate = Math.max(diffOffsetToNegate, -newLeft);
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initPosition = selectedTrack.initialPosition;
-      selectedTrack.domElement.style.left = (initPosition + diffX + diffOffsetToNegate) + 'px'
-    }
+    this.multiSelectTracker.applyTransformationToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Apply move transformation to these selected DOM elements
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyResizingStartToMultipleSelectedTracks(diffX: number) {
-    // Making sure one of the width does not move to zero
-    let minShrinkValue = 0;
-    let minShrinkSet = false;
-    // Making sure one of the width does not exceed while expanding inward.
-    let minExpandValue = 0
-    let minExpandSet = false;
-
-    // Rewriting this loop.
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const trackWidth = selectedTrack.initialWidth;
-      const trackScrollLeft = selectedTrack.initialScrollLeft;
-      const trackPosition = selectedTrack.initialPosition;
-
-      if (!minShrinkSet) {
-        minShrinkValue = trackWidth;
-        minShrinkSet = true;
-      } else if (minShrinkValue > trackWidth) {
-        minShrinkValue = trackWidth;
-      }
-
-      if (!minExpandSet) {
-        minExpandValue = Math.min(trackPosition, trackScrollLeft);
-        minExpandSet = true;
-      } else if (minExpandValue > trackScrollLeft) {
-        minExpandValue = Math.min(trackScrollLeft, trackPosition);
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initPosition = selectedTrack.initialPosition;
-      const initScrollLeft = selectedTrack.initialScrollLeft;
-      const initWidth = selectedTrack.initialWidth;
-
-      Object.assign(
-        selectedTrack.domElement.style,
-        {
-          width: clamp(
-            initWidth - diffX,
-            initWidth - minShrinkValue,
-            initWidth + minExpandValue,
-          ) + 'px',
-          left: clamp(
-            initPosition + diffX,
-            initPosition - minExpandValue,
-            initPosition + minShrinkValue,
-          ) + 'px'
-        }
-      );
-
-      selectedTrack.domElement.scrollLeft = clamp(
-        initScrollLeft + diffX,
-        initScrollLeft - minExpandValue,
-        initScrollLeft + minShrinkValue,
-      );
-    }
+    this.multiSelectTracker.applyResizingStartToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Apply move transformation to these selected DOM elements
-   * @param diffX Move track by `diffX` from `initialPosition`
-   * @returns void
-   */
   applyResizingEndToMultipleSelectedTracks(diffX: number) {
-    let minExpandValue = 0
-    let minExpandSet = false;
-
-    let minShrinkValue = 0
-    let minShrinkSet = false;
-
-    // Rewriting this loop.
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const trackWidth = selectedTrack.initialWidth;
-      const trackScrollLeft = selectedTrack.initialScrollLeft;
-      const totalWidth = selectedTrack.domElement.scrollWidth;
-
-      const expandableDist = totalWidth - 2 * trackScrollLeft - trackWidth;
-
-      if (!minExpandSet) {
-        minExpandValue = expandableDist;
-        minExpandSet = true;
-      } else if (minExpandValue > expandableDist) {
-        minExpandValue = expandableDist;
-      }
-
-      if (!minShrinkSet) {
-        minShrinkValue = trackWidth;
-        minShrinkSet = true;
-      } else if (minShrinkValue > trackWidth) {
-        minShrinkValue = trackWidth;
-      }
-    }
-
-    for (const selectedTrack of this.multiSelectedDOMElements) {
-      const initWidth = selectedTrack.initialWidth;
-
-      selectedTrack.domElement.style.width = clamp(
-        initWidth + diffX,
-        initWidth - minShrinkValue,
-        initWidth + minExpandValue,
-      ) + 'px'
-    }
+    this.multiSelectTracker.applyResizingEndToMultipleSelectedTracks(diffX);
   }
 
-  /**
-   * @description Retrieves positions of the selected tracks.
-   * This is managed here instead of letting react handling it.
-   */
   getMultiSelectedTrackInformation(): SelectedTrackInfo {
-    const newElements: SelectedTrackInfo = {
-      trackNumbers: [],
-      audioIndexes: [],
-      scheduledKeys: []
-    };
-    
-    this.multiSelectedDOMElements.forEach(element => {
-      const trackNumber = parseInt(element.domElement.getAttribute('data-trackid') as string);
-      const audioIndex = parseInt(element.domElement.getAttribute('data-audioid') as string);
-
-      newElements.trackNumbers.push(trackNumber);
-      newElements.audioIndexes.push(audioIndex);
-      newElements.scheduledKeys.push(element.trackDetail.scheduledKey);
-    });
-
-    return newElements;
+    return this.multiSelectTracker.getMultiSelectedTrackInformation();
   }
 
-  /**
-   * @description Retrieves all the positions of the current tracks.
-   * @returns 
-   */
   getNewPositionForMultipleSelectedTracks(): TransformedAudioTrackDetails[] {
-    const newElements: TransformedAudioTrackDetails[] = [];
-    
-    this.multiSelectedDOMElements.forEach(element => {
-      const scrollLeft = element.domElement.scrollLeft;
-      const width = element.domElement.offsetWidth;
-      const finalPosition = element.domElement.offsetLeft;
-
-      newElements.push({
-        ...element,
-        finalPosition,
-        finalScrollLeft: scrollLeft,
-        finalWidth: width
-      });
-
-      /// Probably make a separate method to 
-      /// set all from initial to final values.
-      element.initialPosition = finalPosition;
-      element.initialScrollLeft = scrollLeft;
-      element.initialWidth = width;
-    });
-
-    return newElements;
+    return this.multiSelectTracker.getNewPositionForMultipleSelectedTracks();
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
-    // To do: Make 500000 global variable??
     if (timeSelection) {
-      if (timeSelection.endTimeMicros - timeSelection.startTimeMicros < 500000) return;
+      const {endTimeMicros, startTimeMicros} = timeSelection;
+      
+      if (endTimeMicros - startTimeMicros < REGION_SELECT_TIMELIMIT_MICROSEC) {
+        return
+      };
     }
 
     this.timeframeSelectionDetails = timeSelection;
   }
 
   /**
-   * @description Safety function to initialize audiocontext before using audiomanager
-   * @returns Self; the Audio Manager.
+   * @description Safety function to initialize audiocontext before using 
+   * audiomanager
    */
   useManager() {
     if (!this.isInitialized) {
@@ -558,8 +343,12 @@ class AudioTrackManager {
     this.unregisterAudioFromAudioBank(audioId);
   }
 
+  // TODO: When moved to Tempo, allow dynamic min loop end time.
   setLoopEnd(valueMicros: number) {
-    this.loopEnd = Math.max(5, valueMicros / SEC_TO_MICROSEC);
+    this.loopEnd = Math.max(
+      DEFAULT_MIN_TIME_LOOP_SEC, 
+      valueMicros / SEC_TO_MICROSEC
+    );
   }
 
   setGainNodeForMaster(vol: number) {
@@ -598,6 +387,92 @@ class AudioTrackManager {
     }
   }
 
+  scheduleAutomation(trackAutomationDetails: ScheduledTrackAutomation[][]) {
+    for (const automations of trackAutomationDetails) {
+      for (const automation of automations) {
+        this._scheduleAutomationInternal(automation);
+      }
+    }
+  }
+
+  private _scheduleAutomationInternal(automation: ScheduledTrackAutomation) {
+    const seekbarOffsetInMicros = this.runningTimestamp * SEC_TO_MICROSEC;
+    const context = audioService.useAudioContext();
+    const currentTime = context.currentTime;
+
+    const startTime = automation.startOffsetMicros;
+    const endTime = automation.endOffsetMicros;
+    const offsetMicros = automation.offsetMicros
+
+    if (offsetMicros + (endTime - startTime) < seekbarOffsetInMicros) {
+      const key = automation.nodeId;
+
+      if (Object.hasOwn(this.scheduledAutomation, key)) {
+        const node = getAudioNode(key);
+        // Deduce automation being performed on this node.
+
+        if (node !== undefined) {
+          if (AudioNode.name === 'GainNode') {
+            const aParam = (node as GainNode).gain;
+            aParam.cancelScheduledValues(0);
+          }
+        }
+        
+        delete this.scheduledAutomation[key];
+      }
+
+      return;
+    }
+
+    let index = 0;
+
+    // Change strategy based on the total points 
+    while (index < automation.points.length && offsetMicros + automation.points[index].time < seekbarOffsetInMicros) {
+      ++index;
+    }
+
+    --index;
+
+    // Currently assume that all points are linear
+    // Get current value
+    const currPoint = automation.points[index];
+    const nextPoint = automation.points[index + 1];
+    const proportion = (seekbarOffsetInMicros - currPoint.time) / (nextPoint.time - currPoint.time);
+    const currentValue = (nextPoint.value - currPoint.value) * proportion + currPoint.value;
+
+    // const sear
+
+    // const startTimeSecs = startTime / SEC_TO_MICROSEC;
+    // const trackDurationSecs = endTime / SEC_TO_MICROSEC;
+    // const distance = (seekbarOffsetInMicros - trackOffsetMicros) / SEC_TO_MICROSEC;
+
+    // const bufferSource = context.createBufferSource();
+    // bufferSource.buffer = this.getAudioBuffer(audioId);
+    // bufferSource.connect(pannerNodes);
+
+    // const offsetStart = startTimeSecs + Math.max(distance, 0);
+
+    // bufferSource.start(
+    //   currentTime + Math.max(-distance, 0), 
+    //   offsetStart,
+    //   trackDurationSecs - offsetStart
+    // );
+
+    // this.offlineScheduledNodes[scheduledKey] = {
+    //   audioId,
+    //   buffer: bufferSource,
+    //   details: track.trackDetail
+    // };
+
+    // bufferSource.onended = () => {
+    //   if (Object.hasOwn(this.offlineScheduledNodes, scheduledKey)) {
+    //     const node = this.offlineScheduledNodes[scheduledKey];
+    //     node.buffer.disconnect();
+    //     delete this.offlineScheduledNodes[scheduledKey];
+    //   }
+    // }
+  }
+
   scheduleOffline(
     audioTrackDetails: AudioTrackDetails[][],
     pannerNodes: StereoPannerNode[],
@@ -625,9 +500,15 @@ class AudioTrackManager {
     if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
       this.scheduledNodes[symbolKey].buffer.stop(0);
       this.scheduledNodes[symbolKey].buffer.disconnect();
-      this.multiSelectedDOMElements = this.multiSelectedDOMElements.filter((element) => (
+
+      let multiSelectedDomElements = this
+        .multiSelectTracker
+        .multiSelectedDOMElements;
+
+      multiSelectedDomElements = multiSelectedDomElements.filter((element) => (
         element.trackDetail.scheduledKey !== symbolKey
       ));
+
       delete this.scheduledNodes[symbolKey];
     }
   }
@@ -673,12 +554,7 @@ class AudioTrackManager {
     const seekbarOffsetInMicros = 0;
     const currentTime = context.currentTime;
 
-    const {
-      audioId,
-      trackDetail: {
-        scheduledKey
-      }
-    } = track;
+    const {audioId, trackDetail: {scheduledKey}} = track;
 
     // Not scaled with playback rate.
     const startTime = track.trackDetail.startOffsetInMicros;
@@ -814,10 +690,11 @@ class AudioTrackManager {
             (movedAudioTracks as AudioTrackDetails[])[audioTrackIndex] :
             audio;
 
-          delete this.scheduledNodes[symbolKey];
-          this._scheduleInternal(trackToSchedule.audioId, trackToSchedule.trackDetail);
           node.buffer.stop(0);
           node.buffer.disconnect();
+          delete this.scheduledNodes[symbolKey];
+
+          this._scheduleInternal(trackToSchedule.audioId, trackToSchedule.trackDetail);
         } else {
           this._scheduleInternal(audio.audioId, audio.trackDetail);
         }
@@ -826,9 +703,7 @@ class AudioTrackManager {
     } 
   }
 
-  rescheduleAudioFromScheduledNodes(
-    audioKey: symbol
-  ) {
+  rescheduleAudioFromScheduledNodes(audioKey: symbol) {
     for (const key of Object.getOwnPropertySymbols(this.scheduledNodes)) {
       const node = this.scheduledNodes[key];
 
@@ -848,9 +723,20 @@ class AudioTrackManager {
       const node = this.scheduledNodes[scheduledKey];
       node.buffer.stop(0);
       node.buffer.disconnect();
-      delete this.scheduledNodes[node.audioId];
+      delete this.scheduledNodes[scheduledKey];
       this._scheduleInternal(node.audioId, trackDetail);
     }
+  }
+
+  rescheduleTrack(scheduledKey: symbol, trackDetails: AudioTrackDetails) {
+    if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
+      const node = this.scheduledNodes[scheduledKey];
+      node.buffer.stop(0);
+      node.buffer.disconnect();
+      delete this.scheduledNodes[scheduledKey];
+    }
+
+    this._scheduleInternal(trackDetails.audioId, trackDetails.trackDetail);
   }
 
   rescheduleMovedTrackFromScheduledNodes(
@@ -893,15 +779,22 @@ class AudioTrackManager {
     this.paused = false;
   }
 
-  getTimeData(leftArray: Uint8Array, rightArray: Uint8Array) {
+  getTimeData(
+    stereoLeftBuffer: Uint8Array<ArrayBuffer>, 
+    stereoRightBuffer: Uint8Array<ArrayBuffer>
+  ) {
     const left = (this.leftAnalyserNode as AnalyserNode);
     const right = (this.rightAnalyserNode as AnalyserNode);
 
-    left.getByteTimeDomainData(leftArray);
-    right.getByteTimeDomainData(rightArray);
+    left.getByteTimeDomainData(stereoLeftBuffer);
+    right.getByteTimeDomainData(stereoRightBuffer);
   }
 
-  getTimeDataFromMixer(mixer: number, leftArray: Uint8Array, rightArray: Uint8Array) {
+  getTimeDataFromMixer(
+    mixer: number,
+    stereoLeftBuffer: Uint8Array<ArrayBuffer>, 
+    stereoRightBuffer: Uint8Array<ArrayBuffer>
+  ) {
     const {
       left,
       right
@@ -912,8 +805,8 @@ class AudioTrackManager {
         right: AnalyserNode
       };
 
-    left.getByteTimeDomainData(leftArray);
-    right.getByteTimeDomainData(rightArray);
+    left.getByteTimeDomainData(stereoLeftBuffer);
+    right.getByteTimeDomainData(stereoRightBuffer);
   }
 
   private _updateTimestampOnSelectedTimeframe() {

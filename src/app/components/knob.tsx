@@ -55,17 +55,8 @@ const minY = calcVectorY(0);
 const maxX = calcVectorX(-1);
 const maxY = calcVectorY(-1);
 
-/**
- * @description Normalize angle between `5 * PI / 4` and `-PI / 4`.
- * 
- * @param x horizontal position of cursor
- * @param y vertical position of cursor
- * @param centerX x center point
- * @param centerY y center point
- * @returns Normalized angle.
- */
-function normalizeAngle(x: number, y: number, centerX: number, centerY: number): number {
-  const dx = x - centerX, dy = y - centerY;
+function normalizeAngle(x: number, y: number, cx: number, cy: number): number {
+  const dx = x - cx, dy = y - cy;
   let angle = Math.atan(dx / dy);
 
   if (dx > 0 && dy >= 0) {
@@ -135,11 +126,16 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
   function onScroll(event: WheelEvent) {
     event.preventDefault();
     const { deltaY } = event;
-    const newValue = clamp(value + (deltaY !== 0 ? (deltaY / Math.abs(deltaY)) : 0) * scrollDelta, 0, 1);
 
-    setValue(newValue);
+    const scrollValue = (deltaY !== 0 ? (deltaY / Math.abs(deltaY)) : 0);
+    const finalValue = clamp(value + scrollValue * scrollDelta, 0, 1);
 
-    const mapper = props.functionMapper ? props.functionMapper(newValue) : newValue;
+    setValue(finalValue);
+
+    const mapper = props.functionMapper ?
+      props.functionMapper(finalValue) :
+      finalValue;
+
     props.onKnobChange && props.onKnobChange(mapper);
   }
 

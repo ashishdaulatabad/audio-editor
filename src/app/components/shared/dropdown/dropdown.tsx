@@ -4,29 +4,14 @@ import {
   DropdownPanelContextInfo,
   ListItem
 } from './dropdownpanel';
-import { FaChevronDown } from 'react-icons/fa';
-import { css } from '@/app/services/utils';
+import {FaChevronDown} from 'react-icons/fa';
+import {css} from '@/app/services/utils';
 
 export type SimpleDropdownProps<Item extends Object> = {
-  /**
-   * @description All list to be displayed on the item
-   */
   list: Item[]
-  /**
-   * @description Label for each item
-   */
   label: (elem: ListItem<Item>) => React.JSX.Element
-  /**
-   * @description Value you want to emit
-   */
   value?: keyof Item
-  /**
-   * @description Placeholder
-   */
   placeholder?: string
-  /**
-   * @description Value emitted by user.
-   */
   onSelect: (value: Item | Item[keyof Item]) => void
 }
 
@@ -34,7 +19,7 @@ export function SimpleDropdown<Item extends Object>(
   props: React.PropsWithoutRef<SimpleDropdownProps<Item>>
 ) {
   // States
-  const [selectedItem, setSelectedItem] = React.useState<ListItem<Item> | null>(null);
+  const [selectedItem, setSelectedItem] = React.useState({} as ListItem<Item>);
   // Refs
   const ref = React.useRef<HTMLDivElement | null>(null);
   // variables
@@ -42,14 +27,15 @@ export function SimpleDropdown<Item extends Object>(
 
   const { 
     showDropdownPanel,
-    hideDropdownPanel
+    hideDropdownPanel,
+    isPanelOpen
   } = React.useContext(DropdownPanelContext) as DropdownPanelContextInfo<Item>;
 
   function prepareDropdownPanel() {
     showDropdownPanel({
       content: props.list,
       label: props.label,
-      onSelect: (item: ListItem<Item>) => {
+      onSelect: (item) => {
         setSelectedItem(item);
         props.onSelect(item.value);
       },
@@ -78,10 +64,13 @@ export function SimpleDropdown<Item extends Object>(
     <div
       ref={ref}
       className={css(
-        "list p-3 min-w-36 border border-solid border-white/20 relative text-center content-center items-center",
+        "list p-3 min-w-36 border select-none border-solid cursor-pointer border-white/20 relative text-center content-center items-center",
       )}
     >
-      <div className="label flex text-center content-center justify-between" onClick={prepareDropdownPanel}>
+      <div 
+        className="label flex text-center content-center justify-between" 
+        onClick={prepareDropdownPanel}
+      >
         {
           !selectedItem ? 
             <span className="placeholder">{props.placeholder ?? ''}</span> :

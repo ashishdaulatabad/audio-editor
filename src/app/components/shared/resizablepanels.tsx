@@ -16,12 +16,12 @@ export interface ResizablePanelProps {
 
 export interface ResizableHandleProps {}
 
-export function ResizingHandle(props: React.PropsWithoutRef<ResizableHandleProps>) {
+export function ResizingHandle() {
   return (
     <div
       className="resizer w-[1px] h-auto hover:border-[2px] border border-solid border-zinc-500 hover:border-zinc-400 hover:cursor-col-resize"
     ></div>
-  )
+  );
 }
 
 export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps>) {
@@ -29,13 +29,9 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   const [anchor, setAnchor] = React.useState(0);
   const [initialWidth, setInitialWidth] = React.useState(0);
   const [resizer, setResizer] = React.useState<HTMLElement | null>(null);
-  const ref = React.useRef<HTMLDivElement | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
 
-  /**
-   * @description Handle mouse event on moving the cursor
-   * @param event Event details
-   */
-  function handleMouseMove(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseMove(event: React.MouseEvent<HTMLElement>) {
     if (hold && resizer) {
       const previousElement = resizer.previousElementSibling as HTMLElement;
       const { clientX } = event.nativeEvent;
@@ -53,10 +49,10 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   }
 
   /**
-   * @description Handle mouse event on moving the cursor
-   * @param event Event details
+   * TODO: Make this simple, send event to parent component for
+   * the handlerElement.
    */
-  function handleMouseDown(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseDown(event: React.MouseEvent<HTMLElement>) {
     const element = event.target as HTMLElement;
 
     if (element.classList.contains('resizer') && event.buttons === 1) {
@@ -72,11 +68,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
     }
   }
 
-  /**
-   * @description Handle release button
-   * @param event 
-   */
-  function handleMouseRelease(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseRelease(event: React.MouseEvent<HTMLElement>) {
     setResizer(null);
     setAnchor(0);
     setInitialWidth(0);
@@ -99,14 +91,12 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
 
 export function ResizingWindowPanel(props: React.PropsWithChildren<ResizablePanelProps>) {
   return (
-    <>
-      <div
-        className={css("resizing-panel", props.className ?? '')}
-        ref={props.ref}
-        style={props.initialWidth ? {minWidth: props.initialWidth, maxWidth: props.initialWidth} : {}}
-      >
-        {props.children}
-      </div>
-    </>
+    <div
+      className={css('resizing-panel', props.className ?? '')}
+      ref={props.ref}
+      style={props.initialWidth ? {minWidth: props.initialWidth, maxWidth: props.initialWidth} : {}}
+    >
+      {props.children}
+    </div>
   )
 }
