@@ -43,11 +43,7 @@ export function createAutomation(node: AudioNode, type: string) {
   if (node instanceof GainNode) {
     // Get gain param
     if (type === 'gain') {
-      automationRegistry[sym] = {
-        node,
-        type: 'gain',
-        audioParam: node.gain
-      }
+      automationRegistry[sym] = {node, type: 'gain', audioParam: node.gain};
 
       return sym;
     }
@@ -75,27 +71,16 @@ export function createAutomation(node: AudioNode, type: string) {
 
   if (node instanceof BiquadFilterNode) {
     switch (type) {
-      case 'gain': {
-        automationRegistry[sym] = {
-          node,
-          type,
-          audioParam: node.gain
-        }
+      case 'gain':
+        automationRegistry[sym] = {node, type, audioParam: node.gain}
         break;
-      }
 
-      case 'Q': {
-        automationRegistry[sym] = {
-          node,
-          type,
-          audioParam: node.Q
-        };
+      case 'Q':
+        automationRegistry[sym] = {node, type, audioParam: node.Q};
         break;
-      }
 
-      default: {
+      default:
         return undefined;
-      }
     }
 
     return sym;
@@ -212,20 +197,16 @@ export function compareValues(left: any, right: any): boolean {
 }
 
 export function cloneValues(value: any): any {
-  if (value === null) {
-    return null;
-  }
-  if (value === undefined) {
-    return undefined;
+  if (value === null || value === undefined) {
+    return value;
   }
 
   switch (typeof value) {
     case 'number':
     case 'boolean':
     case 'string':
-    case 'symbol': {
+    case 'symbol':
       return value;
-    };
 
     // Not to be confused with the class.
     case 'object': {

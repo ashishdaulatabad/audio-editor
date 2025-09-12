@@ -52,9 +52,6 @@ const audioSlice = createSlice({
   }
 });
 
-export const {
-  addIntoAudioBank,
-  removeAudioFromBank,
-} = audioSlice.actions;
+export const {addIntoAudioBank, removeAudioFromBank} = audioSlice.actions;
 
 export default audioSlice.reducer;

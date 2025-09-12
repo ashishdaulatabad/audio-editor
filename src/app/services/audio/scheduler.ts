@@ -1,5 +1,5 @@
-import { AudioTrackDetails } from "@/app/state/trackdetails/trackdetails";
-import { SubType } from "./audiotrackmanager";
+import {AudioTrackDetails} from "@/app/state/trackdetails/trackdetails";
+import {SubType} from "./audiotrackmanager";
 
 /**
  * @description Schedule Node Information related to the tracks.
@@ -12,15 +12,21 @@ export type ScheduledNodesInformation = {
   }
 };
 
-const offlineScheduledNodes: ScheduledNodesInformation = {};
-
-const scheduledNodes: ScheduledNodesInformation = {};
-
+// TODO: Define scheduler for automation type.
 /**
- * @description Schedule the audio track for playback.
- * @param audioId - Unique identifier for the audio track.
- * @param trackDetail - Details of the audio track to be scheduled.
+ * @description General Scheduler for tracks.
  */
-function scheduleInternal(audioId: symbol, trackDetail: SubType<AudioTrackDetails, 'trackDetail'>) {
+export class Scheduler {
+  private scheduledAudioNodes: ScheduledNodesInformation = {};
+  private scheduledAutomations = {};
 
+  constructor() {}
+
+  private _scheduleTrackInternal(
+    audioId: symbol,
+    trackDetail: SubType<AudioTrackDetails, 'trackDetail'>
+  ) {
+
+  }
 }
+

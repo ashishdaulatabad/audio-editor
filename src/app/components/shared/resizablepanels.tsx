@@ -31,7 +31,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
   const [resizer, setResizer] = React.useState<HTMLElement | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 
-  function handleMouseMove(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseMove(event: React.MouseEvent<HTMLElement>) {
     if (hold && resizer) {
       const previousElement = resizer.previousElementSibling as HTMLElement;
       const { clientX } = event.nativeEvent;
@@ -52,7 +52,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
    * TODO: Make this simple, send event to parent component for
    * the handlerElement.
    */
-  function handleMouseDown(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseDown(event: React.MouseEvent<HTMLElement>) {
     const element = event.target as HTMLElement;
 
     if (element.classList.contains('resizer') && event.buttons === 1) {
@@ -68,7 +68,7 @@ export function ResizingGroup(props: React.PropsWithChildren<ResizableGroupProps
     }
   }
 
-  function handleMouseRelease(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function handleMouseRelease(event: React.MouseEvent<HTMLElement>) {
     setResizer(null);
     setAnchor(0);
     setInitialWidth(0);

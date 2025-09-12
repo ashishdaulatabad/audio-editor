@@ -70,7 +70,7 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
     setEndY(0);
   }
 
-  function dragSlicer(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function dragSlicer(event: React.MouseEvent<HTMLDivElement>) {
     if (event.buttons === 1) {
       const multiplier = event.nativeEvent.offsetY / trackHeight;
       const level = Math.round(multiplier) * trackHeight;

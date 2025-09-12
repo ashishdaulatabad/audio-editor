@@ -1,24 +1,24 @@
-import { TimeSectionSelection } from "@/app/components/editor/seekbar";
-import { audioService } from "../audioservice";
-import { Maybe } from "../interfaces";
-import { SEC_TO_MICROSEC } from "@/app/state/trackdetails/trackdetails";
+import {TimeSectionSelection} from '@/app/components/editor/seekbar';
+import {audioService} from '../audioservice';
+import {Maybe} from '../interfaces';
+import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
 
 const DEFAULT_MIN_TIME_LOOP_SEC = 5;
 
-export const AudioSyncClock = {
-  timestamp: 0,
-  startTimestamp: 0,
-  runningTimestamp: 0,
-  loopEnd: DEFAULT_MIN_TIME_LOOP_SEC,
-  timeframeSelectionDetails: null as Maybe<TimeSectionSelection>,
+export class AudioSyncClock  {
+  timestamp = 0;
+  startTimestamp = 0;
+  runningTimestamp = 0;
+  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
+  timeframeSelectionDetails = null as Maybe<TimeSectionSelection>;
 
   setLoopEnd(loopEnd: number) {
     this.loopEnd = loopEnd;
-  },
+  }
 
   getRunningTimestamp() {
     return this.runningTimestamp;
-  },
+  }
   // TODO: Set private
   _updateTimestampOnSelectedTimeframe() {
     const {
@@ -42,7 +42,7 @@ export const AudioSyncClock = {
       this.runningTimestamp = time - this.startTimestamp;
       return false;
     }
-  },
+  }
   // TODO: Set private
   _setTimestampOnSelectedTimeframe(valueSecs: number) {
     const {
@@ -65,7 +65,7 @@ export const AudioSyncClock = {
       this.runningTimestamp = time - this.startTimestamp;
       return false;
     }
-  },
+  }
   setTimestamp(startValue: number) {
     const context = audioService.useAudioContext();
     const time = context.currentTime;
@@ -90,7 +90,7 @@ export const AudioSyncClock = {
       this.runningTimestamp = time - this.startTimestamp;
       return false;
     }
-  },
+  }
   updateTimestamp() {
     const context = audioService.useAudioContext();
     const time = context.currentTime;

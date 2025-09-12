@@ -18,9 +18,12 @@ export type ListItem<Type> = {
   value: Type
 }
 
-export const DropdownPanelContext = React.createContext<DropdownPanelContextInfo<any> | null>(null);
+export const DropdownPanelContext = 
+  React.createContext<DropdownPanelContextInfo<any> | null>(null);
 
-export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) {
+export function DropdownPanelProvider<Item>(
+  props: React.PropsWithChildren<{}>
+) {
   type LabelType = (item: ListItem<Item>) => React.JSX.Element;
 
   const [itemList, setItemList] = React.useState<any[]>([]);
@@ -37,13 +40,7 @@ export function DropdownPanelProvider<Item>(props: React.PropsWithChildren<{}>) 
     label: LabelType
     onSelect: (item: ListItem<Item>) => void
   }) {
-    const {
-      x,
-      y,
-      content,
-      label,
-      onSelect
-    } = info;
+    const {x, y, content, label, onSelect} = info;
 
     if (content === itemList || visible) {
       hideDropdownPanel();
@@ -106,15 +103,9 @@ export function DropdownPanel<Type>(props: React.PropsWithChildren<{
   onSelect: (_: ListItem<Type>) => void
   Label: (item:ListItem<Type>) => React.JSX.Element
 }>) {
-  const {
-    itemList,
-    left,
-    top,
-    Label 
-  } = props;
-
   // Refs
   const listRef = React.useRef<HTMLUListElement>(null);
+  const {itemList, left, top, Label} = props;
 
   React.useEffect(() => {
     if (listRef.current) {

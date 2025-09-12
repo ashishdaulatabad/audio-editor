@@ -2,6 +2,11 @@ import { audioService } from './audioservice';
 import { Maybe } from './interfaces';
 import { registerAudioNode } from './audio/noderegistry';
 
+type StereoAnalyzerNodes = {
+  left: AnalyserNode,
+  right: AnalyserNode
+}
+
 export class Mixer {
   // TODO: Create all nodes in array, and assign first ref to masterGainNode.
   masterGainNode: Maybe<GainNode> = null;
@@ -24,14 +29,8 @@ export class Mixer {
   private mixerViewIdentifier: symbol = Symbol();
   private isInitialized = false;
 
-  masterAnalyserNodes: {
-    left: AnalyserNode,
-    right: AnalyserNode
-  } | null = null;
-  analyserNodes: {
-    left: AnalyserNode,
-    right: AnalyserNode
-  }[] = [];
+  masterAnalyserNodes: StereoAnalyzerNodes | null = null;
+  analyserNodes: Array<StereoAnalyzerNodes> = [];
 
   constructor(
     private totalMixerCount: number
@@ -158,7 +157,6 @@ export class Mixer {
     node.connect(this.panNodes[mixerNumber]);
   }
 
-  // TODO: make mixer number uniform.
   connectMixerOutputTo(node: AudioNode, mixerNumber: number) {
     this.gainNodes[mixerNumber].connect(node);
   }

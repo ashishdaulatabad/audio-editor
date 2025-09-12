@@ -1,7 +1,6 @@
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { compareValues } from '@/app/services/audio/noderegistry';
-
-import { AudioTrackDetails } from './trackdetails';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {compareValues} from '@/app/services/audio/noderegistry';
+import {AudioTrackDetails} from './trackdetails';
 import {
   ChangeDetails,
   ChangeType,
@@ -26,11 +25,11 @@ export function undoSnapshotChange(
     switch (changeDetail.changeType) {
       // Remove the values.
       case ChangeType.NewlyCreated: {
-        const { trackNumber, audioId, trackDetail } = changeDetail.data;
+        const {trackNumber, audioId, trackDetail} = changeDetail.data;
 
-        // Sorted for labelling.
+        // Probably use enum for undo/redo instead of boolean
+        // Redo if false, else Undo
         switch (redo) {
-          // This is an undo operation.
           case false:
             const index = trackDetails[trackNumber].findIndex(trk => (
               trk.trackDetail.scheduledKey === trackDetail.scheduledKey
@@ -63,11 +62,7 @@ export function undoSnapshotChange(
 
       // Add them back
       case ChangeType.Removed: {
-        const {
-          trackNumber,
-          // audioIndex,
-          ...rest
-        } = changeDetail.data;
+        const {trackNumber, ...rest} = changeDetail.data;
 
         switch (redo) {
           case false: 
@@ -86,6 +81,7 @@ export function undoSnapshotChange(
             const index = trackDetails[trackNumber].findIndex(trk => (
               trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
             ));
+
             if (index > -1) {
               const currentTrack = trackDetails[trackNumber][index];
               audioManager.removeTrackFromScheduledNodes(currentTrack);
@@ -101,7 +97,7 @@ export function undoSnapshotChange(
 
       // Change to previous
       case ChangeType.Updated: {
-        const { trackNumber, ...rest } = !redo ? 
+        const {trackNumber, ...rest} = !redo ? 
           changeDetail.data.previous :
           changeDetail.data.current;
         

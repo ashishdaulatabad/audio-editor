@@ -1,8 +1,8 @@
 import {
   AudioTrackDetails
 } from '@/app/state/trackdetails/trackdetails';
-import { cloneValues } from './audio/noderegistry';
-import { compareSnapshots } from '@/app/state/trackdetails/tracksnapshots';
+import {cloneValues} from './audio/noderegistry';
+import {compareSnapshots} from '@/app/state/trackdetails/tracksnapshots';
 
 /**
  * @description Change Type performed
@@ -58,7 +58,7 @@ export type Snapshot<Type> = {
  */
 export function createSnapshot<Type>(state: Type): Snapshot<Type> {
   // A simple object currently.
-  return { state: cloneValues(state) };
+  return {state: cloneValues(state)};
 }
 
 /**

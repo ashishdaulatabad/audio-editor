@@ -4,8 +4,8 @@ import {
   DropdownPanelContextInfo,
   ListItem
 } from './dropdownpanel';
-import { FaChevronDown } from 'react-icons/fa';
-import { css } from '@/app/services/utils';
+import {FaChevronDown} from 'react-icons/fa';
+import {css} from '@/app/services/utils';
 
 export type SimpleDropdownProps<Item extends Object> = {
   list: Item[]
@@ -67,7 +67,10 @@ export function SimpleDropdown<Item extends Object>(
         "list p-3 min-w-36 border select-none border-solid cursor-pointer border-white/20 relative text-center content-center items-center",
       )}
     >
-      <div className="label flex text-center content-center justify-between" onClick={prepareDropdownPanel}>
+      <div 
+        className="label flex text-center content-center justify-between" 
+        onClick={prepareDropdownPanel}
+      >
         {
           !selectedItem ? 
             <span className="placeholder">{props.placeholder ?? ''}</span> :

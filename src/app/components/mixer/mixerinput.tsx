@@ -1,15 +1,19 @@
 import React from 'react';
-import { Knob } from '../knob';
-import { Slider } from '../slider';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { Orientation, VolumeLevels } from '../player/volumelevels';
+import {Knob} from '../knob';
+import {Slider} from '../slider';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {Orientation, VolumeLevels} from '../player/volumelevels';
 
 export function MixerInput(props: React.PropsWithoutRef<{
   mixerNumber: number
   master: boolean 
 }>) {
-  const [gain, setGain] = React.useState(audioManager.useManager().mixer.getGainValue(props.mixerNumber + 1));
-  const [panner, setPanner] = React.useState(audioManager.useManager().mixer.getPanValue(props.mixerNumber + 1));
+  const [gain, setGain] = React.useState(
+    audioManager.useManager().mixer.getGainValue(props.mixerNumber + 1)
+  );
+  const [panner, setPanner] = React.useState(
+    audioManager.useManager().mixer.getPanValue(props.mixerNumber + 1)
+  );
 
   function setGainValue(e: number) {
     audioManager.setGainNodeForMixer(props.mixerNumber + 1, e);

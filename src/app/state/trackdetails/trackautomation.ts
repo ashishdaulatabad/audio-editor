@@ -17,7 +17,6 @@ export interface ScheduledTrackAutomation {
   points: Array<TrackAutomationPoint>
 }
 
-
 export type TrackAutomationChangeDetails = ScheduledTrackAutomation & {
   trackNumber: number
 }

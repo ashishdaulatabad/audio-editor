@@ -1,12 +1,9 @@
-import { Maybe } from '@/app/services/interfaces';
-import { AudioTrackManipulationMode } from './trackaudio';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { clamp } from '@/app/utils';
+import {Maybe} from '@/app/services/interfaces';
+import {AudioTrackManipulationMode} from './trackaudio';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {clamp} from '@/app/utils';
 
-const {
-  max,
-  min,
-} = Math;
+const {max, min} = Math;
 
 // TODO: Move hooks in different file wherever possible
 export function useMultiTrackMovement(mode: AudioTrackManipulationMode) {
@@ -51,11 +48,8 @@ export function useSingleTrackMovement({
     switch (mode) {
       // Change position
       case AudioTrackManipulationMode.Move:
-        movableEntity.style.left = clamp(
-          position + diffAnchorX,
-          0,
-          width
-        ) + 'px';
+        const left = position + diffAnchorX;
+        movableEntity.style.left = clamp(left, 0, width) + 'px';
         setDragged(diffAnchorX !== 0);
         break;
 

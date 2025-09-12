@@ -1,5 +1,5 @@
-import { AudioTrackDetails } from '@/app/state/trackdetails/trackdetails';
-import { clamp } from '@/app/utils';
+import {AudioTrackDetails} from '@/app/state/trackdetails/trackdetails';
+import {clamp} from '@/app/utils';
 
 type SelectedAudioTrackDetails = AudioTrackDetails & {
   domElement: HTMLElement

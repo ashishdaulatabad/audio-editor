@@ -320,7 +320,9 @@ export function removeAudioFromAllScheduledTrack(
 ) {
   /// Filter all the tracks that contains this Audio
   for (let index = 0; index < trackDetails.length; ++index) {
-    trackDetails[index] = trackDetails[index].filter(detail => detail.audioId !== audioId);
+    trackDetails[index] = trackDetails[index].filter(detail => (
+      detail.audioId !== audioId
+    ));
   }
 
   return trackDetails;

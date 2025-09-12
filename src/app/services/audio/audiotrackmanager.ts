@@ -215,10 +215,7 @@ class AudioTrackManager {
   unregisterAudioFromAudioBank(sym: symbol): boolean {
     if (Object.hasOwn(this.audioBank, sym)) {
       // Remove all the settings from the bank.
-      const {
-        gainRegister,
-        pannerRegister
-      } = this.audioBank[sym];
+      const {gainRegister, pannerRegister} = this.audioBank[sym];
 
       deregisterAudioNode(gainRegister);
       deregisterAudioNode(pannerRegister);
@@ -313,7 +310,6 @@ class AudioTrackManager {
   /**
    * @description Safety function to initialize audiocontext before using 
    * audiomanager
-   * @returns Self; the Audio Manager.
    */
   useManager() {
     if (!this.isInitialized) {
@@ -558,12 +554,7 @@ class AudioTrackManager {
     const seekbarOffsetInMicros = 0;
     const currentTime = context.currentTime;
 
-    const {
-      audioId,
-      trackDetail: {
-        scheduledKey
-      }
-    } = track;
+    const {audioId, trackDetail: {scheduledKey}} = track;
 
     // Not scaled with playback rate.
     const startTime = track.trackDetail.startOffsetInMicros;

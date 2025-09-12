@@ -37,7 +37,7 @@ export function Window(props: React.PropsWithChildren<{
   header?: React.JSX.Element 
   windowSymbol: symbol
 }>) {
-  /// States
+  // States
   const [hold, setHold] = React.useState(false);
   const [
     windowManipulationMode,

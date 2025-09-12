@@ -8,7 +8,6 @@ import { AudioTransformation } from '@/app/services/interfaces';
 import { TimeSectionSelection } from '@/app/components/editor/seekbar';
 import { animationBatcher } from '@/app/services/animationbatch';
 import { cloneValues } from '@/app/services/audio/noderegistry';
-
 import {
   ChangeDetails,
   changeHistory,
@@ -101,7 +100,11 @@ const initialState: {
   trackUniqueIds: new Array<number>(),
 };
 
-function isWithinRegionAndNotSelected(track: AudioTrackDetails, pointStartSec: number, pointEndSec: number) {
+function isWithinRegionAndNotSelected(
+  track: AudioTrackDetails,
+  pointStartSec: number,
+  pointEndSec: number
+): boolean {
   const startTime = track.trackDetail.offsetInMicros / SEC_TO_MICROSEC;
   const startOffset = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
   const endOffset = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
@@ -126,7 +129,12 @@ function processTrackHistory<Action>(
 ) {
   const initialState = createSnapshot(state);
   const finalState = fn(state, action);
-  changeHistory.storeChanges(initialState, cloneValues(finalState), WorkspaceChange.TrackChanges);
+
+  changeHistory.storeChanges(
+    initialState,
+    cloneValues(finalState),
+    WorkspaceChange.TrackChanges
+  );
 
   return finalState;
 }

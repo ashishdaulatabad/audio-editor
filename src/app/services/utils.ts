@@ -5,7 +5,7 @@ import { randomColor } from './random';
 import { Maybe } from './interfaces';
 
 type Attr = string |
-  { [k: string]: boolean | (() => boolean) };
+  {[k: string]: boolean | (() => boolean)};
 
 /**
  * @description CSS builder
@@ -15,16 +15,18 @@ type Attr = string |
 export function css(...cssStr: Attr[]): string {
   const resultStr = cssStr.map(css => {
     switch (typeof css) {
-      case 'string': return css.trim();
+      case 'string': 
+        return css.trim();
+
       case 'object': {
         return Object.keys(css).filter(key => (
           (typeof css[key] === 'function' && css[key]() === true) ||
           (typeof css[key] === 'boolean' && css[key] === true)
         )).map(key => key.trim()).join(' ')
       }
-      default: {
+
+      default: 
         return null;
-      }
     }
   }).filter(returnedCss => returnedCss).join(' ');
 
@@ -90,17 +92,11 @@ export function traverseParentUntilOneCondition(
     if (index === -1) {
       traverse = traverse.parentElement;
     } else {
-      return {
-        index,
-        expectedNode: traverse
-      }
+      return {index, expectedNode: traverse};
     }
   } while (traverse !== null);
 
-  return {
-    index: -1,
-    expectedNode: traverse
-  };
+  return {index: -1, expectedNode: traverse};
 }
 
 /**
@@ -111,10 +107,7 @@ export function traverseParentUntilOneCondition(
 export function getTrackAudioElement(element: HTMLElement) {
   let traverse: Maybe<HTMLElement> = element;
 
-  while (
-    traverse !== null &&
-    !traverse.classList.contains('track-audio')
-  ) {
+  while (!!traverse && !traverse.classList.contains('track-audio')) {
     traverse = traverse.parentElement;
   }
 
