@@ -11,10 +11,15 @@ export type AudioTrackChangeDetails = AudioTrackDetails & {
   trackNumber: number
 }
 
+export enum HistoryAction {
+  Undo,
+  Redo
+}
+
 export function undoSnapshotChange(
   trackDetails: AudioTrackDetails[][],
   changeDetails: ChangeDetails<AudioTrackChangeDetails>[],
-  redo = false
+  action: HistoryAction = HistoryAction.Undo
 ) {
   const tracksToAdd: AudioTrackDetails[][] = 
     Array.from({ length: trackDetails.length }, () => []);
@@ -29,8 +34,8 @@ export function undoSnapshotChange(
 
         // Probably use enum for undo/redo instead of boolean
         // Redo if false, else Undo
-        switch (redo) {
-          case false:
+        switch (action) {
+          case HistoryAction.Undo:
             const index = trackDetails[trackNumber].findIndex(trk => (
               trk.trackDetail.scheduledKey === trackDetail.scheduledKey
             ));
@@ -45,7 +50,7 @@ export function undoSnapshotChange(
             break;
           
           // This is a redo operation.
-          default:
+          case HistoryAction.Redo:
             const newData = {
               ...changeDetail.data,
               trackDetail: {
@@ -64,8 +69,8 @@ export function undoSnapshotChange(
       case ChangeType.Removed: {
         const {trackNumber, ...rest} = changeDetail.data;
 
-        switch (redo) {
-          case false: 
+        switch (action) {
+          case HistoryAction.Undo: 
             const newData = {
               ...rest,
               trackDetail: {
@@ -77,7 +82,7 @@ export function undoSnapshotChange(
             audioManager.scheduleSingleTrack(rest.audioId, newData.trackDetail);
             break;
 
-          default:
+          case HistoryAction.Redo:
             const index = trackDetails[trackNumber].findIndex(trk => (
               trk.trackDetail.scheduledKey === rest.trackDetail.scheduledKey
             ));
@@ -97,7 +102,7 @@ export function undoSnapshotChange(
 
       // Change to previous
       case ChangeType.Updated: {
-        const {trackNumber, ...rest} = !redo ? 
+        const {trackNumber, ...rest} = HistoryAction.Undo === action ? 
           changeDetail.data.previous :
           changeDetail.data.current;
         
@@ -147,7 +152,7 @@ export function compareSnapshots(
   snapshot: Snapshot<AudioTrackDetails[][]>, 
   trackDetails: AudioTrackDetails[][]
 ): Array<ChangeDetails<AudioTrackChangeDetails>> {
-  const { state } = snapshot;
+  const {state} = snapshot;
   const changedDetails: ChangeDetails<AudioTrackChangeDetails>[] = [];
 
   for (let trackIndex = 0; trackIndex < trackDetails.length; ++trackIndex) {

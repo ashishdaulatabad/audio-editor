@@ -13,7 +13,7 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
   seekOffset?: number
 }>) {
   const seekbarRef = React.createRef<HTMLDivElement>();
-  const { trackNumber, audioId, lineDist, h } = props;
+  const {trackNumber, audioId, lineDist, h} = props;
 
   const track = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[trackNumber][audioId]
@@ -64,7 +64,7 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
       value = requestAnimationFrame(animateSeekbar);
     }
 
-    return () => cancelAnimationFrame(value)
+    return () => cancelAnimationFrame(value);
   });
 
   return (

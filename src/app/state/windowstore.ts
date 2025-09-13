@@ -124,7 +124,7 @@ const windowManagerSlice = createSlice({
       state: InitialType<any>, 
       action: PayloadAction<WindowView<any>>
     ) {
-      const { propsUniqueIdentifier } = action.payload;
+      const {propsUniqueIdentifier} = action.payload;
 
       for (const key of Object.getOwnPropertySymbols(state.contents)) {
         const window = state.contents[key];
@@ -204,7 +204,7 @@ export const {
   batchRemoveWindowWithUniqueIdentifier
 } = windowManagerSlice.actions;
 
-const { addWindow } = windowManagerSlice.actions;
+const {addWindow} = windowManagerSlice.actions;
 
 /**
  * @description Add window to window management.

@@ -111,7 +111,7 @@ export class Mixer {
       [this.gainNodes, this.panNodes, this.masterGainNode, this.masterPannerNode] = this.initialize(context);
 
       this.analyserNodes = Array.from(
-        { length: this.totalMixerCount }, 
+        {length: this.totalMixerCount + 1}, 
         (_, index: number) => {
           const left = context.createAnalyser();
           const right = context.createAnalyser()
@@ -124,7 +124,7 @@ export class Mixer {
       };
 
       this._channelSplitterNodes = Array.from(
-        { length: this.totalMixerCount }, 
+        {length: this.totalMixerCount + 1}, 
         (_, index: number) => {
           const channelSplitter = context.createChannelSplitter();
           this.gainNodes[index].connect(channelSplitter);

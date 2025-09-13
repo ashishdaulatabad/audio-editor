@@ -16,7 +16,7 @@ import {
 } from '@/app/services/changehistory';
 import { TimeframeMode } from '@/app/components/player/player';
 import { getRandomTrackId } from '@/app/services/random';
-import { AudioTrackChangeDetails, undoSnapshotChange } from './tracksnapshots';
+import { AudioTrackChangeDetails, HistoryAction, undoSnapshotChange } from './tracksnapshots';
 import { ScheduledTrackAutomation } from './trackautomation';
 import { getMaxTimeOverall } from './trackutils';
 import {
@@ -397,7 +397,7 @@ export const trackDetailsSlice = createSlice({
       audioId: symbol,
       noSnapshot: true
     }>){
-      const { audioId, noSnapshot } = action.payload;
+      const {audioId, noSnapshot} = action.payload;
 
       state.trackDetails = !noSnapshot ?
         processTrackHistory(state.trackDetails, audioId, removeAudioFromAllScheduledTrack) :
@@ -412,14 +412,20 @@ export const trackDetailsSlice = createSlice({
 
     rollbackChanges(state, action: PayloadAction<{
       updatedChanges: ChangeDetails<AudioTrackChangeDetails>[],
-      redo: boolean
+      action: HistoryAction
     }>) {
-      const { updatedChanges, redo } = action.payload;
+      const {updatedChanges, action: act} = action.payload;
 
-      undoSnapshotChange(state.trackDetails, updatedChanges, redo);
-      state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
+      undoSnapshotChange(state.trackDetails, updatedChanges, act);
+      state.trackUniqueIds = syncAllIds(
+        state.trackDetails,
+        state.trackUniqueIds
+      );
 
-      const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
+      const maxTime = getMaxTimeOverall(
+        state.trackDetails,
+        state.trackAutomation
+      );
       state.maxTimeMicros = maxTime + twoMinuteInMicros;
       audioManager.setLoopEnd(maxTime);
     }

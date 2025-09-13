@@ -28,7 +28,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
   const [endY, setEndY] = React.useState(0);
   const [hold, setHold] = React.useState(false);
 
-  const { lineDist, trackHeight, unitTime } = props;
+  const {lineDist, trackHeight, unitTime} = props;
 
   function setDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     setHold(true);
@@ -68,7 +68,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
   }
 
   function leaveRegionSelect(event: React.MouseEvent<HTMLDivElement>) {
-    const { offsetX, offsetY } = event.nativeEvent;
+    const {offsetX, offsetY} = event.nativeEvent;
 
     setHold(false);
     setStartX(0);

@@ -82,7 +82,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   function seekToPoint(event: React.MouseEvent<HTMLDivElement>) {
     if (!isUserSelecting && props.mode === ModeType.DefaultSelector) {
-      const { offsetX } = event.nativeEvent;
+      const {offsetX} = event.nativeEvent;
       const currentTimeInSeconds = (offsetX / lineDist) * timeUnit;
 
       audioManager.useManager().setTimestamp(currentTimeInSeconds);
@@ -103,7 +103,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
       // current cursor is default.
       (props.mode === ModeType.DefaultSelector && event.buttons === 2)
     ) {
-      const { offsetX } = event.nativeEvent;
+      const {offsetX} = event.nativeEvent;
       const currentTimeSecs = (offsetX / lineDist) * timeUnit;
 
       setStartRegionSelection(currentTimeSecs);
@@ -160,7 +160,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
 
   const timeData = Array.from(
-    { length: Math.floor(props.totalLines / labelMultiplier) },
+    {length: Math.floor(props.totalLines / labelMultiplier)},
     (_, index: number) => {
       const time = (timeUnit * labelMultiplier * (index + 1));
       const currMinute = Math.floor(time / 60);

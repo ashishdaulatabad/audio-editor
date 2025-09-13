@@ -44,7 +44,7 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
   const [startY, setStartY] = React.useState(0);
   const [endY, setEndY] = React.useState(0);
 
-  const { unitTime, trackHeight, lineDist } = props;
+  const {unitTime, trackHeight, lineDist} = props;
 
   function setupDrag(event: React.MouseEvent<HTMLDivElement>) {
     setStartX(event.nativeEvent.offsetX);

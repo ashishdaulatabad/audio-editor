@@ -11,7 +11,7 @@ export function MixerMaster(props: React.PropsWithoutRef<MixerProps>) {
     <>
       <div className="mixer-master mr-2 pr-2 border-r border-darker">
         <MixerInput
-          mixerNumber={-1}
+          mixerNumber={0}
           master={true}
         />
       </div>
@@ -19,7 +19,7 @@ export function MixerMaster(props: React.PropsWithoutRef<MixerProps>) {
         {
           Array.from({length: totalMixers}, (_, index: number) => (
             <MixerInput
-              mixerNumber={index}
+              mixerNumber={index + 1}
               master={false}
               key={index}
             />

@@ -17,39 +17,36 @@ export function Seeker(props: {
     state.trackDetailsReducer.status
   ));
 
-  const {
-    lineDist,
-    ref,
-    timePerUnitLine
-  } = props;
+  let value: symbol;
 
-  /// Resetting seekbar after exceeding certain threshold
+  function animateSeekbar() {
+    if (ref.current) {
+      const isLoopEnd = audioManager.updateTimestamp();
+
+      if (isLoopEnd) {
+        props.onLoopEnd();
+      }
+
+      const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
+      ref.current.style.transform = `translate(${Math.round(left)}px)`;
+    }
+  }
+
+  const {lineDist, ref, timePerUnitLine} = props;
+
+  // Resetting seekbar after exceeding certain threshold
   React.useEffect(() => {
     if (ref.current) {
       const currLeft = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
       ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
     }
 
-    let value = Symbol();
     value = animationBatcher.addAnimationHandler(animateSeekbar);
 
     if (status === Status.Play) {
       animationBatcher.resumeAnimation(value);
     } else {
       animationBatcher.suspendAnimation(value);
-    }
-
-    function animateSeekbar() {
-      if (ref.current) {
-        const isLoopEnd = audioManager.updateTimestamp();
-
-        if (isLoopEnd) {
-          props.onLoopEnd();
-        }
-
-        const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
-        ref.current.style.transform = `translate(${Math.round(left)}px)`;
-      }
     }
 
     return () => animationBatcher.removeAnimationHandler(value);
