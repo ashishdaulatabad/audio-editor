@@ -27,27 +27,24 @@ self.addEventListener(
   });
 
 function handleTransformation(data: InputAudioTransformationDetails) {
-  const { transformationType, buffer } = data;
+  const {transformationType, buffer} = data;
 
   switch (transformationType) {
-    case AudioTransformation.Reverse: {
+    case AudioTransformation.Reverse:
       reverseAudio(buffer);
       break;
-    }
-    case AudioTransformation.Normalization: {
+
+    case AudioTransformation.Normalization:
       normalizeAudio(buffer);
       break;
-    }
 
-    case AudioTransformation.ReversePolarity: {
+    case AudioTransformation.ReversePolarity:
       reversePolarity(buffer);
       break;
-    }
 
-    case AudioTransformation.SwapStereo: {
+    case AudioTransformation.SwapStereo:
       swapStereo(buffer);
       break;
-    }
   }
 }
 

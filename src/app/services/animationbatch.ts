@@ -61,6 +61,7 @@ class AnimationBatcher {
       return;
     }
     cancelAnimationFrame(this.masterHandler);
+    this.masterHandler = 0;
   }
 
   /**

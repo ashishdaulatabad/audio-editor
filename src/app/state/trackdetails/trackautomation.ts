@@ -1,11 +1,10 @@
-import { ChangeDetails } from '@/app/services/changehistory';
+import {ChangeDetails} from '@/app/services/changehistory';
 
 export interface TrackAutomationPoint {
   time: number
   value: number
 }
 
-// Todo: Deccide curvature.
 export interface ScheduledTrackAutomation {
   nodeId: symbol
   selected: boolean

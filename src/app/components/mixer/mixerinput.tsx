@@ -9,19 +9,19 @@ export function MixerInput(props: React.PropsWithoutRef<{
   master: boolean 
 }>) {
   const [gain, setGain] = React.useState(
-    audioManager.useManager().mixer.getGainValue(props.mixerNumber + 1)
+    audioManager.useManager().mixer.getGainValue(props.mixerNumber)
   );
   const [panner, setPanner] = React.useState(
-    audioManager.useManager().mixer.getPanValue(props.mixerNumber + 1)
+    audioManager.useManager().mixer.getPanValue(props.mixerNumber)
   );
 
   function setGainValue(e: number) {
-    audioManager.setGainNodeForMixer(props.mixerNumber + 1, e);
+    audioManager.setGainNodeForMixer(props.mixerNumber, e);
     setGain(e);
   }
 
   function setPannerValue(e: number) {
-    audioManager.setPannerNodeForMixer(props.mixerNumber + 1, e);
+    audioManager.setPannerNodeForMixer(props.mixerNumber, e);
     setPanner(e);
   }
 
@@ -37,7 +37,7 @@ export function MixerInput(props: React.PropsWithoutRef<{
           pd={10}
           r={15}
           onKnobChange={setPannerValue}
-          functionMapper={(e) => e * 2 - 1}
+          functionMapper={e => e * 2 - 1}
           value={(panner + 1) / 2}
           scrollDelta={0.04}
         />
@@ -49,7 +49,7 @@ export function MixerInput(props: React.PropsWithoutRef<{
           headh={12}
           headw={30}
           value={gain / 1.5}
-          functionMapper={(e) => e * 1.5}
+          functionMapper={e => e * 1.5}
           scrollDelta={0.01}
           onSliderChange={setGainValue}
           lineThickness={4}
@@ -58,7 +58,7 @@ export function MixerInput(props: React.PropsWithoutRef<{
         />
         <label className="text-md select-none">Vol</label>
       </div>
-      <span className="text-nowrap text-sm select-none">{props.master ? 'Master' : `Mixer ${props.mixerNumber + 1}`}</span>
+      <span className="text-nowrap text-sm select-none">{props.master ? 'Master' : `Mixer ${props.mixerNumber}`}</span>
     </div>
   )
 }

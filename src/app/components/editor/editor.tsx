@@ -68,6 +68,7 @@ import {
 } from '@/app/services/changehistory';
 import { Maybe } from '@/app/services/interfaces';
 import { useMultiTrackMovement, useSingleTrackMovement } from './editormove';
+import { HistoryAction } from '@/app/state/trackdetails/tracksnapshots';
 
 /**
  * @description Movable Type, for handling all the move events.
@@ -835,7 +836,7 @@ export function Editor() {
               case WorkspaceChange.TrackChanges: {
                 dispatch(rollbackChanges({
                   updatedChanges: trackChanges.updatedValues,
-                  redo: true
+                  action: HistoryAction.Redo
                 }));
                 break;
               }
@@ -853,7 +854,7 @@ export function Editor() {
               case WorkspaceChange.TrackChanges: {
                 dispatch(rollbackChanges({
                   updatedChanges: trackChanges.updatedValues,
-                  redo: false
+                  action: HistoryAction.Undo
                 }))
                 break;
               }

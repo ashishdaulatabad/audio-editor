@@ -13,12 +13,9 @@ export type AutomatedKnobProps = {
 }
 
 export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) {
-  const { audioParam } = props;
+  const {audioParam} = props;
 
-  const {
-    minValue,
-    maxValue
-  } = audioParam;
+  const {minValue, maxValue} = audioParam;
 
   // To scale from [0, 1] to [min-max]
   function functionMapper(value: number) {

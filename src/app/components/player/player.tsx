@@ -52,9 +52,15 @@ export function Timer() {
 }
 
 export function Player() {
-  const status = useSelector((state: RootState) => state.trackDetailsReducer.status);
-  const tracks = useSelector((state: RootState) => state.trackDetailsReducer.trackDetails);
-  const mode = useSelector((state: RootState) => state.trackDetailsReducer.timeframeMode);
+  const status = useSelector((state: RootState) => (
+    state.trackDetailsReducer.status
+  ));
+  const tracks = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackDetails
+  ));
+  const mode = useSelector((state: RootState) => (
+    state.trackDetailsReducer.timeframeMode
+  ));
   // States
   const [masterVol, setMasterVol] = React.useState(1);
   const dispatch = useDispatch();

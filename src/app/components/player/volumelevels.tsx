@@ -32,8 +32,8 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
   const leftRect = React.useRef<HTMLDivElement | null>(null);
   const rightRect = React.useRef<HTMLDivElement | null>(null);
   let handler: symbol | null = null;
-  const leftBuffer = new Uint8Array(2048);
-  const rightBuffer = new Uint8Array(2048);
+  const leftBuffer = new Uint8Array(1024);
+  const rightBuffer = new Uint8Array(1024);
   leftBuffer.fill(0);
   rightBuffer.fill(0);
   

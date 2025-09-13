@@ -62,10 +62,7 @@ export function AudioTrackFile(
     showContextMenu
   } = React.useContext(ContextMenuContext);
 
-  const {
-    showDialog,
-    hideDialog
-  } = React.useContext(DialogContext);
+  const {showDialog, hideDialog} = React.useContext(DialogContext);
 
   function onDeleteSelected() {
     /// Maybe make a common method for this.

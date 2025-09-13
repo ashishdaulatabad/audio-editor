@@ -313,8 +313,8 @@ export function renderAudioWaveform(
 
   const buffer = audioManager.getAudioBuffer(data.audioId) as AudioBuffer;
  
-  context.strokeStyle = '#111';
-  context.fillStyle = data.colorAnnotation;
+  context.strokeStyle = '#e2e3ef';
+  context.fillStyle = '#fff1';
   context.beginPath();
   context.clearRect(0, 0, width, height);
   context.fillRect(0, 0, width, height);
