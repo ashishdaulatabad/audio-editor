@@ -102,9 +102,9 @@ function removeWindowFromCollection(
   contents: WindowContents<any>,
   ordering: Array<symbol>,
   windowSymbol: symbol
-) {
+): boolean {
   if (Object.hasOwn(contents, windowSymbol)) {
-    const { windowId } = contents[windowSymbol];
+    const {windowId} = contents[windowSymbol];
     delete contents[windowSymbol];
     removeRandomWindowId(windowId);
 
@@ -113,7 +113,10 @@ function removeWindowFromCollection(
     if (index > -1) {
       ordering.splice(index, 1);
     }
+    return true;
   }
+
+  return false;
 }
 
 const windowManagerSlice = createSlice({
@@ -149,8 +152,8 @@ const windowManagerSlice = createSlice({
       for (const key of Object.getOwnPropertySymbols(state.contents)) {
         const window = state.contents[key];
 
-        if (window.propsUniqueIdentifier === action.payload) {
-          removeWindowFromCollection(state.contents, state.ordering, action.payload);
+        if (window.propsUniqueIdentifier === action.payload) {;
+          removeWindowFromCollection(state.contents, state.ordering, window.windowSymbol);
           return;
         }
       }

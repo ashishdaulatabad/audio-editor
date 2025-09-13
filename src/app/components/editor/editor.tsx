@@ -728,10 +728,10 @@ export function Editor() {
     const audioIntIndex = parseInt(audioIndex);
 
     const audioTrack = trackDetails[trackNumber][audioIntIndex];
-    audioManager.removeTrackFromScheduledNodes(audioTrack);
     dispatch(
       removeWindowWithUniqueIdentifier(audioTrack.trackDetail.scheduledKey)
     );
+    audioManager.removeTrackFromScheduledNodes(audioTrack);
     dispatch(deleteAudioFromTrack({
       trackNumber,
       audioIndex: audioIntIndex
