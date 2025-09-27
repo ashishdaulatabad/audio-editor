@@ -69,16 +69,16 @@ export class Mixer {
     const masterGainNode = audioContext.createGain();
     const masterPannerNode = audioContext.createStereoPanner();
 
-    const gainNodes = Array.from({ length: this.totalMixerCount }, () => {
+    const gainNodes = Array.from({length: this.totalMixerCount}, () => {
       const gainNode = audioContext.createGain();
       gainNode.connect(masterPannerNode);
       return gainNode;
     });
 
     const pannerNodes = Array.from(
-      { length: this.totalMixerCount },
+      {length: this.totalMixerCount},
       (_, index: number) => {
-        const pannerNode = audioContext.createStereoPanner()
+        const pannerNode = audioContext.createStereoPanner();
         pannerNode.connect(gainNodes[index]);
         return pannerNode;
       });
@@ -115,8 +115,8 @@ export class Mixer {
         {length: this.totalMixerCount + 1}, 
         (_, index: number) => {
           const left = context.createAnalyser();
-          const right = context.createAnalyser()
-          return { left, right };
+          const right = context.createAnalyser();
+          return {left, right};
         });
 
       this.masterAnalyserNodes = {
@@ -129,7 +129,7 @@ export class Mixer {
         (_, index: number) => {
           const channelSplitter = context.createChannelSplitter();
           this.gainNodes[index].connect(channelSplitter);
-          const { left, right } = this.analyserNodes[index];
+          const {left, right} = this.analyserNodes[index];
           channelSplitter.connect(left, 0);
           channelSplitter.connect(right, 1);
           // left.fftSize = 512;
@@ -179,7 +179,7 @@ export class Mixer {
       'Invalid mixer number: ' + mixerNumber
     );
 
-    this.gainNodes[mixerNumber].gain.value = value;
+    this.panNodes[mixerNumber].pan.value = value;
   }
 };
 

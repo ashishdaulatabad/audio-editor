@@ -6,7 +6,6 @@ import {TrackAudio} from './trackaudio';
 import {TimeSectionSelection} from './seekbar';
 import {SEC_TO_MICROSEC} from '@/app/state//trackdetails/trackdetails';
 import {TrackAutomation} from './trackautomation';
-import { MarkerElement } from '../web/marker';
 
 interface TrackProps {
   id: number

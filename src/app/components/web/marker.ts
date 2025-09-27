@@ -91,7 +91,7 @@ export class MarkerElement extends HTMLElement {
     svg.setAttribute('height', this.height.toString());
     svg.classList.add('track-patterns');
     svg.classList.add('relative');
-    // const shadow = this.attachShadow({mode: 'open'});
+    const shadow = this.attachShadow({mode: 'open'});
 
     const markerDefinition = document.createElementNS(svgxmlns, 'defs');
     const pattern = this.createPatternDef();
@@ -107,7 +107,7 @@ export class MarkerElement extends HTMLElement {
 
     svg.appendChild(rect);
 
-    this.appendChild(svg);
+    shadow.appendChild(svg);
     this.mainSvg = svg;
     this.rect = rect;
     this.pattern = pattern;
