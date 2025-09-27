@@ -17,6 +17,7 @@ export class MarkerElement extends HTMLElement {
   rect: SVGRectElement | null = null;
   def: SVGDefsElement | null = null;
   pattern: SVGPatternElement | null = null;
+  maybeSelect: SVGRectElement | null = null;
 
   set width(w: number) {
     this.w = w;
@@ -54,7 +55,6 @@ export class MarkerElement extends HTMLElement {
   set lineDistance(d: number) {
     this.d = d;
 
-    // Modify them instead of appending them again
     if (this.def) {
       this.modifyPatternDefinition();
     }
@@ -66,6 +66,13 @@ export class MarkerElement extends HTMLElement {
 
   set selectedStart(s: number) {
     this.sStart = s;
+
+    if (this.sStart !== this.sEnd && this.rect) {
+      this.createSelectedRect();
+    } else if (this.maybeSelect) {
+      this.mainSvg?.removeChild(this.maybeSelect);
+      this.maybeSelect = null;
+    }
   }
   
   get selectedStart() {
@@ -74,6 +81,13 @@ export class MarkerElement extends HTMLElement {
   
   set selectedEnd(e: number) {
     this.sEnd = e;
+
+    if (this.sStart !== this.sEnd && this.rect) {
+      this.createSelectedRect();
+    } else if (this.maybeSelect) {
+      this.mainSvg?.removeChild(this.maybeSelect);
+      this.maybeSelect = null;
+    }
   }
 
   get selectedEnd() {
@@ -82,6 +96,21 @@ export class MarkerElement extends HTMLElement {
 
   constructor() {
     super();
+  }
+
+  private createSelectedRect() {
+    if (!this.maybeSelect) {
+      this.maybeSelect = document.createElementNS(svgxmlns, 'rect');
+    }
+    this.maybeSelect.setAttribute('x', this.sStart.toString());
+    this.maybeSelect.setAttribute('y', '0');
+    this.maybeSelect.setAttribute('width', Math.abs(this.sEnd - this.sStart).toString());
+    this.maybeSelect.setAttribute('height', this.h.toString());
+    this.maybeSelect.setAttribute('fill', 'rgba(250, 100, 100, 0.3)');
+
+    if (!this.mainSvg?.contains(this.maybeSelect)) {
+      this.mainSvg?.appendChild(this.maybeSelect);
+    }
   }
 
   initialize() {

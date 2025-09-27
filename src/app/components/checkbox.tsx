@@ -1,6 +1,6 @@
 import React from 'react'
-import { svgxmlns } from '../utils'
-import { css } from '../services/utils';
+import {svgxmlns} from '../utils'
+import {css} from '../services/utils';
 
 interface RadioProps {
   label: string
