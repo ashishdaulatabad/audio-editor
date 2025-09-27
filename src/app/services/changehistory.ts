@@ -1,6 +1,4 @@
-import {
-  AudioTrackDetails
-} from '@/app/state/trackdetails/trackdetails';
+import {AudioTrackDetails} from '@/app/state/trackdetails/trackdetails';
 import {cloneValues} from './audio/noderegistry';
 import {compareSnapshots} from '@/app/state/trackdetails/tracksnapshots';
 

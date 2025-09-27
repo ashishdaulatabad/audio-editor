@@ -1,4 +1,4 @@
-import { svgxmlns } from '@/app/utils';
+import { SVGXMLNS } from '@/app/utils';
 import React from "react";
 
 /**
@@ -104,7 +104,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
       onMouseUp={leaveRegionSelect}
       onMouseMove={dragRectangle}
     >
-      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
+      <svg xmlns={SVGXMLNS} width={props.w} height={props.h}>
         <rect
           x={Math.min(startX, endX)}
           y={Math.min(startY, endY)} 

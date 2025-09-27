@@ -1,4 +1,4 @@
-export const svgxmlns = 'http://www.w3.org/2000/svg';
+export const SVGXMLNS = 'http://www.w3.org/2000/svg';
 
 export function clamp(x: number, min: number, max: number): number {
   return Math.max(Math.min(x, max), min);

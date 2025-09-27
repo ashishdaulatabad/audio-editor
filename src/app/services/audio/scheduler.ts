@@ -24,13 +24,23 @@ export type ScheduledNodesInformation = {
 
 type ScheduledAutomation = {
   [k: symbol]: ScheduledTrackAutomation
-}
+};
+
+type TBD = any;
 
 // TODO: Define scheduled queue for tracks and track automations
 export class ScheduledQueue {
-  private queue = [];
+  private queue: TBD = [];
 
   constructor() {}
+
+  enqueueForScheduling(item: any) {
+    this.queue.push(item);
+  }
+
+  schedule() {
+
+  }
 };
 
 const scheduledQueue = new ScheduledQueue();

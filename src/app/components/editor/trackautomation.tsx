@@ -6,7 +6,7 @@ import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
 import {Waveform} from '@/assets/wave';
 import {css} from '@/app/services/utils';
 import {ScheduledTrackAutomation} from '@/app/state/trackdetails/trackautomation';
-import {svgxmlns} from '@/app/utils';
+import {SVGXMLNS} from '@/app/utils';
 
 export interface TrackAutomationProps {
   index: number
@@ -182,7 +182,7 @@ export function TrackAutomation(
         </span>
       </div>
       <div style={{height: actualHeight}}>
-        <svg xmlns={svgxmlns} height={actualHeight}>
+        <svg xmlns={SVGXMLNS} height={actualHeight}>
           <path
             d={timeData}
             height={actualHeight}

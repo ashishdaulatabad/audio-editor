@@ -1,5 +1,5 @@
 import React from 'react';
-import {svgxmlns} from '@/app/utils';
+import {SVGXMLNS} from '@/app/utils';
 import {Seeker} from './seeker';
 import {audioManager} from '@/app/services/audio/audiotrackmanager';
 import {useSelector} from 'react-redux';
@@ -158,7 +158,8 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
     setIsUserSelecting(false);
   }
 
-
+  // This might take some time.
+  // Will look for alternatives later.
   const timeData = Array.from(
     {length: Math.floor(props.totalLines / labelMultiplier)},
     (_, index: number) => {
@@ -209,7 +210,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
         onMouseUp={handleMouseRelease}
         ref={props.scrollRef}
       >
-        <svg xmlns={svgxmlns} width={props.w} height={30}>
+        <svg xmlns={SVGXMLNS} width={props.w} height={30}>
           <rect
             fill="#C5887666"
             x={startRegion}
@@ -219,7 +220,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
           ></rect>
           {timeData}
         </svg>
-        <svg xmlns={svgxmlns} width={props.w} height={30}>
+        <svg xmlns={SVGXMLNS} width={props.w} height={30}>
           <defs>
             <pattern
               id="repeatedSeekbarLines"

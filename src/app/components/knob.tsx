@@ -1,5 +1,5 @@
 import React from 'react';
-import { clamp, svgxmlns } from '../utils';
+import { clamp, SVGXMLNS } from '../utils';
 
 /**
  * @description Knob Props for setting values.
@@ -173,7 +173,7 @@ export function Knob(props: React.PropsWithoutRef<KnobSettings>) {
       onMouseMove={moveKnob}
     >
       <svg
-        xmlns={svgxmlns}
+        xmlns={SVGXMLNS}
         width={centerX * 2}
         height={centerY * 2}
       >

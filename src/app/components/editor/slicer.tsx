@@ -1,5 +1,5 @@
-import { svgxmlns } from "@/app/utils";
-import React from "react";
+import {SVGXMLNS} from '@/app/utils';
+import React from 'react';
 
 export interface SlicerSelection {
   startTrack: number
@@ -86,7 +86,7 @@ export function Slicer(props: React.PropsWithoutRef<SlicerProps>) {
       onMouseUp={leaveSlicer}
       onMouseMove={dragSlicer}
     >
-      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
+      <svg xmlns={SVGXMLNS} width={props.w} height={props.h}>
         <path 
           stroke="#fff"
           strokeWidth={2}

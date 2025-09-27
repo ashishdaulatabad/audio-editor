@@ -1,4 +1,4 @@
-import {svgxmlns} from '@/app/utils';
+import {SVGXMLNS} from '@/app/utils';
 
 export class MarkerElement extends HTMLElement {
   static observedAttributes = [ 
@@ -100,7 +100,7 @@ export class MarkerElement extends HTMLElement {
 
   private createSelectedRect() {
     if (!this.maybeSelect) {
-      this.maybeSelect = document.createElementNS(svgxmlns, 'rect');
+      this.maybeSelect = document.createElementNS(SVGXMLNS, 'rect');
     }
     this.maybeSelect.setAttribute('x', this.sStart.toString());
     this.maybeSelect.setAttribute('y', '0');
@@ -114,20 +114,20 @@ export class MarkerElement extends HTMLElement {
   }
 
   initialize() {
-    const svg = document.createElementNS(svgxmlns, 'svg');
-    svg.setAttribute('xmlns', svgxmlns);
+    const svg = document.createElementNS(SVGXMLNS, 'svg');
+    svg.setAttribute('xmlns', SVGXMLNS);
     svg.setAttribute('width', this.width.toString());
     svg.setAttribute('height', this.height.toString());
     svg.classList.add('track-patterns');
     svg.classList.add('relative');
     const shadow = this.attachShadow({mode: 'open'});
 
-    const markerDefinition = document.createElementNS(svgxmlns, 'defs');
+    const markerDefinition = document.createElementNS(SVGXMLNS, 'defs');
     const pattern = this.createPatternDef();
     markerDefinition.appendChild(pattern);
     svg.appendChild(markerDefinition);
 
-    const rect = document.createElementNS(svgxmlns, 'rect');
+    const rect = document.createElementNS(SVGXMLNS, 'rect');
     rect.setAttribute('x', '0');
     rect.setAttribute('y', '0');
     rect.setAttribute('width', this.width.toString());
@@ -152,7 +152,7 @@ export class MarkerElement extends HTMLElement {
   }
 
   private createPatternDef() {
-    const pattern = document.createElementNS(svgxmlns, 'pattern');
+    const pattern = document.createElementNS(SVGXMLNS, 'pattern');
     pattern.setAttribute('id', 'repeatingLines');
     pattern.setAttribute('patternUnits', 'userSpaceOnUse');
     pattern.setAttribute('patternContentUnits', 'userSpaceOnUse');
@@ -215,7 +215,7 @@ export class MarkerElement extends HTMLElement {
   }
 
   private static createPath(data: string, stroke: string, strokeWidth: number) {
-    const path = document.createElementNS(svgxmlns, 'path');
+    const path = document.createElementNS(SVGXMLNS, 'path');
     path.setAttribute('d', data);
     path.setAttribute('stroke', stroke);
     path.setAttribute('stroke-width', strokeWidth.toString());

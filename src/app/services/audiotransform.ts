@@ -2,7 +2,7 @@ import {
   AudioTrackDetails,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
-import { AudioTransformation } from './interfaces';
+import {AudioTransformation} from './interfaces';
 
 /**
  * @todo Maybe keep note of exact-recoverable transformation types:

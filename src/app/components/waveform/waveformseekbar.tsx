@@ -1,5 +1,5 @@
 import React from 'react';
-import {svgxmlns} from '@/app/utils';
+import {SVGXMLNS} from '@/app/utils';
 import {WaveformSeeker} from './waveformseeker';
 
 interface WaveformSeekbarProps {
@@ -127,11 +127,11 @@ export function WaveformSeekbar(
         trackNumber={trackNumber}
         audioId={audioId}
       />
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
+      <svg xmlns={SVGXMLNS} width={props.w} height={30}>
         {svgTimeData}
         {isPartial && <rect fill="#C5645466" x={startLimit} y={0} width={endLimit - startLimit} height={30}></rect>}
       </svg>
-      <svg xmlns={svgxmlns} width={props.w} height={30}>
+      <svg xmlns={SVGXMLNS} width={props.w} height={30}>
         {svgLinePathDetails.map((svgLine, index: number) => (
           <path
             d={svgLine.content}

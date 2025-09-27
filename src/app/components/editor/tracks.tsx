@@ -1,6 +1,6 @@
 import React from 'react';
 import {RootState} from '@/app/state/store';
-import {svgxmlns} from '@/app/utils'
+import {SVGXMLNS} from '@/app/utils'
 import {useSelector} from 'react-redux';
 import {TrackAudio} from './trackaudio';
 import {TimeSectionSelection} from './seekbar';
