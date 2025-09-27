@@ -1,9 +1,9 @@
-import React from "react";
-import { audioManager } from "@/app/services/audio/audiotrackmanager";
-import { RootState } from "@/app/state/store";
-import { Status } from "@/app/state/trackdetails/trackdetails";
-import { useSelector } from "react-redux";
-import { animationBatcher } from "@/app/services/animationbatch";
+import React from 'react';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {RootState} from '@/app/state/store';
+import {Status} from '@/app/state/trackdetails/trackdetails';
+import {useSelector} from 'react-redux';
+import {animationBatcher} from '@/app/services/animationbatch';
 
 export function Seeker(props: {
   lineDist: number
@@ -37,8 +37,8 @@ export function Seeker(props: {
   // Resetting seekbar after exceeding certain threshold
   React.useEffect(() => {
     if (ref.current) {
-      const currLeft = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
-      ref.current.style.transform = `translate(${Math.round(currLeft)}px)`;
+      const left = (lineDist / timePerUnitLine) * audioManager.getTimestamp();
+      ref.current.style.transform = `translate(${Math.round(left)}px)`;
     }
 
     value = animationBatcher.addAnimationHandler(animateSeekbar);

@@ -1,24 +1,28 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AudioDetails } from '../audiostate';
-import { audioService } from '@/app/services/audioservice';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { RegionSelection } from '@/app/components/editor/regionselect';
-import { SlicerSelection } from '@/app/components/editor/slicer';
-import { AudioTransformation } from '@/app/services/interfaces';
-import { TimeSectionSelection } from '@/app/components/editor/seekbar';
-import { animationBatcher } from '@/app/services/animationbatch';
-import { cloneValues } from '@/app/services/audio/noderegistry';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {AudioDetails} from '../audiostate';
+import {audioService} from '@/app/services/audioservice';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {RegionSelection} from '@/app/components/editor/regionselect';
+import {SlicerSelection} from '@/app/components/editor/slicer';
+import {AudioTransformation} from '@/app/services/interfaces';
+import {TimeSectionSelection} from '@/app/components/editor/seekbar';
+import {animationBatcher} from '@/app/services/animationbatch';
+import {cloneValues} from '@/app/services/audio/noderegistry';
 import {
   ChangeDetails,
   changeHistory,
   createSnapshot,
   WorkspaceChange
 } from '@/app/services/changehistory';
-import { TimeframeMode } from '@/app/components/player/player';
-import { getRandomTrackId } from '@/app/services/random';
-import { AudioTrackChangeDetails, HistoryAction, undoSnapshotChange } from './tracksnapshots';
-import { ScheduledTrackAutomation } from './trackautomation';
-import { getMaxTimeOverall } from './trackutils';
+import {TimeframeMode} from '@/app/components/player/player';
+import {getRandomTrackId, randomColor} from '@/app/services/random';
+import {
+  AudioTrackChangeDetails,
+  HistoryAction,
+  undoSnapshotChange
+} from './tracksnapshots';
+import {ScheduledTrackAutomation} from './trackautomation';
+import {getMaxTimeOverall} from './trackutils';
 import {
   addNewAudioToTrack,
   bulkDeleteTracks,
@@ -158,7 +162,6 @@ function syncAllIds(state: AudioTrackDetails[][], existingIds: Array<number>) {
   return newIds;
 }
 
-
 export const trackDetailsSlice = createSlice({
   name: 'trackDetailSlices',
   initialState,
@@ -177,6 +180,29 @@ export const trackDetailsSlice = createSlice({
           animationBatcher.runAnimations(); 
         });
       }
+    },
+    createAutomation(state, action: PayloadAction<{
+      aParam: AudioParam,
+      aParamDesc: string
+    }>) {
+      // TODO: Decide in which track does this automation goes.
+      const {aParam, aParamDesc} = action.payload;
+      const trackNumber = 0;
+      // const annotationColor = ;
+      // First we need to get the first and last point of this current track.
+      const automation: ScheduledTrackAutomation = {
+        nodeId: Symbol(),
+        aParam,
+        points: [{time: 0, value: 1}, {time: 20, value: 1}],
+        colorAnnotation: randomColor(),
+        offsetMicros: 0,
+        startOffsetMicros: 0,
+        endOffsetMicros: 20 * SEC_TO_MICROSEC,
+        selected: false,
+        automationKey: aParamDesc
+      };
+
+      state.trackAutomation[trackNumber].push(automation);
     },
     changeTimeframeMode(state, action: PayloadAction<TimeframeMode>) {
       // Based on this, the timer may change.
@@ -215,8 +241,14 @@ export const trackDetailsSlice = createSlice({
         audioIndex: number
       }>
     ) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, deleteSingleAudioTrack);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails, 
+        action.payload,
+        deleteSingleAudioTrack
+      );
+
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
+
       // Now find the next longest track among all the tracks exists with offset
       const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
 
@@ -232,7 +264,11 @@ export const trackDetailsSlice = createSlice({
           if (index < trackStart || index > trackEnd) {
             track.trackDetail.selected = false;
           } else {
-            track.trackDetail.selected = isWithinRegionAndNotSelected(track, pointStartSec, pointEndSec);
+            track.trackDetail.selected = isWithinRegionAndNotSelected(
+              track,
+              pointStartSec,
+              pointEndSec
+            );
           }
         }
       }
@@ -265,7 +301,11 @@ export const trackDetailsSlice = createSlice({
         audioIndexes: number[]
       }>
     ) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, cloneMultipleAudioTracks);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails,
+        action.payload,
+        cloneMultipleAudioTracks
+      );
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
     deleteMultipleAudioTrack(
@@ -275,7 +315,11 @@ export const trackDetailsSlice = createSlice({
         audioIndexes: number[]
       }>
     ) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, bulkDeleteTracks);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails,
+        action.payload,
+        bulkDeleteTracks
+      );
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
   
       const maxTime = getMaxTimeOverall(state.trackDetails, state.trackAutomation);
@@ -289,12 +333,20 @@ export const trackDetailsSlice = createSlice({
         audioIndex: number
       }>
     ) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, cloneSingleAudioTrack);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails,
+        action.payload,
+        cloneSingleAudioTrack
+      );
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
 
     sliceAudioTracks(state, action: PayloadAction<SlicerSelection>) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, sliceAudioTracksAtPoint);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails,
+        action.payload,
+        sliceAudioTracksAtPoint
+      );
       state.trackUniqueIds = syncAllIds(state.trackDetails, state.trackUniqueIds);
     },
 
@@ -323,7 +375,11 @@ export const trackDetailsSlice = createSlice({
         endOffsetInMicros: number
       }>
     ) {
-      state.trackDetails = processTrackHistory(state.trackDetails, action.payload, setTrackOffsetToAFinalPoint);
+      state.trackDetails = processTrackHistory(
+        state.trackDetails,
+        action.payload,
+        setTrackOffsetToAFinalPoint
+      );
       const {
         trackNumber,
         audioIndex,
@@ -335,7 +391,8 @@ export const trackDetailsSlice = createSlice({
 
       // Should always exist in milliseconds
       const startTimeOfTrack = trackDetails.trackDetail.startOffsetInMicros ?? 0;
-      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMicros ?? ((trackDetails.duration as number) * SEC_TO_MICROSEC);
+      const endTimeOfTrack = trackDetails.trackDetail.endOffsetInMicros ?? 
+        ((trackDetails.duration as number) * SEC_TO_MICROSEC);
       const trackTotalTime = endTimeOfTrack - startTimeOfTrack;
 
       const endTime = offsetInMicros + trackTotalTime;
@@ -439,6 +496,7 @@ export const {
   selectTracksWithinSelectedSeekbarSection,
   setOffsetDetailsToAudioTrack,
   sliceAudioTracks,
+  createAutomation,
   applyChangesToModifiedAudio,
   cloneAudioTrack,
   cloneMultipleAudioTrack,

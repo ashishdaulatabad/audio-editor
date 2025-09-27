@@ -1,7 +1,9 @@
 import React from 'react';
-import { ContextItem, ContextMenuContext } from '@/app/providers/contextmenu';
-import { Knob } from '../knob';
-import { FaTimes } from 'react-icons/fa';
+import {ContextItem, ContextMenuContext} from '@/app/providers/contextmenu';
+import {Knob} from '../knob';
+import {FaTimes} from 'react-icons/fa';
+import {useDispatch} from 'react-redux';
+import { createAutomation } from '@/app/state/trackdetails/trackdetails';
 
 export type AutomatedKnobProps = {
   r: number
@@ -14,6 +16,8 @@ export type AutomatedKnobProps = {
 
 export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) {
   const {audioParam} = props;
+
+  const dispatch = useDispatch();
 
   const {minValue, maxValue} = audioParam;
 
@@ -29,10 +33,16 @@ export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) 
       icon: <FaTimes />,
       onSelect: () => console.log('Removing automation')
     },
-    // {
-    //   name: 'Create Automation',
-    //   // icon: <FaP
-    // }
+    {
+      name: 'Create Automation',
+      onSelect: () => {
+        // Add automation to the track as well as audio manager.
+        dispatch(createAutomation({
+          aParam: audioParam,
+          aParamDesc: ''
+        }))
+      }
+    }
   ];
 
   const {
@@ -46,14 +56,18 @@ export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) 
     
     if (isContextOpen()) {
       hideContextMenu();
-      return;
     }
 
-    // showContextMenu();
+    const {clientX, clientY} = event.nativeEvent;
+    console.log(clientX, clientY);
+    showContextMenu(contextMenuOptions, clientX, clientY);
   }
+
+  console.log('here');
 
   return (
     <div
+      className="automated-knob"
       onContextMenu={openContextMenu}
     >
       <Knob
@@ -64,7 +78,6 @@ export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) 
         onKnobRelease={props.onRelease}
         scrollDelta={props.scrollDelta || 0.05}
         value={props.value}
-        // functionMapper={}
       />
     </div>
   );

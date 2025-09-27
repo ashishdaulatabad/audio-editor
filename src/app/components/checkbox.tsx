@@ -10,7 +10,7 @@ interface RadioProps {
 }
 
 export function Checkbox(props: React.PropsWithoutRef<RadioProps>) {
-  const value = typeof props.checked === 'boolean' ? props.checked : false;
+  const value = typeof props.checked === 'boolean' && props.checked;
 
   return (
     <div 

@@ -1,10 +1,12 @@
 import React from 'react';
-import { RootState } from '@/app/state/store';
-import { svgxmlns } from '@/app/utils'
-import { useSelector } from 'react-redux';
-import { TrackAudio } from './trackaudio';
-import { TimeSectionSelection } from './seekbar';
-import { SEC_TO_MICROSEC } from '@/app/state//trackdetails/trackdetails';
+import {RootState} from '@/app/state/store';
+import {svgxmlns} from '@/app/utils'
+import {useSelector} from 'react-redux';
+import {TrackAudio} from './trackaudio';
+import {TimeSectionSelection} from './seekbar';
+import {SEC_TO_MICROSEC} from '@/app/state//trackdetails/trackdetails';
+import {TrackAutomation} from './trackautomation';
+import { MarkerElement } from '../web/marker';
 
 interface TrackProps {
   id: number
@@ -18,6 +20,9 @@ interface TrackProps {
 export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
   const trackData = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[props.id]
+  ));
+  const trackAutomation = useSelector((state: RootState) => (
+    state.trackDetailsReducer.trackAutomation[props.id]
   ));
   const mode = useSelector((state: RootState) => (
     state.trackDetailsReducer.timeframeMode
@@ -50,39 +55,28 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
           />
         ))
       }
-      <svg xmlns={svgxmlns} width={props.w} height={props.h}>
-        <svg width={props.w} className="track-patterns relative" style={{zIndex: 10000}} height={props.h} xmlns={svgxmlns}>
-          <defs>
-            <pattern
-              id="repeatingLines"
-              x="0"
-              y="0"
-              width={props.lineDist}
-              height={props.h}
-              patternUnits="userSpaceOnUse"
-              patternContentUnits="userSpaceOnUse"
-            >
-              <path d={`M0 0 L0 ${props.h}`} stroke="#333" strokeWidth="2" />
-              <path d={`M${lineDist / 4} 0 L${lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
-              <path d={`M${lineDist / 2} 0 L${lineDist / 2} ${props.h}`} stroke="#333" strokeWidth="1" />
-              <path d={`M${3 * lineDist / 4} 0 L${3 * lineDist / 4} ${props.h}`} stroke="#333" strokeWidth="1" />
-              <path d={`M0 0 L0 ${props.h}`} stroke="#333" strokeWidth="4" />
-              <path d={`M0 0 L${lineDist} 0`} stroke="#333" strokeWidth="1" />
-              <path d={`M0 ${props.h} L${lineDist} ${props.h}`} stroke="#344556" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect x="0" y="0" width={props.w} height={props.h} fill="url(#repeatingLines)" />
-        </svg>
-        {props.selectedContent && 
-          <rect
-            fill="#C5664566"
-            x={selectedStart}
-            y={0}
-            width={selectedEnd - selectedStart}
+      {
+        trackAutomation.map((automation, index: number) => (
+          <TrackAutomation
+            index={index}
+            lineDist={lineDist}
+            trackId={props.id}
+            timeUnitPerLineDistanceSecs={timeUnit}
+            key={automation.colorAnnotation}
+            automation={automation}
             height={props.h}
-          ></rect>
-        }
-      </svg>
+          />
+        ))
+      }
+      <c-marker
+        width={props.w}
+        height={props.h} 
+        lineDistance={lineDist}
+        style={{width: props.w, height: props.h}}
+        className="track-patterns relative block"
+        selectedStart={selectedStart}
+        selectedEnd={selectedEnd}
+      ></c-marker>
     </div>
   )
 }

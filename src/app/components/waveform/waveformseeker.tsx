@@ -12,7 +12,7 @@ export function WaveformSeeker(props: React.PropsWithoutRef<{
   lineDist: number
   seekOffset?: number
 }>) {
-  const seekbarRef = React.createRef<HTMLDivElement>();
+  const seekbarRef = React.useRef<HTMLDivElement>(null);
   const {trackNumber, audioId, lineDist, h} = props;
 
   const track = useSelector((state: RootState) => (

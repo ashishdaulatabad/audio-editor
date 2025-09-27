@@ -1,19 +1,22 @@
-import { TimeSectionSelection } from '@/app/components/editor/seekbar';
-import { AudioDetails } from '@/app/state/audiostate';
-import { audioService } from '@/app/services/audioservice';
-import { Maybe } from '@/app/services/interfaces';
-import { Mixer } from '@/app/services/mixer';
-import {
-  registerAudioNode,
-  deregisterAudioNode,
-  getAudioNode
-} from '@/app/services/audio/noderegistry';
+import {TimeSectionSelection} from '@/app/components/editor/seekbar';
+import {AudioDetails} from '@/app/state/audiostate';
+import {audioService} from '@/app/services/audioservice';
+import {Maybe} from '@/app/services/interfaces';
+import {Mixer} from '@/app/services/mixer';
+import {getAudioNodeFromRegistry} from '@/app/services/audio/noderegistry';
 import {
   AudioTrackDetails,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
-import { MultiSelectTracker, SelectedTrackInfo, TransformedAudioTrackDetails } from './multiselect';
-import { ScheduledTrackAutomation } from '@/app/state/trackdetails/trackautomation';
+import {
+  MultiSelectTracker,
+  SelectedTrackInfo,
+  TransformedAudioTrackDetails
+} from './multiselect';
+import {ScheduledTrackAutomation} from '@/app/state/trackdetails/trackautomation';
+import {SingletonStore} from '../singlestore';
+import {AudioSyncClock} from './clock';
+import {AudioStore} from './audiobank';
 
 export type AudioBank = {
   [audioId: symbol]: {
@@ -37,8 +40,6 @@ export type SubType<T, K extends string> = T extends Object ? (
   K extends `${infer F}.${infer R}` ? SubType<Idx<T, F>, R> : Idx<T, K>
 ) : never;
 
-const REGION_SELECT_TIMELIMIT_MICROSEC = 100000;
-const DEFAULT_MIN_TIME_LOOP_SEC = 5;
 const DEFAULT_SAMPLE_RATE = 48000;
 const DEFAULT_CHANNELS = 2;
 
@@ -61,10 +62,6 @@ class AudioTrackManager {
   isInitialized = false;
   paused = true;
   scheduled = false;
-  startTimestamp = 0;
-  runningTimestamp = 0;
-  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
-  timeframeSelectionDetails: Maybe<TimeSectionSelection> = null;
   mixer: Mixer
 
   // Audio-specific nodes
@@ -72,7 +69,8 @@ class AudioTrackManager {
   leftAnalyserNode: AnalyserNode | null = null;
   rightAnalyserNode: AnalyserNode | null = null;
   splitChannel: ChannelSplitterNode | null = null;
-  audioBank: AudioBank = {};
+  audioStore: AudioStore = SingletonStore.getInstance(AudioStore) as AudioStore;
+  clock = SingletonStore.getInstance(AudioSyncClock) as AudioSyncClock;
 
   /// Store objects
   scheduledNodes: ScheduledNodesInformation = {};
@@ -118,23 +116,23 @@ class AudioTrackManager {
   }
 
   setPannerForAudio(audioId: symbol, pan: number) {
-    const { panner } = this.audioBank[audioId];
-    panner.pan.value = pan;
+    this.audioStore.setPannerForAudio(audioId, pan);
   }
 
   getPannerForAudio(audioId: symbol) {
-    const { panner } = this.audioBank[audioId];
-    return panner.pan.value;
+    return this.audioStore.getPannerForAudio(audioId);
   }
 
   setGainForAudio(audioId: symbol, value: number) {
-    const { gain } = this.audioBank[audioId];
-    gain.gain.value = value;
+    this.audioStore.setGainForAudio(audioId, value);
   }
 
   getGainForAudio(audioId: symbol) {
-    const { gain } = this.audioBank[audioId];
-    return gain.gain.value;
+    return this.audioStore.getGainForAudio(audioId);
+  }
+  
+  getGainParamForAudio(audioId: symbol) {
+    return this.audioStore.getGainParamForAudio(audioId);
   }
 
   /**
@@ -145,7 +143,9 @@ class AudioTrackManager {
    */
   async simulateIntoOfflineAudio(scheduledTracks: AudioTrackDetails[][]) {
     const channels = DEFAULT_CHANNELS;
-    const bufferLength = Math.ceil(DEFAULT_SAMPLE_RATE * this.loopEnd);
+    const bufferLength = Math.ceil(
+      DEFAULT_SAMPLE_RATE * this.clock.loopEnd / SEC_TO_MICROSEC
+    );
     const sampleRate = DEFAULT_SAMPLE_RATE;
 
     const offlineAudioContext = new OfflineAudioContext(
@@ -178,24 +178,7 @@ class AudioTrackManager {
     audioDetails: Omit<AudioDetails, 'audioId'>,
     audioBuffer: AudioBuffer
   ): symbol {
-    const audioBankSymbol = Symbol();
-    const context = audioService.useAudioContext();
-
-    const gain = context.createGain();
-    const panner = context.createStereoPanner();
-    const gainRegister = registerAudioNode(gain);
-    const pannerRegister = registerAudioNode(panner);
-
-    this.audioBank[audioBankSymbol] = {
-      audioDetails,
-      buffer: audioBuffer,
-      gainRegister,
-      gain,
-      pannerRegister,
-      panner
-    };
-
-    return audioBankSymbol;
+    return this.audioStore.registerAudioInAudioBank(audioDetails, audioBuffer);
   }
 
   /**
@@ -203,9 +186,7 @@ class AudioTrackManager {
    * @returns boolean value where audio buffer is successfully removed or not.
    */
   updateRegisteredAudioFromAudioBank(sym: symbol, updatedBuffer: AudioBuffer) {
-    if (Object.hasOwn(this.audioBank, sym)) {
-      this.audioBank[sym].buffer = updatedBuffer;
-    }
+    this.audioStore.updateRegisteredAudioFromAudioBank(sym, updatedBuffer);
   }
 
   /**
@@ -213,39 +194,19 @@ class AudioTrackManager {
    * @returns boolean value where audio buffer is successfully removed or not.
    */
   unregisterAudioFromAudioBank(sym: symbol): boolean {
-    if (Object.hasOwn(this.audioBank, sym)) {
-      // Remove all the settings from the bank.
-      const {gainRegister, pannerRegister} = this.audioBank[sym];
-
-      deregisterAudioNode(gainRegister);
-      deregisterAudioNode(pannerRegister);
-
-      delete this.audioBank[sym];
-      return true;
-    }
-
-    console.warn('Audio Bank not found');
-    return false;
+    return this.audioStore.unregisterAudioFromAudioBank(sym);
   }
 
   getAudioBuffer(symbol: symbol): AudioBuffer | null {
-    if (Object.hasOwn(this.audioBank, symbol)) {
-      return this.audioBank[symbol].buffer;
-    }
-
-    return null;
+    return this.audioStore.getAudioBuffer(symbol);
   }
 
   getMixerValue(symbol: symbol): number {
-    return this.audioBank[symbol].audioDetails.mixerNumber;
+    return this.audioStore.getMixerValue(symbol);
   }
 
   setMixerValue(symbol: symbol, mixerValue: number) {
-    this.audioBank[symbol].audioDetails.mixerNumber = mixerValue;
-    this.audioBank[symbol].panner.disconnect();
-    const newPanner = audioService.useAudioContext().createStereoPanner();
-    this.mixer.useMixer().connectNodeToMixer(newPanner, mixerValue);
-    this.audioBank[symbol].panner = newPanner;
+    this.audioStore.setMixerValue(symbol, mixerValue);
   }
 
   clearSelection() {
@@ -296,15 +257,7 @@ class AudioTrackManager {
   }
 
   selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
-    if (timeSelection) {
-      const {endTimeMicros, startTimeMicros} = timeSelection;
-      
-      if (endTimeMicros - startTimeMicros < REGION_SELECT_TIMELIMIT_MICROSEC) {
-        return
-      };
-    }
-
-    this.timeframeSelectionDetails = timeSelection;
+    this.clock.selectTimeframe(timeSelection);
   }
 
   /**
@@ -345,10 +298,7 @@ class AudioTrackManager {
 
   // TODO: When moved to Tempo, allow dynamic min loop end time.
   setLoopEnd(valueMicros: number) {
-    this.loopEnd = Math.max(
-      DEFAULT_MIN_TIME_LOOP_SEC, 
-      valueMicros / SEC_TO_MICROSEC
-    );
+    this.clock.setLoopEnd(valueMicros / SEC_TO_MICROSEC);
   }
 
   setGainNodeForMaster(vol: number) {
@@ -375,10 +325,6 @@ class AudioTrackManager {
     return this.audioCanvas[audioKey];
   }
 
-  /**
-   * @description Schedule all audio tracks
-   * @param audioTrackDetails 2D array containing all tracks.
-   */
   schedule(audioTrackDetails: AudioTrackDetails[][]) {
     for (const trackContents of audioTrackDetails) {
       for (const track of trackContents) {
@@ -396,7 +342,7 @@ class AudioTrackManager {
   }
 
   private _scheduleAutomationInternal(automation: ScheduledTrackAutomation) {
-    const seekbarOffsetInMicros = this.runningTimestamp * SEC_TO_MICROSEC;
+    const seekbarOffsetInMicros = this.clock.getRunningTimestamp() * SEC_TO_MICROSEC;
     const context = audioService.useAudioContext();
     const currentTime = context.currentTime;
 
@@ -408,7 +354,7 @@ class AudioTrackManager {
       const key = automation.nodeId;
 
       if (Object.hasOwn(this.scheduledAutomation, key)) {
-        const node = getAudioNode(key);
+        const node = getAudioNodeFromRegistry(key);
         // Deduce automation being performed on this node.
 
         if (node !== undefined) {
@@ -606,7 +552,7 @@ class AudioTrackManager {
     audioId: symbol,
     trackDetail: SubType<AudioTrackDetails, 'trackDetail'>,
   ) {
-    const seekbarOffsetInMicros = this.runningTimestamp * SEC_TO_MICROSEC;
+    const seekbarOffsetInMicros = this.clock.getRunningTimestamp() * SEC_TO_MICROSEC;
     const context = audioService.useAudioContext();
     const currentTime = context.currentTime;
 
@@ -646,7 +592,7 @@ class AudioTrackManager {
       audioDetails: {
         mixerNumber
       }
-    } = this.audioBank[audioId];
+    } = this.audioStore.audioBank[audioId];
 
     const destination = bufferSource.connect(gain).connect(panner);
     this.mixer.useMixer().connectNodeToMixer(destination, mixerNumber);
@@ -751,7 +697,7 @@ class AudioTrackManager {
       node.buffer.stop(0);
       node.buffer.disconnect();
       delete this.scheduledNodes[symbolKey];
-      this._scheduleInternal(audioId, { ...trackDetail, offsetInMicros: trackOffsetMicros });
+      this._scheduleInternal(audioId, {...trackDetail, offsetInMicros: trackOffsetMicros});
     }
   }
 
@@ -795,41 +741,10 @@ class AudioTrackManager {
     stereoLeftBuffer: Uint8Array<ArrayBuffer>, 
     stereoRightBuffer: Uint8Array<ArrayBuffer>
   ) {
-    const {
-      left,
-      right
-    } = mixer > 0 ? 
-      this.mixer.useMixer().analyserNodes[mixer - 1] :
-      this.mixer.useMixer().masterAnalyserNodes as {
-        left: AnalyserNode,
-        right: AnalyserNode
-      };
+    const {left, right} = this.mixer.useMixer().analyserNodes[mixer];
 
     left.getByteTimeDomainData(stereoLeftBuffer);
     right.getByteTimeDomainData(stereoRightBuffer);
-  }
-
-  private _updateTimestampOnSelectedTimeframe() {
-    const {
-      startTimeMicros,
-      endTimeMicros
-    } = this.timeframeSelectionDetails as TimeSectionSelection;
-
-    const startTimeSecs = startTimeMicros / SEC_TO_MICROSEC;
-    const endTimeSecs = endTimeMicros / SEC_TO_MICROSEC;
-
-    const context = audioService.useAudioContext();
-    const time = context.currentTime;
-
-    if (time - this.startTimestamp >= endTimeSecs) {
-      const diffCorrection = time - this.startTimestamp - endTimeSecs;
-      this.startTimestamp = time - startTimeSecs;
-      this.runningTimestamp = time - this.startTimestamp + diffCorrection;
-      return true;
-    } else {
-      this.runningTimestamp = time - this.startTimestamp;
-      return false;
-    }
   }
 
   /**
@@ -837,51 +752,7 @@ class AudioTrackManager {
    * @returns true if by updating timestamp, time goes out of bounds.
    */
   updateTimestamp(): boolean {
-    const context = audioService.useAudioContext();
-    const time = context.currentTime;
-
-    if (this.timeframeSelectionDetails) {
-      return this._updateTimestampOnSelectedTimeframe()
-    }
-
-    if (time - this.startTimestamp > this.loopEnd) {
-      let diff = time - this.startTimestamp - this.loopEnd;
-
-      if (diff > this.loopEnd) {
-        const multiplier = Math.floor(Math.abs(diff) / this.loopEnd);
-        diff = Math.abs(diff) - multiplier * this.loopEnd;
-      }
-
-      this.startTimestamp = time - diff;
-      this.runningTimestamp = time - this.startTimestamp;
-      return true;
-    } else {
-      this.runningTimestamp = time - this.startTimestamp;
-      return false;
-    }
-  }
-
-  private _setTimestampOnSelectedTimeframe(valueSecs: number) {
-    const {
-      startTimeMicros,
-      endTimeMicros
-    } = this.timeframeSelectionDetails as TimeSectionSelection;
-
-    const startTimeSecs = startTimeMicros / SEC_TO_MICROSEC;
-    const endTimeSecs = endTimeMicros / SEC_TO_MICROSEC;
-
-    const context = audioService.useAudioContext();
-    const time = context.currentTime;
-
-    if (valueSecs > endTimeSecs) {
-      this.startTimestamp = time - startTimeSecs;
-      this.runningTimestamp = time - this.startTimestamp;
-      return true;
-    } else {
-      this.startTimestamp = time - valueSecs;
-      this.runningTimestamp = time - this.startTimestamp;
-      return false;
-    }
+    return this.clock.updateTimestamp();
   }
 
   /**
@@ -889,29 +760,7 @@ class AudioTrackManager {
    * @returns true if by setting timestamp, time goes out of bounds.
    */
   setTimestamp(startValue: number) {
-    const context = audioService.useAudioContext();
-    const time = context.currentTime;
-
-    if (this.timeframeSelectionDetails) {
-      return this._setTimestampOnSelectedTimeframe(startValue);
-    }
-
-    if (startValue > this.loopEnd) {
-      let diff = this.loopEnd - startValue;
-
-      if (diff < 0 || diff > this.loopEnd) {
-        const multiplier = Math.floor(Math.abs(diff) / this.loopEnd);
-        diff = Math.abs(diff) - multiplier * this.loopEnd;
-      }
-
-      this.startTimestamp = time - diff;
-      this.runningTimestamp = time - this.startTimestamp;
-      return true;
-    } else {
-      this.startTimestamp = time - startValue;
-      this.runningTimestamp = time - this.startTimestamp;
-      return false;
-    }
+    return this.clock.setTimestamp(startValue);
   }
 
   /**
@@ -919,7 +768,7 @@ class AudioTrackManager {
    * @returns number
    */
   getTimestamp() {
-    return this.runningTimestamp;
+    return this.clock.getRunningTimestamp();
   }
 }
 

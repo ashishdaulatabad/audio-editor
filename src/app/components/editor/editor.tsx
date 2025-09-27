@@ -281,11 +281,13 @@ export function Editor() {
   // TODO: Optimize this.
   function setTrackDraggingMode(
     event: React.MouseEvent<HTMLDivElement, DragEvent>,
-    desiredAudioElement: HTMLElement
+    desiredAudioElement: HTMLElement,
+    isAutomation: boolean = false
   ) {
     const element = desiredAudioElement;
-    const { clientX, offsetX } = event.nativeEvent;
-    const { scrollLeft, clientWidth } = desiredAudioElement;
+    const {clientX, offsetX} = event.nativeEvent;
+    const {scrollLeft, clientWidth} = desiredAudioElement;
+
     const attribute = element.getAttribute('data-selected');
 
     const isResize = element.classList.contains('cursor-e-resize') ||
@@ -380,6 +382,7 @@ export function Editor() {
 
       dispatch(selectAudio(trackDetails[trackNumber][audioIndex]));
     }
+
     setMovableEntity(element);
     setMovableType(MovableType.ScheduledTrack);
   }
@@ -396,15 +399,19 @@ export function Editor() {
     return element.classList.contains('topbar');
   }
 
+  function isAutomation(element: HTMLElement) {
+    return element.classList.contains('track-automation');
+  }
+
   function decideDragMode(event: React.MouseEvent<HTMLDivElement, DragEvent>) {
     if (event.buttons === 1) {
       const element = event.target as HTMLElement;
-      const fnArray = [isAudioTrack, isTrack, isWindowHeader];
+      const fnArray = [isAudioTrack, isTrack, isWindowHeader, isAutomation];
 
-      const {
-        index,
-        expectedNode
-      } = traverseParentUntilOneCondition(element, fnArray);
+      const {index, expectedNode} = traverseParentUntilOneCondition(
+        element, 
+        fnArray
+      );
 
       if (index === -1) {
         return;
@@ -414,20 +421,21 @@ export function Editor() {
 
       // Set cases as enums for easy switch case.
       switch (index) {
-        case 0: {
+        case 0:
           setTrackDraggingMode(event, expectedNode);
           break;
-        }
 
-        case 1: {
+        case 1:
           addCurrentTrack(event, expectedNode);
           break;
-        }
 
-        case 2: {
+        case 2:
           setupDraggingWindow(event, expectedNode);
           break;
-        }
+
+        case 3:
+          setTrackDraggingMode(event, expectedNode);
+          break;
 
         default: {
           break;

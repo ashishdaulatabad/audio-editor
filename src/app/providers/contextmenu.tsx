@@ -1,5 +1,5 @@
 import React from 'react';
-import { ContextMenu } from '../components/shared/contextmenu';
+import {ContextMenu} from '../components/shared/contextmenu';
 
 /**
  * @description Menu Item to be shown in context menu.
@@ -58,7 +58,7 @@ export const ContextMenuProvider = (props: React.PropsWithChildren) => {
   return (
     <>
       <ContextMenuContext.Provider 
-        value={{ showContextMenu, hideContextMenu, isContextOpen }}
+        value={{showContextMenu, hideContextMenu, isContextOpen}}
       >
         {props.children}
       </ContextMenuContext.Provider>

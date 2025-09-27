@@ -1,6 +1,6 @@
-import React from "react";
-import { svgxmlns } from "@/app/utils";
-import { WaveformSeeker } from "./waveformseeker";
+import React from 'react';
+import {svgxmlns} from '@/app/utils';
+import {WaveformSeeker} from './waveformseeker';
 
 interface WaveformSeekbarProps {
   trackNumber: number

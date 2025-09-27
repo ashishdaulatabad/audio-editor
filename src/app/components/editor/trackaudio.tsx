@@ -257,7 +257,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
       onMouseUp={unsetGrab}
       onMouseLeave={unsetGrab}
       className={css(
-        "track-audio shadow-sm shadow-black text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80",
+        "track-audio shadow-sm shadow-black text-left overflow-x-hidden absolute rounded-sm bg-slate-900/80 data-[selected='true']:bg-red-950/80 z-[2]",
         cursorStyle,
       )}
       style={{left: calculateLeft(track)}}

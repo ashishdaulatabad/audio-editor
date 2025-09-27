@@ -1,5 +1,5 @@
-import { ContextItem } from "@/app/providers/contextmenu"
-import React from "react";
+import {ContextItem} from '@/app/providers/contextmenu';
+import React from 'react';
 
 export interface ContextMenuProps {
   items: ContextItem[],
@@ -44,7 +44,7 @@ export function ContextMenu(props: React.PropsWithoutRef<ContextMenuProps>) {
 
   return (
     <div
-      className="fixed context-menu flex flex-col text-md rounded-md bg-zinc-950 max-w-full text-center"
+      className="fixed context-menu z-[1000] flex flex-col text-md rounded-md bg-zinc-950 max-w-full text-center"
       style={{left: left + 'px', top: top + 'px'}}
       ref={menuRef}
     >

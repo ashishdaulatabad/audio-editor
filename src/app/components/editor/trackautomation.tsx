@@ -1,13 +1,12 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
-import { AudioTrackManipulationMode } from './trackaudio';
-import { ContextMenuContext } from '@/app/providers/contextmenu';
-import { SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
-import { Waveform } from '@/assets/wave';
-import { css } from '@/app/services/utils';
-import { ScheduledTrackAutomation } from '@/app/state/trackdetails/trackautomation';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { svgxmlns } from '@/app/utils';
+import {useDispatch} from 'react-redux';
+import {AudioTrackManipulationMode} from './trackaudio';
+import {ContextMenuContext} from '@/app/providers/contextmenu';
+import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
+import {Waveform} from '@/assets/wave';
+import {css} from '@/app/services/utils';
+import {ScheduledTrackAutomation} from '@/app/state/trackdetails/trackautomation';
+import {svgxmlns} from '@/app/utils';
 
 export interface TrackAutomationProps {
   index: number
@@ -18,13 +17,16 @@ export interface TrackAutomationProps {
   automation: ScheduledTrackAutomation
 }
 
-export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProps>) {
+export function TrackAutomation(
+  props: React.PropsWithoutRef<TrackAutomationProps>
+) {
   // refs
   const spanRef = React.createRef<HTMLSpanElement>();
   const divRef = React.createRef<HTMLDivElement>();
   const dispatch = useDispatch();
 
   const {automation, lineDist, height} = props;
+  const actualHeight = height - 22;
 
   /// States
   const [mode, setMode] = React.useState(AudioTrackManipulationMode.Move);
@@ -39,8 +41,8 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
 
   const timeData = automation.points.slice(1).reduce((previousValue, currentValue) => {
     const offset = (currentValue.time / timeUnit) * lineDist;
-    return previousValue + `L ${offset} ${currentValue.value * height}`
-  }, `M 0 ${startPoint.value / height}`);
+    return previousValue + `L ${offset} ${currentValue.value * actualHeight}`
+  }, `M 0 ${startPoint.value / actualHeight}`);
 
   const {
     hideContextMenu,
@@ -93,7 +95,7 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
     return (track.offsetMicros / timeUnitMicros) * lineDist;
   }
 
-  function setGrab(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function setGrab(event: React.MouseEvent<HTMLDivElement>) {
     if (!(event.target as HTMLElement).classList.contains('wave-icon')) {
       hideContextMenu();
       !grab && setIsGrab(true);
@@ -104,15 +106,17 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
     grab && setIsGrab(false);
   }
 
-  function applyStyles(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function applyStyles(event: React.MouseEvent<HTMLDivElement>) {
     const target = (event.nativeEvent.target as HTMLElement);
-    let pointerPosition = event.nativeEvent.offsetX;
+    const {offsetX} = event.nativeEvent;
+
+    let pointerPosition = offsetX;
 
     if (target === divRef.current) {
-      pointerPosition = event.nativeEvent.offsetX;
+      pointerPosition = offsetX;
     } else {
       if (divRef.current) {
-        pointerPosition = event.nativeEvent.offsetX - divRef.current.scrollLeft;
+        pointerPosition = offsetX - divRef.current.scrollLeft;
       }
     }
 
@@ -156,7 +160,12 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
     >
       <div
         className="data-[selected='true']:bg-red-500 w-full"
-        style={{ background: automation.selected ? 'rgb(239 68 68)' : automation.colorAnnotation, width: width + 'px' }}
+        style={{
+          background: automation.selected ? 
+            'rgb(239 68 68)' : 
+            automation.colorAnnotation, 
+          width: width + 'px'
+        }}
       >
         <span
           ref={spanRef}
@@ -169,12 +178,17 @@ export function TrackAutomation(props: React.PropsWithoutRef<TrackAutomationProp
           >
             <Waveform color="#fff" w={22} h={22} vb="0 0 22 22" />
           </span>
-          {/* {track.audioName} */}
+            Automation
         </span>
       </div>
-      <div>
-        <svg xmlns={svgxmlns}>
-          <path d={timeData} fill={automation.colorAnnotation}></path>
+      <div style={{height: actualHeight}}>
+        <svg xmlns={svgxmlns} height={actualHeight}>
+          <path
+            d={timeData}
+            height={actualHeight}
+            fill={automation.colorAnnotation}
+            stroke={automation.colorAnnotation}
+          ></path>
         </svg>
       </div>
     </div>

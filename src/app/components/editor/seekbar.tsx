@@ -1,11 +1,11 @@
 import React from 'react';
-import { svgxmlns } from '@/app/utils';
-import { Seeker } from './seeker';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/app/state/store';
-import { ModeType } from './toolkit';
-import { SEC_TO_MICROSEC } from '@/app/state/trackdetails/trackdetails';
+import {svgxmlns} from '@/app/utils';
+import {Seeker} from './seeker';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {useSelector} from 'react-redux';
+import {RootState} from '@/app/state/store';
+import {ModeType} from './toolkit';
+import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
 
 /**
  * @description Timeframe selected by the user.
@@ -225,12 +225,12 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
               id="repeatedSeekbarLines"
               x="0"
               y="0"
-              width={props.lineDist}
+              width={lineDist}
               height={props.h}
               patternUnits="userSpaceOnUse"
               patternContentUnits="userSpaceOnUse"
             >
-              <path d={`M${props.lineDist / 2} 23 L${props.lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
+              <path d={`M${lineDist / 2} 23 L${lineDist / 2} 30`} stroke="#777" strokeWidth="2" />
               <path d={`M0 15 L0 30`} stroke="#777" strokeWidth="4" />
             </pattern>
           </defs>

@@ -1,17 +1,18 @@
 import React from 'react';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
 import {
   applyChangesToModifiedAudio,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
-import { Checkbox } from '../checkbox';
-import { transformAudio } from '@/app/services/audiotransform';
-import { useDispatch, useSelector } from 'react-redux';
-import { renderAudioWaveform } from '../editor/trackaudio';
-import { AudioTransformation } from '@/app/services/interfaces';
-import { Knob } from '../knob';
-import { RootState } from '@/app/state/store';
-import { WaveformSeekbar } from './waveformseekbar';
+import {Checkbox} from '../checkbox';
+import {transformAudio} from '@/app/services/audiotransform';
+import {useDispatch, useSelector} from 'react-redux';
+import {renderAudioWaveform} from '../editor/trackaudio';
+import {AudioTransformation} from '@/app/services/interfaces';
+import {Knob} from '../knob';
+import {RootState} from '@/app/state/store';
+import {WaveformSeekbar} from './waveformseekbar';
+import {AutomatedKnob} from '../shared/automatedknob';
 
 /**
  * @description Settings for Waveform Editor
@@ -48,8 +49,10 @@ export interface WaveformEditorProps {
  * - [ ] To do: Figure out how the internal width and height will be set up:
  * should be handled by the parent element itself.
  */
-export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorProps>) {
-  const { trackNumber, audioId } = props;
+export function AudioWaveformEditor(
+  props: React.PropsWithoutRef<WaveformEditorProps>
+) {
+  const {trackNumber, audioId , timePerUnitLineDistanceSecs} = props;
   const track = useSelector((state: RootState) => (
     state.trackDetailsReducer.trackDetails[trackNumber][audioId]
   ));
@@ -58,37 +61,52 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
   const dispatch = useDispatch();
 
   // States
-  const [transformationInProgress, setTransformationInProgress] = React.useState(false);
+  const [transformationInProgress, setTransformationInProgress] = 
+    React.useState(false);
   const [pitch, setPitch] = React.useState(1);
   const [playbackRate, setPlaybackRate] = React.useState(1);
-  const [audioVolume, setAudioVolume] = React.useState(audioManager.getGainForAudio(track.audioId));
-  const [audioPanner, setAudioPanner] = React.useState(audioManager.getPannerForAudio(track.audioId));
-  const [audioMixer, setAudioMixer] = React.useState<number>(audioManager.getMixerValue(track.audioId));
+  const [audioVolume, setAudioVolume] = React.useState(
+    audioManager.getGainForAudio(track.audioId)
+  );
+  const [audioPanner, setAudioPanner] = React.useState(
+    audioManager.getPannerForAudio(track.audioId)
+  );
+  const [audioMixer, setAudioMixer] = React.useState(
+    audioManager.getMixerValue(track.audioId)
+  );
   const [pitchBendingThreshold, setPitchBendingThreshold] = React.useState(2);
+
+  // Audio-related decl
+  const audioGainParam = audioManager.getGainParamForAudio(track.audioId);
 
   // Declarations.
   const endTime = track.duration as number;
-  const { timePerUnitLineDistanceSecs } = props;
   const totalLines = endTime / timePerUnitLineDistanceSecs;
   const lineDist = props.w / totalLines;
-  const { startOffsetInMicros, endOffsetInMicros } = track.trackDetail;
+  const {startOffsetInMicros, endOffsetInMicros} = track.trackDetail;
   const measuredDuration = (endOffsetInMicros - startOffsetInMicros);
-  const isPartial = Math.abs((measuredDuration - endTime * SEC_TO_MICROSEC)) > 1;
+  const isPartial = Math.abs(measuredDuration - endTime * SEC_TO_MICROSEC) > 1;
 
   React.useEffect(() => {
     /// Draw canvas
     if (ref.current && divRef.current) {
-      const startOffsetSecs = track.trackDetail.startOffsetInMicros / SEC_TO_MICROSEC;
-      const endOffsetSecs = track.trackDetail.endOffsetInMicros / SEC_TO_MICROSEC;
-      const startLimit = ((lineDist / timePerUnitLineDistanceSecs) * startOffsetSecs);
-      const endLimit = ((lineDist / timePerUnitLineDistanceSecs) * endOffsetSecs);
+      const startOffsetSecs = startOffsetInMicros / SEC_TO_MICROSEC;
+      const endOffsetSecs = endOffsetInMicros / SEC_TO_MICROSEC;
+      const startLimit = (lineDist / timePerUnitLineDistanceSecs) * startOffsetSecs;
+      const endLimit = (lineDist / timePerUnitLineDistanceSecs) * endOffsetSecs;
       const offcanvas = audioManager.getOffscreenCanvasDrawn(track.audioId);
       const context = ref.current.getContext('2d') as CanvasRenderingContext2D;
 
       context.clearRect(0, 0, ref.current.width, ref.current.height);
       context.fillStyle = "#C5645333";
       context.fillRect(startLimit, 0, endLimit - startLimit, offcanvas.height);
-      context.drawImage(offcanvas, 0, 0, offcanvas.width, offcanvas.height, 0, 0, ref.current.clientWidth, ref.current.height);
+      context.drawImage(
+        offcanvas,
+        0, 0,
+        offcanvas.width, offcanvas.height,
+        0, 0,
+        ref.current.clientWidth, ref.current.height
+      );
     }
 
     return () => {};
@@ -102,7 +120,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       transformation
     ).then(data => {
       audioManager.updateRegisteredAudioFromAudioBank(track.audioId, data);
-      renderAudioWaveform({ ...track }, 400, timePerUnitLineDistanceSecs, true);
+      renderAudioWaveform({...track}, 400, timePerUnitLineDistanceSecs, true);
 
       dispatch(applyChangesToModifiedAudio({
         audioId: track.audioId,
@@ -140,7 +158,7 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
     setAudioMixer(newMixerValue);
   }
 
-  const { effects } = track;
+  const {effects} = track;
   const isPolarityReversed = effects.includes(AudioTransformation.ReversePolarity);
   const isAudioReversed = effects.includes(AudioTransformation.Reverse);
   const isNormalized = effects.includes(AudioTransformation.Normalization);
@@ -151,15 +169,16 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
       <div>
         <div className="mixer-details flex flex-row justify-end">
           <div className="volume m-2 min-w-20 text-center">
-            <Knob
-              onKnobChange={changeVolume}
-              pd={10}
-              r={15}
-              functionMapper={(e) => e * 1.5}
+            <AutomatedKnob
+              onChange={changeVolume}
               value={audioVolume / 1.5}
               scrollDelta={0.01}
+              audioParam={audioGainParam.gain}
+              r={15}
             />
-            <label className="select-none">Vol: {Math.round(audioVolume * 100)}%</label>
+            <label className="select-none">
+              Vol: {Math.round(audioVolume * 100)}%
+            </label>
           </div>
           <div className="panner m-2 min-w-20 text-center">
             <Knob
@@ -170,7 +189,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
               value={(audioPanner + 1) / 2}
               scrollDelta={0.025}
             />
-            <label className="select-none">Pan: {Math.round(audioPanner * 100) / 100}</label>
+            <label className="select-none">
+              Pan: {Math.round(audioPanner * 100) / 100}
+            </label>
           </div>
           <div className="mixer-assign m-2 min-w-20 text-center flex flex-col content-center">
             <input
@@ -236,7 +257,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   functionMapper={(e) => e * 1.5 + 0.5}
                   pd={8}
                 />
-                <label className="select-none">Pitch: { Math.round(pitch * 100) / 100 }</label>
+                <label className="select-none">
+                  Pitch: {Math.round(pitch * 100) / 100}
+                </label>
               </div>
               <div className="box w-full inline-grid justify-items-center py-2">
                 <Knob
@@ -248,7 +271,9 @@ export function AudioWaveformEditor(props: React.PropsWithoutRef<WaveformEditorP
                   functionMapper={(e) => e * 2}
                   pd={8}
                 />
-                <label className="select-none">Playback Rate: { Math.round(playbackRate * 100) / 100 }</label>
+                <label className="select-none">
+                  Playback Rate: {Math.round(playbackRate * 100) / 100}
+                </label>
               </div>
             </div>
           </div>

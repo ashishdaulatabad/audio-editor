@@ -22,9 +22,9 @@ export function undoSnapshotChange(
   action: HistoryAction = HistoryAction.Undo
 ) {
   const tracksToAdd: AudioTrackDetails[][] = 
-    Array.from({ length: trackDetails.length }, () => []);
+    Array.from({length: trackDetails.length}, () => []);
   const audioTracksToRemove: number[][] = 
-    Array.from({ length: trackDetails.length }, () => []);
+    Array.from({length: trackDetails.length}, () => []);
 
   for (const changeDetail of changeDetails) {
     switch (changeDetail.changeType) {

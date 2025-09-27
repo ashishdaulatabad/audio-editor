@@ -113,7 +113,7 @@ export function deregisterAudioNode(sym: symbol) {
  * @param sym symbol
  * @returns AudioNode if exists, undefined otherwise
  */
-export function getAudioNode(sym: symbol): AudioNode | undefined {
+export function getAudioNodeFromRegistry(sym: symbol): AudioNode | undefined {
   return registry[sym];
 }
 

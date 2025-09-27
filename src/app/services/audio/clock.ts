@@ -2,23 +2,29 @@ import {TimeSectionSelection} from '@/app/components/editor/seekbar';
 import {audioService} from '../audioservice';
 import {Maybe} from '../interfaces';
 import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
+import {SingletonStore} from '../singlestore';
 
 const DEFAULT_MIN_TIME_LOOP_SEC = 5;
+const REGION_SELECT_TIMELIMIT_MICROSEC = 100000;
 
 export class AudioSyncClock  {
   timestamp = 0;
   startTimestamp = 0;
   runningTimestamp = 0;
-  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
+  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC * SEC_TO_MICROSEC;
   timeframeSelectionDetails = null as Maybe<TimeSectionSelection>;
 
   setLoopEnd(loopEnd: number) {
-    this.loopEnd = loopEnd;
+    this.loopEnd = Math.max(
+      loopEnd, 
+      DEFAULT_MIN_TIME_LOOP_SEC
+    );
   }
 
   getRunningTimestamp() {
     return this.runningTimestamp;
   }
+
   // TODO: Set private
   _updateTimestampOnSelectedTimeframe() {
     const {
@@ -42,6 +48,18 @@ export class AudioSyncClock  {
       this.runningTimestamp = time - this.startTimestamp;
       return false;
     }
+  }
+
+  selectTimeframe(timeSelection: Maybe<TimeSectionSelection>) {
+    if (timeSelection) {
+      const {endTimeMicros, startTimeMicros} = timeSelection;
+      
+      if (endTimeMicros - startTimeMicros < REGION_SELECT_TIMELIMIT_MICROSEC) {
+        return
+      };
+    }
+
+    this.timeframeSelectionDetails = timeSelection;
   }
   // TODO: Set private
   _setTimestampOnSelectedTimeframe(valueSecs: number) {
@@ -116,3 +134,6 @@ export class AudioSyncClock  {
     }
   }
 }
+
+const clock = new AudioSyncClock();
+SingletonStore.setInstance(AudioSyncClock, clock);

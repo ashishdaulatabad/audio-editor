@@ -1,6 +1,7 @@
-import { audioService } from './audioservice';
-import { Maybe } from './interfaces';
-import { registerAudioNode } from './audio/noderegistry';
+import {audioService} from './audioservice';
+import {Maybe} from './interfaces';
+import {registerAudioNode} from './audio/noderegistry';
+import {SingletonStore} from './singlestore';
 
 type StereoAnalyzerNodes = {
   left: AnalyserNode,
@@ -181,3 +182,7 @@ export class Mixer {
     this.gainNodes[mixerNumber].gain.value = value;
   }
 };
+
+const mixer = new Mixer(30);
+
+SingletonStore.setInstance(Mixer, mixer);

@@ -6,6 +6,7 @@ import { ContextMenuProvider } from './app/providers/contextmenu'
 import { DialogBoxProvider } from './app/providers/dialog'
 import { PromptMenuProvider } from './app/providers/customprompt'
 import { DropdownPanelProvider } from './app/components/shared/dropdown/dropdownpanel'
+import { MarkerElement } from './app/components/web/marker'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,3 +21,10 @@ createRoot(document.getElementById('root')!).render(
     </ContextMenuProvider>
   </StrictMode>,
 )
+
+function init() {
+  customElements.define('c-marker', MarkerElement);
+}
+
+init();
+

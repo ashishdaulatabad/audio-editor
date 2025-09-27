@@ -14,6 +14,7 @@ export interface ScheduledTrackAutomation {
   endOffsetMicros: number
   automationKey: string
   points: Array<TrackAutomationPoint>
+  aParam: AudioParam
 }
 
 export type TrackAutomationChangeDetails = ScheduledTrackAutomation & {

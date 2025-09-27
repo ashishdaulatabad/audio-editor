@@ -1,5 +1,5 @@
 import React from 'react';
-import { clamp, svgxmlns } from '../utils';
+import {clamp, svgxmlns} from '../utils';
 
 interface SliderSettings {
   h: number
@@ -31,13 +31,13 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
     setHold(false);
   }
 
-  function holdKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function holdKnob(event: React.MouseEvent<HTMLElement>) {
     setHold(event.buttons === 1);
   }
 
   function onScroll(event: WheelEvent) {
     event.preventDefault();
-    const { deltaY } = event;
+    const {deltaY} = event;
 
     // TODO: Simplify this.
     const direction = (deltaY !== 0 ? (-deltaY / Math.abs(deltaY)) : 0);
@@ -53,7 +53,7 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
     props.onSliderChange(mapper);
   }
 
-  function moveKnob(event: React.MouseEvent<HTMLElement, MouseEvent>) {
+  function moveKnob(event: React.MouseEvent<HTMLElement>) {
     if (hold && event.buttons === 1) {
       const y = event.nativeEvent.offsetY;
       
@@ -78,8 +78,8 @@ export function Slider(props: React.PropsWithoutRef<SliderSettings>) {
   const level = props.h - value * props.h;
   
   React.useEffect(() => {
-    ref.current?.addEventListener('wheel', onScroll, { passive: false });
-    return () => ref.current?.removeEventListener('wheel', onScroll)
+    ref.current?.addEventListener('wheel', onScroll, {passive: false});
+    return () => ref.current?.removeEventListener('wheel', onScroll);
   }, [props.value]);
 
   // To do: work on markers.
