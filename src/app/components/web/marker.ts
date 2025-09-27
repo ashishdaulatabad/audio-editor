@@ -43,6 +43,7 @@ export class MarkerElement extends HTMLElement {
 
     if (this.rect) {
       this.rect.setAttribute('height', h.toString());
+      this.modifyPatternDefinition();
     }
   }
   
@@ -55,8 +56,7 @@ export class MarkerElement extends HTMLElement {
 
     // Modify them instead of appending them again
     if (this.def) {
-      const newPattern = this.createPatternDef();
-      this.def.replaceChildren(newPattern)
+      this.modifyPatternDefinition();
     }
   }
   
@@ -129,7 +129,7 @@ export class MarkerElement extends HTMLElement {
     pattern.setAttribute('patternContentUnits', 'userSpaceOnUse');
     pattern.setAttribute('x', '0');
     pattern.setAttribute('y', '0');
-    pattern.setAttribute('width', this.lineDistance.toString());
+    pattern.setAttribute('width', this.d.toString());
     pattern.setAttribute('height', this.h.toString());
 
     pattern.appendChild(MarkerElement.createPath(
@@ -138,17 +138,17 @@ export class MarkerElement extends HTMLElement {
       2
     ));
     pattern.appendChild(MarkerElement.createPath(
-      `M${this.lineDistance / 4} 0 L${this.lineDistance / 4} ${this.h}`,
+      `M${this.d / 4} 0 L${this.d / 4} ${this.h}`,
       '#333',
       1
     ));
     pattern.appendChild(MarkerElement.createPath(
-      `M${this.lineDistance / 2} 0 L${this.lineDistance / 2} ${this.h}`,
+      `M${this.d / 2} 0 L${this.d / 2} ${this.h}`,
       '#333',
       1
     ));
     pattern.appendChild(MarkerElement.createPath(
-      `M${3 * this.lineDistance / 4} 0 L${3 * (this.lineDistance) / 4} ${this.h}`,
+      `M${3 * this.d / 4} 0 L${3 * (this.d) / 4} ${this.h}`,
       '#333',
       1
     ));
@@ -158,12 +158,12 @@ export class MarkerElement extends HTMLElement {
       4
     ));
     pattern.appendChild(MarkerElement.createPath(
-      `M0 0 L${this.lineDistance} 0`,
+      `M0 0 L${this.d} 0`,
       '#333',
       1
     ));
     pattern.appendChild(MarkerElement.createPath(
-      `M0 ${this.h} L${this.lineDistance} ${this.h}`,
+      `M0 ${this.h} L${this.d} ${this.h}`,
       '#344556',
       1
     ));
@@ -171,11 +171,21 @@ export class MarkerElement extends HTMLElement {
     return pattern;
   }
 
-  private static createPath(
-    data: string,
-    stroke: string,
-    strokeWidth: number
-  ) {
+  private modifyPatternDefinition() {
+    if (!this.pattern) return;
+
+    this.pattern.setAttribute('width', this.d.toString());
+    this.pattern.setAttribute('height', this.h.toString());
+    this.pattern.children[0].setAttribute('d', `M0 0 L0 ${this.h}`);
+    this.pattern.children[1].setAttribute('d', `M${this.d / 4} 0 L${this.d / 4} ${this.h}`);
+    this.pattern.children[2].setAttribute('d', `M${this.d / 2} 0 L${this.d / 2} ${this.h}`);
+    this.pattern.children[3].setAttribute('d', `M${3 * this.d / 4} 0 L${3 * (this.d) / 4} ${this.h}`);
+    this.pattern.children[4].setAttribute('d', `M0 0 L0 ${this.h}`);
+    this.pattern.children[5].setAttribute('d', `M0 0 L${this.d} 0`);
+    this.pattern.children[6].setAttribute('d', `M0 ${this.h} L${this.d} ${this.h}`);
+  }
+
+  private static createPath(data: string, stroke: string, strokeWidth: number) {
     const path = document.createElementNS(svgxmlns, 'path');
     path.setAttribute('d', data);
     path.setAttribute('stroke', stroke);
@@ -184,7 +194,7 @@ export class MarkerElement extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: any, newValue: any) {
-    console.log(name, oldValue, newValue);
+    // console.log(name, oldValue, newValue);
   }
 }
 

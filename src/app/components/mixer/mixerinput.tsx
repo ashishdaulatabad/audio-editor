@@ -6,7 +6,6 @@ import {Orientation, VolumeLevels} from '../player/volumelevels';
 
 export function MixerInput(props: React.PropsWithoutRef<{
   mixerNumber: number
-  master: boolean 
 }>) {
   const [gain, setGain] = React.useState(
     audioManager.useManager().mixer.getGainValue(props.mixerNumber)
@@ -30,7 +29,6 @@ export function MixerInput(props: React.PropsWithoutRef<{
       <VolumeLevels
         orientation={Orientation.Vertical}
         mixerNumber={props.mixerNumber}
-        mixerMaster={props.master}
       />
       <div className="panner-value mb-6">
         <Knob 
@@ -58,7 +56,9 @@ export function MixerInput(props: React.PropsWithoutRef<{
         />
         <label className="text-md select-none">Vol</label>
       </div>
-      <span className="text-nowrap text-sm select-none">{props.master ? 'Master' : `Mixer ${props.mixerNumber}`}</span>
+      <span className="text-nowrap text-sm select-none">
+        {props.mixerNumber === 0 ? 'Master' : `Mixer ${props.mixerNumber}`}
+      </span>
     </div>
   )
 }

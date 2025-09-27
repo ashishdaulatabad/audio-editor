@@ -45,10 +45,8 @@ export function VolumeLevels(props: React.PropsWithoutRef<{
 
       if (props.mixerNumber === undefined) { 
         audioManager.getTimeData(leftBuffer, rightBuffer);
-      } else if (typeof props.mixerMaster === 'boolean' && props.mixerMaster) {
-        audioManager.getTimeDataFromMixer(0, leftBuffer, rightBuffer);
       } else {
-        audioManager.getTimeDataFromMixer(props.mixerNumber + 1, leftBuffer, rightBuffer);
+        audioManager.getTimeDataFromMixer(props.mixerNumber, leftBuffer, rightBuffer);
       }
 
       if (leftRect.current && rightRect.current) {
