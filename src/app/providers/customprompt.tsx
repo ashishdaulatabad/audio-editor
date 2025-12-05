@@ -1,5 +1,5 @@
 import React from 'react';
-import { CustomPrompt } from '../components/shared/customprompt';
+import {CustomPrompt} from '../components/shared/customprompt';
 
 export enum PromptInputType {
   Number,

@@ -59,10 +59,10 @@ export function Window(props: React.PropsWithChildren<{
   }
 
   function onMouseMovedInsideWindow(event: React.MouseEvent<HTMLDivElement>) {
-    const { clientX, clientY } = event.nativeEvent;
+    const {clientX, clientY} = event.nativeEvent;
 
     if (windowRef.current) {
-      const { left, top, width, height } = windowRef
+      const {left, top, width, height} = windowRef
         .current
         .getBoundingClientRect();
 

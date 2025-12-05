@@ -559,6 +559,7 @@ export function Editor() {
     setAnchorY(0);
   }
 
+  // TODO: Move this to a different file.
   function unsetDrag(_: React.MouseEvent<HTMLElement>) {
     if (!movableEntity) {
       return;
@@ -706,6 +707,7 @@ export function Editor() {
     }
   }
 
+  // TODO: Move to a different file.
   function deleteAudio(event: React.MouseEvent<HTMLElement>) {
     event.preventDefault();
 

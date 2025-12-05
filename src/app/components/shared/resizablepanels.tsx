@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from '@/app/services/utils';
+import {css} from '@/app/services/utils';
 
 export interface ResizableGroupProps {
   className?: string

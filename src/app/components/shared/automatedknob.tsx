@@ -3,7 +3,7 @@ import {ContextItem, ContextMenuContext} from '@/app/providers/contextmenu';
 import {Knob} from '../knob';
 import {FaTimes} from 'react-icons/fa';
 import {useDispatch} from 'react-redux';
-import { createAutomation } from '@/app/state/trackdetails/trackdetails';
+import {createAutomation} from '@/app/state/trackdetails/trackdetails';
 
 export type AutomatedKnobProps = {
   r: number
@@ -59,11 +59,8 @@ export function AutomatedKnob(props: React.PropsWithoutRef<AutomatedKnobProps>) 
     }
 
     const {clientX, clientY} = event.nativeEvent;
-    console.log(clientX, clientY);
     showContextMenu(contextMenuOptions, clientX, clientY);
   }
-
-  console.log('here');
 
   return (
     <div

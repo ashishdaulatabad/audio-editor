@@ -7,6 +7,7 @@ import { DialogBoxProvider } from './app/providers/dialog'
 import { PromptMenuProvider } from './app/providers/customprompt'
 import { DropdownPanelProvider } from './app/components/shared/dropdown/dropdownpanel'
 import { MarkerElement } from './app/components/web/marker'
+import { AudioTrackElement } from './app/components/web/audiotrack'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
 
 function init() {
   customElements.define('c-marker', MarkerElement);
+  customElements.define('audio-track', AudioTrackElement);
 }
 
 init();

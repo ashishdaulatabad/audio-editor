@@ -1,10 +1,10 @@
 import React from 'react';
-import { css } from '@/app/services/utils';
-import { FaBrush } from 'react-icons/fa';
-import { FaPencil, FaScissors } from 'react-icons/fa6';
-import { PiSelectionPlus } from 'react-icons/pi';
-import { SimpleDropdown } from '../shared/dropdown/dropdown';
-import { TimeframeMode } from '../player/player';
+import {css} from '@/app/services/utils';
+import {FaBrush} from 'react-icons/fa';
+import {FaPencil, FaScissors} from 'react-icons/fa6';
+import {PiSelectionPlus} from 'react-icons/pi';
+import {SimpleDropdown} from '../shared/dropdown/dropdown';
+import {TimeframeMode} from '../player/player';
 
 /**
  * @description Mode Type Selection.

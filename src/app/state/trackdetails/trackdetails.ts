@@ -85,6 +85,27 @@ export type ScheduledAudioTrack = AudioDetails & {
 
 export type AudioTrackDetails = ScheduledAudioTrack;
 
+export function getDefaultAudioTrackDetails(): AudioTrackDetails {
+  return {
+    trackDetail: {
+      offsetInMicros: 0,
+      scheduledKey: Symbol(),
+      id: -1,
+      trackNumber: -1,
+      startOffsetInMicros: 0,
+      endOffsetInMicros: 0,
+      playbackRate: 1,
+      selected: false
+    },
+    audioId: Symbol(),
+    duration: 0,
+    effects: [],
+    audioName: '',
+    colorAnnotation: '#ffffff',
+    mixerNumber: 0
+  };
+}
+
 /// Setting extra time buffer to 2 minutes.
 const initialState: {
   status: Status

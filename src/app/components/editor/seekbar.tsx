@@ -6,6 +6,7 @@ import {useSelector} from 'react-redux';
 import {RootState} from '@/app/state/store';
 import {ModeType} from './toolkit';
 import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
+import {REGION_SELECT_TIMELIMIT_MICROSEC} from '@/app/services/audio/clock';
 
 /**
  * @description Timeframe selected by the user.
@@ -119,7 +120,7 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     if (isUserSelecting && event.buttons > 0) {
-      const { offsetX } = event.nativeEvent;
+      const {offsetX} = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
       setEndRegionSelection(endTimeSecs);
 
@@ -135,10 +136,10 @@ export function Seekbar(props: React.PropsWithoutRef<SeekbarProps>) {
 
   function handleMouseRelease(event: React.MouseEvent<HTMLDivElement>) {
     if (isUserSelecting) {
-      const { offsetX } = event.nativeEvent;
+      const {offsetX} = event.nativeEvent;
       const endTimeSecs = (offsetX / lineDist) * timeUnit;
 
-      if (Math.abs(endTimeSecs - startRegionSelection) > 0.1) {
+      if (Math.abs(endTimeSecs - startRegionSelection) > REGION_SELECT_TIMELIMIT_MICROSEC / SEC_TO_MICROSEC) {
         setEndRegionSelection(endTimeSecs);
         const startPoint = Math.min(startRegionSelection, endTimeSecs);
         const endPoint = Math.max(startRegionSelection, endTimeSecs);

@@ -1,11 +1,11 @@
 import React from 'react';
-import { RootState } from '@/app/state/store';
-import { useDispatch, useSelector } from 'react-redux';
+import {RootState} from '@/app/state/store';
+import {useDispatch, useSelector} from 'react-redux';
 
-import { Window } from './window';
-import { FaWindowMaximize } from 'react-icons/fa';
-import { css } from '@/app/services/utils';
-import { Exit } from '@/assets/exit';
+import {Window} from './window';
+import {FaWindowMaximize} from 'react-icons/fa';
+import {css} from '@/app/services/utils';
+import {Exit} from '@/assets/exit';
 
 import {
   focusWindow,
@@ -64,7 +64,7 @@ export function WindowManager() {
    * @param symbol 
    */
   function close(symbol: symbol){
-    dispatch(removeWindow(symbol))
+    dispatch(removeWindow(symbol));
   }
 
   /**
@@ -83,7 +83,7 @@ export function WindowManager() {
    * @param index window index in redux store.
    */
   function setPosition(top: number, left: number, windowSymbol: symbol) {
-    dispatch(setWindowPosition({ x: left, y: top, windowSymbol }))
+    dispatch(setWindowPosition({x: left, y: top, windowSymbol}));
   }
 
   /**

@@ -1,4 +1,7 @@
-/** */
+/** 
+ * Sets a singlestore to collect only one instances.
+ * Prevents multiple instances of the same class.
+*/
 export class SingletonStore {
   private static instances: Map<Object, any> = new Map();
 

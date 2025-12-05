@@ -190,9 +190,8 @@ export function compareValues(left: any, right: any): boolean {
         ));
     }
 
-    default: {
+    default:
       return left === right;
-    }
   }
 }
 

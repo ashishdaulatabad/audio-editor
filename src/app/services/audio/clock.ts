@@ -1,17 +1,18 @@
 import {TimeSectionSelection} from '@/app/components/editor/seekbar';
 import {audioService} from '../audioservice';
 import {Maybe} from '../interfaces';
-import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
+// import {SEC_TO_MICROSEC} from '@/app/state/trackdetails/trackdetails';
 import {SingletonStore} from '../singlestore';
 
 const DEFAULT_MIN_TIME_LOOP_SEC = 5;
-const REGION_SELECT_TIMELIMIT_MICROSEC = 100000;
+export const REGION_SELECT_TIMELIMIT_MICROSEC = 10000;
+const SEC_TO_MICROSEC = 1000000; // 1 second in microseconds;
 
 export class AudioSyncClock  {
   timestamp = 0;
   startTimestamp = 0;
   runningTimestamp = 0;
-  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC * SEC_TO_MICROSEC;
+  loopEnd = DEFAULT_MIN_TIME_LOOP_SEC;
   timeframeSelectionDetails = null as Maybe<TimeSectionSelection>;
 
   setLoopEnd(loopEnd: number) {
@@ -84,6 +85,7 @@ export class AudioSyncClock  {
       return false;
     }
   }
+
   setTimestamp(startValue: number) {
     const context = audioService.useAudioContext();
     const time = context.currentTime;

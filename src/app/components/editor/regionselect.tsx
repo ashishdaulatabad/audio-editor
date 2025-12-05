@@ -1,5 +1,5 @@
-import { SVGXMLNS } from '@/app/utils';
-import React from "react";
+import {SVGXMLNS} from '@/app/utils';
+import React from 'react';
 
 /**
  * @description Region Selection performed by the user.
@@ -30,7 +30,7 @@ export function RegionSelect(props: React.PropsWithChildren<RegionSelectProps>) 
 
   const {lineDist, trackHeight, unitTime} = props;
 
-  function setDrag(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function setDrag(event: React.MouseEvent<HTMLDivElement>) {
     setHold(true);
     setStartX(event.nativeEvent.offsetX);
     setStartY(event.nativeEvent.offsetY);

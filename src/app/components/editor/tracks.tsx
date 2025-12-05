@@ -1,6 +1,5 @@
 import React from 'react';
 import {RootState} from '@/app/state/store';
-import {SVGXMLNS} from '@/app/utils'
 import {useSelector} from 'react-redux';
 import {TrackAudio} from './trackaudio';
 import {TimeSectionSelection} from './seekbar';
@@ -43,6 +42,14 @@ export function Tracks(props: React.PropsWithoutRef<TrackProps>) {
     >
       {
         trackData.map((track, index: number) => (
+          // <audio-track
+          //   unitTime={timeUnit}
+          //   trackSource={track}
+          //   key={track.trackDetail.id}
+          //   dataId={index}
+          //   height={props.h}
+          //   lineDistance={lineDist}
+          // ></audio-track>
           <TrackAudio
             index={index}
             lineDist={lineDist}

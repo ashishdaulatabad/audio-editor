@@ -1,4 +1,4 @@
-import { SVGXMLNS } from '@/app/utils';
+import {SVGXMLNS} from '@/app/utils';
 import React from 'react';
 
 export function Mixer(props: React.PropsWithoutRef<{

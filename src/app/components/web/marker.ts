@@ -148,7 +148,7 @@ export class MarkerElement extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeChild(this.mainSvg!);
+    // this.removeChild(this.mainSvg!);
   }
 
   private createPatternDef() {

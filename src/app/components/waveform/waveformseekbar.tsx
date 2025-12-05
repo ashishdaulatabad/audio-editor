@@ -37,7 +37,7 @@ export function WaveformSeekbar(
 
   const divRef = React.useRef<HTMLDivElement>(null);
 
-  let { lineDist, timeUnitPerLineDistInSeconds: timeUnit, totalLines } = props;
+  let {lineDist, timeUnitPerLineDistInSeconds: timeUnit, totalLines} = props;
 
   [timeUnit, totalLines, lineDist] = setTimeInterval(
     timeUnit,

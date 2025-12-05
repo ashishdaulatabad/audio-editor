@@ -1,6 +1,11 @@
-import { SVGXMLNS } from "@/app/utils";
+import {SVGXMLNS} from '@/app/utils';
 
-export function Pause(props: React.PropsWithoutRef<{ w: number, h: number,  c: string, f: string }>) {
+export function Pause(props: React.PropsWithoutRef<{
+  w: number,
+  h: number,
+  c: string,
+  f: string
+}>) {
   return (
     <svg xmlns={SVGXMLNS} width={props.w} height={props.h} viewBox="0 0 80 80">
       <path 
@@ -11,5 +16,5 @@ export function Pause(props: React.PropsWithoutRef<{ w: number, h: number,  c: s
            M 68 2 C 62 0, 56 0, 50 2 L 50 78 C 56 80, 62 80, 68 78 L 68 2"
       ></path>
     </svg>
-  )
+  );
 }

@@ -113,7 +113,7 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
     grab && setIsGrab(false);
   }
 
-  function applyStyles(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function applyStyles(event: React.MouseEvent<HTMLDivElement>) {
     const target = (event.nativeEvent.target as HTMLElement);
     let pointerPosition = event.nativeEvent.offsetX;
 
@@ -158,7 +158,10 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   }
 
   function handleNewSampleCreation(track: AudioTrackDetails) {
-    createAudioSample(track, audioManager.getAudioBuffer(track.audioId) as AudioBuffer).then(data => {
+    createAudioSample(
+      track, 
+      audioManager.getAudioBuffer(track.audioId)!
+    ).then(data => {
       const newTrackDetails = {
         audioName: track.audioName,
         duration: data.duration,
@@ -179,11 +182,11 @@ export function TrackAudio(props: React.PropsWithoutRef<TrackAudioProps>) {
   /**
    * @todo: this.
    */
-  function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+  function handleDuplicateSamplesCreation(event: React.MouseEvent<HTMLSpanElement>) {
     hideContextMenu();
   }
 
-  function contextMenu(event: React.MouseEvent<HTMLSpanElement, MouseEvent>) {
+  function contextMenu(event: React.MouseEvent<HTMLSpanElement>) {
     if (!isContextOpen()) {
       showContextMenu([
         {

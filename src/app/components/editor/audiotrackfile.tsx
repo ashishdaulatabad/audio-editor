@@ -1,28 +1,30 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 
-import { ContextMenuContext } from '@/app/providers/contextmenu';
-import { DialogContext } from '@/app/providers/dialog';
-import { audioManager } from '@/app/services/audio/audiotrackmanager';
-import { deleteColor } from '@/app/services/random';
-import { RootState } from '@/app/state/store';
-import { FaTrash } from 'react-icons/fa';
+import {ContextMenuContext} from '@/app/providers/contextmenu';
+import {DialogContext} from '@/app/providers/dialog';
+import {audioManager} from '@/app/services/audio/audiotrackmanager';
+import {deleteColor} from '@/app/services/random';
+import {RootState} from '@/app/state/store';
+import {FaTrash} from 'react-icons/fa';
 
-import { removeAudioFromBank } from '@/app/state/audiostate';
-import { batchRemoveWindowWithUniqueIdentifier } from '@/app/state/windowstore';
-import {
-  resetToDefault,
-  selectAudio
-} from '@/app/state/selectedaudiostate';
+import {removeAudioFromBank} from '@/app/state/audiostate';
+import {batchRemoveWindowWithUniqueIdentifier} from '@/app/state/windowstore';
+import {resetToDefault, selectAudio} from '@/app/state/selectedaudiostate';
 import {
   AudioTrackDetails,
   removeAudioFromAllTracks,
   SEC_TO_MICROSEC
 } from '@/app/state/trackdetails/trackdetails';
 
-import { css } from '@/app/services/utils';
-import { Waveform } from '@/assets/wave';
-import { ChangeDetails, changeHistory, ChangeType, WorkspaceChange } from '@/app/services/changehistory';
+import {css} from '@/app/services/utils';
+import {Waveform} from '@/assets/wave';
+import {
+  ChangeDetails,
+  changeHistory,
+  ChangeType,
+  WorkspaceChange
+} from '@/app/services/changehistory';
 
 interface AudioTrackFileProps {
   isSame: boolean
@@ -137,7 +139,12 @@ export function AudioTrackFile(
       <div className="min-w-8 ml-2">
         <Waveform color="#ccc" w={40} h={40} vb={"0 0 21 21"} />
       </div>
-      <div className={css("w-full font-xl ml-2 text-nowrap text-lg overflow-hidden overflow-ellipsis", { 'font-bold' : props.isSame })}>{file.audioName}</div>
+      <div className={css(
+        "w-full font-xl ml-2 text-nowrap text-lg overflow-hidden overflow-ellipsis",
+        {'font-bold' : props.isSame})}
+      >
+        {file.audioName}
+      </div>
     </div>
   )
 }

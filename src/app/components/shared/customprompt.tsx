@@ -1,5 +1,5 @@
 import React from 'react';
-import { PromptInputInfo, PromptInputType } from '@/app/providers/customprompt';
+import {PromptInputInfo, PromptInputType} from '@/app/providers/customprompt';
 
 export type PromptInputProps = {
   promptInputs: PromptInputInfo[]
@@ -12,7 +12,7 @@ export function PromptInput(props: React.PropsWithoutRef<{
   promptValue: string,
   onChange: (e: string) => void
 }>) {
-  const { promptInput: inp } = props;
+  const {promptInput: inp} = props;
 
   switch (inp.inputType) {
     case PromptInputType.Number: {

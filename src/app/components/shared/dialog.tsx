@@ -1,6 +1,6 @@
 import React from 'react';
-import { DialogInformation } from '@/app/providers/dialog';
-import { FaCheck, FaTimes } from 'react-icons/fa';
+import {DialogInformation} from '@/app/providers/dialog';
+import {FaCheck, FaTimes} from 'react-icons/fa';
 
 export type DialogProps = DialogInformation;
 

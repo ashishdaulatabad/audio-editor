@@ -1,16 +1,9 @@
 import React from 'react';
-import { RootState } from '@/app/state/store';
-import { createAudioData } from '../../services/utils';
-import { AudioTrackFile } from './audiotrackfile';
-
-import {
-  useDispatch,
-  useSelector
-} from 'react-redux';
-import {
-  addIntoAudioBank,
-  AudioDetails,
-} from '@/app/state/audiostate';
+import {RootState} from '@/app/state/store';
+import {createAudioData} from '../../services/utils';
+import {AudioTrackFile} from './audiotrackfile';
+import {useDispatch, useSelector} from 'react-redux';
+import {addIntoAudioBank, AudioDetails} from '@/app/state/audiostate';
 
 export function AudioTrackList() {
   // Selectors

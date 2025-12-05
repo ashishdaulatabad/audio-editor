@@ -17,6 +17,7 @@ import {ScheduledTrackAutomation} from '@/app/state/trackdetails/trackautomation
 import {SingletonStore} from '../singlestore';
 import {AudioSyncClock} from './clock';
 import {AudioStore} from './audiobank';
+import {Scheduler} from './scheduler';
 
 export type AudioBank = {
   [audioId: symbol]: {
@@ -62,35 +63,34 @@ class AudioTrackManager {
   isInitialized = false;
   paused = true;
   scheduled = false;
-  mixer: Mixer
+  mixer: Mixer = SingletonStore.getInstance(Mixer);
 
   // Audio-specific nodes
   masterGainNode: GainNode | null = null 
   leftAnalyserNode: AnalyserNode | null = null;
   rightAnalyserNode: AnalyserNode | null = null;
   splitChannel: ChannelSplitterNode | null = null;
-  audioStore: AudioStore = SingletonStore.getInstance(AudioStore) as AudioStore;
-  clock = SingletonStore.getInstance(AudioSyncClock) as AudioSyncClock;
+  audioStore: AudioStore = SingletonStore.getInstance(AudioStore)!;
+  clock = SingletonStore.getInstance(AudioSyncClock)!;
+  scheduler = SingletonStore.getInstance(Scheduler)!;
 
   /// Store objects
-  scheduledNodes: ScheduledNodesInformation = {};
   scheduledAutomation: ScheduledAutomation = {}
   offlineScheduledNodes: ScheduledNodesInformation = {};
 
   // Classes
-  private multiSelectTracker: MultiSelectTracker;
+  private multiSelectTracker: MultiSelectTracker = SingletonStore.getInstance(
+    MultiSelectTracker
+  );
 
   audioCanvas: {
-    [k: symbol]: OffscreenCanvas
+    [k: symbol]: OffscreenCanvas  
   } = {};
 
   constructor(
     public totalTrackSize: number,
     public totalMixers: number
-  ) {
-    this.multiSelectTracker = new MultiSelectTracker();
-    this.mixer = new Mixer(totalMixers);
-  }
+  ) {}
 
   initialize(context: BaseAudioContext): [GainNode[], StereoPannerNode[], GainNode] {
     const audioContext = context;
@@ -326,11 +326,7 @@ class AudioTrackManager {
   }
 
   schedule(audioTrackDetails: AudioTrackDetails[][]) {
-    for (const trackContents of audioTrackDetails) {
-      for (const track of trackContents) {
-        this._scheduleInternal(track.audioId, track.trackDetail);
-      }
-    }
+    this.scheduler.scheduleTracks(audioTrackDetails);
   }
 
   scheduleAutomation(trackAutomationDetails: ScheduledTrackAutomation[][]) {
@@ -441,54 +437,22 @@ class AudioTrackManager {
   }
 
   removeTrackFromScheduledNodes(track: AudioTrackDetails) {
-    const symbolKey = track.trackDetail.scheduledKey;
-
-    if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
-      this.scheduledNodes[symbolKey].buffer.stop(0);
-      this.scheduledNodes[symbolKey].buffer.disconnect();
-
-      let multiSelectedDomElements = this
-        .multiSelectTracker
-        .multiSelectedDOMElements;
-
-      multiSelectedDomElements = multiSelectedDomElements.filter((element) => (
-        element.trackDetail.scheduledKey !== symbolKey
-      ));
-
-      delete this.scheduledNodes[symbolKey];
-    }
+    this.scheduler.removeTrackFromScheduledNodes(track);
   }
 
   removeScheduledTracksFromScheduledKeys(scheduledKeys: symbol[]) {
-    for (const key of scheduledKeys) {
-      const node = this.scheduledNodes[key]
-
-      if (node) {
-        node.buffer.stop(0);
-        delete this.scheduledNodes[key];
-      }
-    }
+    this.scheduler.removeScheduledTracksFromScheduledKeys(scheduledKeys);
   }
 
   removeScheduledAudioInstancesFromScheduledNodes(id: symbol) {
-    const allKeys = Object.getOwnPropertySymbols(this.scheduledNodes);
-
-    for (const key of allKeys) {
-      const node = this.scheduledNodes[key];
-
-      if (node.audioId === id) {
-        node.buffer.stop(0);
-        node.buffer.disconnect();
-        delete this.scheduledNodes[key];
-      }
-    }
+    this.scheduler.removeScheduledAudioInstancesFromScheduledNodes(id);
   }
 
   scheduleSingleTrack(
     audioId: symbol,
     trackDetails: SubType<AudioTrackDetails, 'trackDetail'>
   ) {
-    this._scheduleInternal(audioId, trackDetails);
+    this.scheduler.scheduleSingleTrack(audioId, trackDetails);
   }
 
   private _scheduleOffline(
@@ -510,9 +474,9 @@ class AudioTrackManager {
     if (trackOffsetMicros + (endTime - startTime) < seekbarOffsetInMicros) {
       const key = track.trackDetail.scheduledKey;
 
-      if (Object.hasOwn(this.scheduledNodes, key)) {
-        this.scheduledNodes[key].buffer.stop();
-        delete this.scheduledNodes[key];
+      if (Object.hasOwn(this.offlineScheduledNodes, key)) {
+        this.offlineScheduledNodes[key].buffer.stop();
+        delete this.offlineScheduledNodes[key];
       }
       return;
     }
@@ -548,71 +512,6 @@ class AudioTrackManager {
     }
   }
 
-  private _scheduleInternal(
-    audioId: symbol,
-    trackDetail: SubType<AudioTrackDetails, 'trackDetail'>,
-  ) {
-    const seekbarOffsetInMicros = this.clock.getRunningTimestamp() * SEC_TO_MICROSEC;
-    const context = audioService.useAudioContext();
-    const currentTime = context.currentTime;
-
-    const {
-      scheduledKey,
-      startOffsetInMicros,
-      endOffsetInMicros,
-      offsetInMicros: trackOffsetMicros
-    } = trackDetail;
-
-    // Not scaled with playback rate.
-    const startTime = startOffsetInMicros;
-    // Not scaled with playback rate.
-    const endTime = endOffsetInMicros;
-
-    if (trackOffsetMicros + (endTime - startTime) < seekbarOffsetInMicros) {
-      const key = scheduledKey;
-
-      if (Object.hasOwn(this.scheduledNodes, key)) {
-        this.scheduledNodes[key].buffer.stop();
-        delete this.scheduledNodes[key];
-      }
-      return;
-    }
-
-    const startTimeSecs = startTime / SEC_TO_MICROSEC;
-    const trackDurationSecs = endTime / SEC_TO_MICROSEC;
-    const distance = (seekbarOffsetInMicros - trackOffsetMicros);
-    const startFrom = ((currentTime * SEC_TO_MICROSEC) + Math.max(-distance, 0)) / SEC_TO_MICROSEC;
-    
-    const bufferSource = context.createBufferSource();
-    bufferSource.buffer = this.getAudioBuffer(audioId);
-
-    const {
-      gain,
-      panner,
-      audioDetails: {
-        mixerNumber
-      }
-    } = this.audioStore.audioBank[audioId];
-
-    const destination = bufferSource.connect(gain).connect(panner);
-    this.mixer.useMixer().connectNodeToMixer(destination, mixerNumber);
-
-    const offsetStart = startTimeSecs + (Math.max(distance, 0)) / SEC_TO_MICROSEC;
-
-    bufferSource.start(
-      startFrom, 
-      offsetStart,
-      trackDurationSecs - offsetStart
-    );
-    this.scheduledNodes[scheduledKey] = {
-      audioId,
-      buffer: bufferSource,
-      details: trackDetail
-    };
-
-    bufferSource.onended = () => {};
-  }
-
   /**
    * @description Reschedule audio tracks, with changed details to accomodate new changes.
    * @param audioTrackDetails All track details
@@ -622,67 +521,22 @@ class AudioTrackManager {
     audioTrackDetails: AudioTrackDetails[][],
     movedAudioTracks?: AudioTrackDetails[]
   ) {
-    let trackNumber = 0;
-
-    for (const track of audioTrackDetails) {
-      for (const audio of track) {
-        const symbolKey = audio.trackDetail.scheduledKey;
-
-        if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
-          const audioTrackIndex = movedAudioTracks?.findIndex(value => value.trackDetail.scheduledKey === symbolKey);
-          const node = this.scheduledNodes[symbolKey];
-
-          const trackToSchedule = typeof audioTrackIndex === 'number' && audioTrackIndex > -1 ?
-            (movedAudioTracks as AudioTrackDetails[])[audioTrackIndex] :
-            audio;
-
-          node.buffer.stop(0);
-          node.buffer.disconnect();
-          delete this.scheduledNodes[symbolKey];
-
-          this._scheduleInternal(trackToSchedule.audioId, trackToSchedule.trackDetail);
-        } else {
-          this._scheduleInternal(audio.audioId, audio.trackDetail);
-        }
-      }
-      ++trackNumber;
-    } 
+    this.scheduler.rescheduleAllTracks(audioTrackDetails, movedAudioTracks);
   }
 
   rescheduleAudioFromScheduledNodes(audioKey: symbol) {
-    for (const key of Object.getOwnPropertySymbols(this.scheduledNodes)) {
-      const node = this.scheduledNodes[key];
-
-      if (node.audioId === audioKey) {
-        node.buffer.stop(0);
-        node.buffer.disconnect();
-        this._scheduleInternal(this.scheduledNodes[key].audioId, this.scheduledNodes[key].details);
-      }
-    }
+    this.scheduler.rescheduleAudioFromScheduledNodes(audioKey);
   }
 
   rescheduleTrackFromScheduledNodes(
     scheduledKey: symbol,
     trackDetail: SubType<AudioTrackDetails, 'trackDetail'>
   ) {
-    if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
-      const node = this.scheduledNodes[scheduledKey];
-      node.buffer.stop(0);
-      node.buffer.disconnect();
-      delete this.scheduledNodes[scheduledKey];
-      this._scheduleInternal(node.audioId, trackDetail);
-    }
+    this.scheduler.rescheduleTrackFromScheduledNodes(scheduledKey, trackDetail);
   }
 
   rescheduleTrack(scheduledKey: symbol, trackDetails: AudioTrackDetails) {
-    if (Object.hasOwn(this.scheduledNodes, scheduledKey)) {
-      const node = this.scheduledNodes[scheduledKey];
-      node.buffer.stop(0);
-      node.buffer.disconnect();
-      delete this.scheduledNodes[scheduledKey];
-    }
-
-    this._scheduleInternal(trackDetails.audioId, trackDetails.trackDetail);
+    this.scheduler.rescheduleTrack(scheduledKey, trackDetails);
   }
 
   rescheduleMovedTrackFromScheduledNodes(
@@ -690,15 +544,7 @@ class AudioTrackManager {
     trackDetail: SubType<AudioTrackDetails, 'trackDetail'>, 
     trackOffsetMicros: number
   ) {
-    const symbolKey = trackDetail.scheduledKey;
-
-    if (Object.hasOwn(this.scheduledNodes, symbolKey)) {
-      const node = this.scheduledNodes[symbolKey];
-      node.buffer.stop(0);
-      node.buffer.disconnect();
-      delete this.scheduledNodes[symbolKey];
-      this._scheduleInternal(audioId, {...trackDetail, offsetInMicros: trackOffsetMicros});
-    }
+    this.scheduler.rescheduleMovedTrackFromScheduledNodes(audioId, trackDetail, trackOffsetMicros);
   }
 
   /**
@@ -706,11 +552,7 @@ class AudioTrackManager {
    * @returns void
    */
   removeAllScheduledTracks() {
-    for (const symbolKey of Object.getOwnPropertySymbols(this.scheduledNodes)) {
-      this.scheduledNodes[symbolKey].buffer.stop(0);
-      this.scheduledNodes[symbolKey].buffer.disconnect();
-      delete this.scheduledNodes[symbolKey];
-    }
+    this.scheduler.removeAllScheduledTracks();
   }
 
   isPaused() {

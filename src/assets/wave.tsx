@@ -1,5 +1,5 @@
-import { SVGXMLNS } from "@/app/utils";
-import React from "react";
+import {SVGXMLNS} from '@/app/utils';
+import React from 'react';
 
 interface IconProps {
   color: string,
